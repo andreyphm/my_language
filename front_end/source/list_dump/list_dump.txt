@@ -1,0 +1,19 @@
+digraph structs
+{
+rankdir = LR;
+graph[bgcolor="#e0e0e9ff"];
+node_1 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = VAR | VAR_NUM = 0 (a) | ADDRESS = 0x603000000040 |
+{next = 0x603000000070 | prev = 0x603000000010}" ];
+node_2 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = ASSIGN | ADDRESS = 0x603000000070 |
+{next = 0x6030000000a0 | prev = 0x603000000040}" ];
+node_3 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 15 | ADDRESS = 0x6030000000a0 |
+{next = 0x6030000000d0 | prev = 0x603000000070}" ];
+node_4 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = $ | ADDRESS = 0x6030000000d0 |
+{next = (nil) | prev = 0x6030000000a0}" ];
+{
+edge[color = "#149b5aff", weight = 1000];
+node_1 -> node_2
+node_2 -> node_3
+node_3 -> node_4
+}
+}
