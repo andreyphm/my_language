@@ -5,17 +5,15 @@
 #include "input.h"
 #include "tokenization.h"
 #include "font.h"
-#include "dump.h"
 #include "output.h"
 
-error_code file_to_tokens(variable_t** variables_ptr, FILE* input_file, list_t* list)
+error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list)
 {
     char* buffer = nullptr;
     char* original_ptr = nullptr;
 
-    *variables_ptr = (variable_t*) calloc(MAX_NUMBER_OF_VARS, sizeof(variable_t));
+    *identifiers_ptr = (identifier_t*) calloc(MAX_NUMBER_OF_IDENTIFIERS, sizeof(identifier_t));
     
-    // rewind(input_file);
     buffer = read_file_to_buffer(input_file);
     size_t buffer_len = strlen(buffer);
     buffer[buffer_len] = '$';
@@ -24,7 +22,7 @@ error_code file_to_tokens(variable_t** variables_ptr, FILE* input_file, list_t* 
     list->head = create_token(SPEC, (token_union){.spec_symbol = '!'});
     list->tail = list->head;
 
-    error_code error = tokenization(buffer, *variables_ptr, list);
+    error_code error = tokenization(buffer, *identifiers_ptr, list);
     if (error)
     {
         free(original_ptr);
@@ -34,26 +32,25 @@ error_code file_to_tokens(variable_t** variables_ptr, FILE* input_file, list_t* 
     }
 
     free(original_ptr);
-    printf(MAKE_BOLD_GREEN("Successfully\n"));
+    printf(MAKE_BOLD_GREEN("Tokenization successful\n"));
     return NO_ERROR;
 }
 
-error_code tokenization(const char* buffer, variable_t* variables, list_t* const list)
+error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* const list)
 {
-    bool is_variables = false;
-    int last_variable_num = 0;
+    bool is_identifiers = false;
+    int last_identifier_num = 0;
 
     while (*buffer != '$')
     {
         skip_spaces(&buffer);
         if (*buffer == '$') break;
 
-        if (try_digit(&buffer, list)            ||
-            try_char_op(&buffer, list)          ||
-            try_arithm_function(&buffer, list)  ||
-            try_bracket(&buffer, list)          ||
-            try_assign_op(&buffer, list)        ||
-            try_variable(&buffer, list, variables, &last_variable_num, &is_variables))
+        if (try_digit(&buffer, list)        ||
+            try_op(&buffer, list)           ||
+            try_spec_symbol(&buffer, list)  ||
+            try_keyword(&buffer, list)      ||
+            try_identifier(&buffer, list, identifiers, &last_identifier_num, &is_identifiers))
         {
             continue;
         }
@@ -66,8 +63,6 @@ error_code tokenization(const char* buffer, variable_t* variables, list_t* const
     token_t* new_head = list->head->next;
     free(list->head);
     list->head = new_head;
-
-    list_dump(list, LIST_DUMP_TXT, LIST_DUMP_PNG, variables);
 
     return NO_ERROR;
 }
@@ -104,34 +99,25 @@ bool try_digit(const char** buffer, list_t* const list)
     return false;
 }
 
-bool try_char_op(const char** buffer, list_t* const list)
+bool try_op(const char** buffer, list_t* const list)
 {
-    for (size_t i = 0; i <= LAST_CHAR_OP_NUM; i++)
+    static unsigned char is_op_symbol[256] = {};
+    static bool array_filled = false;
+    if (!array_filled)  
     {
-        if (!strncmp(operators_array[i].design, *buffer, 1))
-        {
-            list_push_back(OP, (token_union){.op = operators_array[i].code}, list);
-            (*buffer)++;
-
-            return true;
-        }
+        init_operations_mask(is_op_symbol);
+        array_filled = true;
     }
-
-    return false;
-}
-
-bool try_arithm_function(const char** buffer, list_t* const list)
-{
     const char* start_of_buffer = *buffer;
-
-    if (isalpha(**buffer))
+    
+    if (is_op_symbol[(unsigned char)**buffer])
     {
         (*buffer)++;
 
-        while (isalpha(**buffer))
+        while (is_op_symbol[(unsigned char)**buffer])
             (*buffer)++;
 
-        for (size_t i = FIRST_FUNC_NUM; i <= LAST_FUNC_NUM; i++)
+        for (size_t i = 0; i < OP_ARRAY_SIZE; i++)
         {
             if (!strncmp(operators_array[i].design, start_of_buffer, (size_t) operators_array[i].strlen))
             {
@@ -147,9 +133,46 @@ bool try_arithm_function(const char** buffer, list_t* const list)
     return false;
 }
 
-bool try_bracket(const char** buffer, list_t* const list)
+bool try_keyword(const char** buffer, list_t* const list)
 {
-    if (**buffer == '(' || **buffer == ')')
+    const char* start_of_buffer = *buffer;
+
+    if (isalpha(**buffer))
+    {
+        (*buffer)++;
+
+        while (isalpha(**buffer))
+            (*buffer)++;
+
+        size_t word_length = (size_t)(*buffer - start_of_buffer);
+        for (size_t i = 0; i < KEYWORD_ARRAY_SIZE; i++)
+        {
+            if (word_length == (size_t)keywords_array[i].strlen &&
+                !strncmp(keywords_array[i].design, start_of_buffer, (size_t) keywords_array[i].strlen))
+            {
+                list_push_back(KEYWORD, (token_union){.keyword = keywords_array[i].code}, list);
+                return true;
+            }
+        }
+
+        *buffer = start_of_buffer;
+        return false;
+    }
+
+    return false;
+}
+
+bool try_spec_symbol(const char** buffer, list_t* const list)
+{
+    static unsigned char is_spec_symbol[256] = {};
+    static bool array_filled = false;
+    if (!array_filled)  
+    {
+        init_spec_symbols_mask(is_spec_symbol);
+        array_filled = true;
+    }
+
+    if (is_spec_symbol[(unsigned char)**buffer])
     {
         list_push_back(SPEC, (token_union){.spec_symbol = **buffer}, list);
         (*buffer)++;
@@ -159,57 +182,48 @@ bool try_bracket(const char** buffer, list_t* const list)
     return false;
 }
 
-bool try_assign_op(const char** buffer, list_t* const list)
-{
-    if (**buffer == '=')
-    {
-        list_push_back(OP, (token_union){.op = ASSIGN}, list);
-        (*buffer)++;
-        return true;
-    }
-
-    return false;
-}
-
-bool try_variable(const char** buffer, list_t* const list, variable_t* variables, int* last_variable_num, bool* is_variables)
+bool try_identifier(const char** buffer, list_t* const list, identifier_t* identifiers, 
+                                            int* last_identifier_num, bool* is_identifiers)
 {
     const char* start_of_buffer = *buffer;
 
-    if (!isalpha(**buffer))
+    if (!(isalpha(**buffer) || **buffer == '_'))
         return false;
 
-    while (isalpha(**buffer))
+    (*buffer)++;
+
+    while (isalpha(**buffer) || **buffer == '_' || isdigit(**buffer))
         (*buffer)++;
 
     size_t name_length = (size_t) (*buffer - start_of_buffer);
 
-    if (*is_variables)
+    if (*is_identifiers)
     {
-        for (int i = 0; i <= *last_variable_num; i++)
+        for (int i = 0; i <= *last_identifier_num; i++)
         {
-            if (variables[i].length == name_length && !strncmp(variables[i].name, start_of_buffer, name_length))
+            if (identifiers[i].length == name_length && !strncmp(identifiers[i].name, start_of_buffer, name_length))
             {
-                list_push_back(VAR, (token_union){.var_number = i}, list);
+                list_push_back(ID, (token_union){.id_number = i}, list);
                 return true;
             }
         }
     }
 
-    if (!*is_variables)
+    if (!*is_identifiers)
     {
-        list_push_back(VAR, (token_union){.var_number = 0}, list);
-        *is_variables = true;
+        list_push_back(ID, (token_union){.id_number = 0}, list);
+        *is_identifiers = true;
     }
 
     else
     {
-        (*last_variable_num)++;
-        list_push_back(VAR, (token_union){.var_number = *last_variable_num}, list);
+        (*last_identifier_num)++;
+        list_push_back(ID, (token_union){.id_number = *last_identifier_num}, list);
     }
 
-    variables[*last_variable_num].name = strndup(start_of_buffer, name_length);
-    variables[*last_variable_num].number = *last_variable_num;
-    variables[*last_variable_num].length = name_length;
+    identifiers[*last_identifier_num].name = strndup(start_of_buffer, name_length);
+    identifiers[*last_identifier_num].number = *last_identifier_num;
+    identifiers[*last_identifier_num].length = name_length;
 
     return true;
 }
@@ -239,12 +253,16 @@ token_t* create_token(const type_data type, token_union data)
             token->data_t.op = data.op;
             break;
 
-        case VAR:
-            token->data_t.var_number = data.var_number;
+        case ID:
+            token->data_t.id_number = data.id_number;
             break;
 
         case NUM:
             token->data_t.number = data.number;
+            break;
+
+        case KEYWORD:
+            token->data_t.keyword = data.keyword;
             break;
 
         case SPEC:
@@ -272,11 +290,36 @@ void list_destroy(list_t* list)
     }
 }
 
-void variables_destroy(variable_t** variables)
+void identifiers_destroy(identifier_t** identifiers)
 {
-    for (size_t i = 0; i < MAX_NUMBER_OF_VARS; i++)
-            free((void*)(*variables)[i].name);
+    for (size_t i = 0; i < MAX_NUMBER_OF_IDENTIFIERS; i++)
+            free((void*)(*identifiers)[i].name);
 
-    free(*variables);
-    *variables = nullptr;
+    free(*identifiers);
+    *identifiers = nullptr;
+}
+
+void init_operations_mask(unsigned char* array)
+{
+    array[(unsigned char)'+'] = 1;
+    array[(unsigned char)'-'] = 1;
+    array[(unsigned char)'*'] = 1;
+    array[(unsigned char)'/'] = 1;
+    array[(unsigned char)'<'] = 1;
+    array[(unsigned char)'>'] = 1;
+    array[(unsigned char)'='] = 1;
+    array[(unsigned char)'&'] = 1;
+    array[(unsigned char)'|'] = 1;
+    array[(unsigned char)'^'] = 1;
+    array[(unsigned char)'!'] = 1;
+}
+
+void init_spec_symbols_mask(unsigned char* array)
+{
+    array[(unsigned char)'('] = 1;
+    array[(unsigned char)')'] = 1;
+    array[(unsigned char)'{'] = 1;
+    array[(unsigned char)'}'] = 1;
+    array[(unsigned char)';'] = 1;
+    array[(unsigned char)','] = 1;
 }

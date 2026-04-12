@@ -6,7 +6,8 @@
 #include "dump.h"
 #include "font.h"
 
-void list_dump(list_t* const list, const char* const txt_file_name, const char* const png_file_name, const variable_t* const variables)
+void list_dump(list_t* const list, const char* const txt_file_name, const char* const png_file_name, 
+                                                                const identifier_t* const identifiers)
 {
     assert(list);
     assert(txt_file_name);
@@ -25,20 +26,26 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
                 fprintf(txt_file, "TYPE = OP | OP_CODE = %s | ", operators_array[list->current->data_t.op].name);
                 break;
-            case VAR:
+            case ID:
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#36ff6fff\","
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
-                fprintf(txt_file, "TYPE = VAR | VAR_NUM = %d (%s) | ", list->current->data_t.var_number, variables[list->current->data_t.var_number].name);
+                fprintf(txt_file, "TYPE = ID | ID_NUM = %d (%s) | ", list->current->data_t.id_number, 
+                                                                        identifiers[list->current->data_t.id_number].name);
+                break;
+            case KEYWORD:
+                fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f1e724ff\","
+                   "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
+                fprintf(txt_file, "TYPE = KEYWORD | KEYWORD_CODE = %s | ", keywords_array[list->current->data_t.keyword].name);
                 break;
             case NUM:
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f8c331ff\","
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
                 fprintf(txt_file, "TYPE = NUM | VALUE = %lg | ", list->current->data_t.number);
-                break;
+                break;  
             case SPEC:
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f673e9ff\","
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
-                fprintf(txt_file, "TYPE = SPEC | VALUE = %c | ", list->current->data_t.spec_symbol);
+                fprintf(txt_file, "TYPE = SPEC | VALUE = %s | ", spec_to_str(list->current->data_t.spec_symbol));
             default:
                 break;
         }
@@ -67,4 +74,21 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
     system(command);
 
     printf(MAKE_BOLD_GREEN("List visualization saved to %s\n"), LIST_DUMP_PNG);
+}
+
+const char* spec_to_str(char symbol)
+{
+    switch(symbol)
+    {
+        case '{': return "LEFT_BRACE";
+        case '}': return "RIGHT_BRACE";
+        case '(': return "LEFT_PAREN";
+        case ')': return "RIGHT_PAREN";
+        case ';': return "SEMMICOLON";
+        case ',': return "COMMA";
+        case '$': return "PROGRAM_END";
+        default:
+            static char buffer[2] = {symbol, '\0'};
+            return buffer;
+    }
 }

@@ -3,13 +3,14 @@
 
 #include "front_end.h"
 
-const int MAX_NUMBER_OF_VARS = 20;
+const int MAX_NUMBER_OF_IDENTIFIERS = 30;
 
 union token_union
 {
     double number;
-    int var_number;
+    int id_number;
     operator_code op;
+    keyword_code keyword;
     char spec_symbol;
 };
 
@@ -28,16 +29,19 @@ struct list_t
     token_t* tail;
 };
 
-error_code file_to_tokens(variable_t** variables_ptr, FILE* input_file, list_t* list);
-error_code tokenization(const char* buffer, variable_t* variables, list_t* const list);
+error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list);
+error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* const list);
 void skip_spaces(const char** string);
 
 bool try_digit(const char** buffer, list_t* const list);
-bool try_char_op(const char** buffer, list_t* const list);
-bool try_arithm_function(const char** buffer, list_t* const list);
-bool try_bracket(const char** buffer, list_t* const list);
-bool try_assign_op(const char** buffer, list_t* const list);
-bool try_variable(const char** buffer, list_t* const list, variable_t* variables, int* last_variable_num, bool* is_variables);
+bool try_op(const char** buffer, list_t* const list);
+bool try_keyword(const char** buffer, list_t* const list);
+bool try_spec_symbol(const char** buffer, list_t* const list);
+bool try_identifier(const char** buffer, list_t* const list, identifier_t* identifiers,
+                                                int* last_function_num, bool* is_functions);
+
+void init_operations_mask(unsigned char* array);
+void init_spec_symbols_mask(unsigned char* array);
 
 token_t* list_push_back(const type_data type, token_union data, list_t* const list);
 token_t* create_token(const type_data type, token_union data);

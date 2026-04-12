@@ -3,6 +3,7 @@
 #include "tokenization.h"
 #include "parser.h"
 #include "output.h"
+#include "dump.h"
 
 int main(int argc, const char* argv[])
 {
@@ -12,22 +13,26 @@ int main(int argc, const char* argv[])
 
     error_code error = NO_ERROR;
     node_t* node = nullptr;
-    variable_t* variables = nullptr;
+    identifier_t* identifiers = nullptr;
     list_t list = {nullptr, nullptr, nullptr};
 
-    file_to_tokens(&variables, input_file, &list);
+    error = file_to_tokens(&identifiers, input_file, &list);
     if (error) 
     {
         error_message(error);
+        program_complete(&identifiers, &node, input_file);
         return 0;
     }
+    list_dump(&list, LIST_DUMP_TXT, LIST_DUMP_PNG, identifiers);
 
-    tokens_to_tree(&list, &node);
+    error = tokens_to_tree(&list, &node);
     if (error) 
     {
         error_message(error);
+        program_complete(&identifiers, &node, input_file);
         return 0;
     }
+    tree_dump(node, TREE_DUMP_PNG, identifiers);
 
-    program_complete(&variables, &node, input_file);
+    program_complete(&identifiers, &node, input_file);
 }
