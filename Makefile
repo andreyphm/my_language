@@ -1,14 +1,11 @@
-SRC_DIR := source
 BUILD_DIR := build
-TARGET := $(BUILD_DIR)/front_end.out
-HDR_DIR := headers
+TARGET := $(BUILD_DIR)/my_language.out
 
-SRCS := $(wildcard $(SRC_DIR)/**/*.c) $(wildcard $(SRC_DIR)/*.c)
-HDRS := $(wildcard $(HDR_DIR)/*.h)
-OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+SRCS := $(shell find . -name "*.c")
+OBJS := $(patsubst ./%.c, $(BUILD_DIR)/%.o, $(SRCS)) # .c files from SRCS -> .o files in BUILD_DIR
 
 CXX := g++
-FLAGS := -I$(HDR_DIR) -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ \
+FLAGS := $(addprefix -I, $(shell find . -type d -name headers)) -I./tree -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ \
          -Waggressive-loop-optimizations -Wc++14-compat -Wmissing-declarations \
          -Wcast-align -Wcast-qual -Wchar-subscripts -Wconditionally-supported \
          -Wconversion -Wctor-dtor-privacy -Wempty-body -Wfloat-equal -Wformat-nonliteral \
@@ -26,17 +23,16 @@ FLAGS := -I$(HDR_DIR) -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ \
          -pie -fPIE -Werror=vla -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,vla-bound,vptr
 
 
-.PHONY: all clean
+.PHONY: all clean	# always build
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(FLAGS) $(OBJS) -o $@
+	$(CXX) $(FLAGS) $(OBJS) -o $@ 
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(HDRS)
+$(BUILD_DIR)/%.o: ./%.c
 	@mkdir -p $(dir $@)
 	$(CXX) $(FLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)
-	rm -f *.aux *.log *.out *.fdb_latexmk *.fls *.synctex.gz *.pdf nul

@@ -7,7 +7,7 @@ const int MAX_NUMBER_OF_IDENTIFIERS = 30;
 
 union token_union
 {
-    double number;
+    int number;
     int id_number;
     operator_code op;
     keyword_code keyword;

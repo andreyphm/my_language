@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <math.h>
 
-#include "node_functions.h"
+#include "tree.h"
 #include "front_end.h"
 #include "font.h"
 #include "macros.h"
@@ -73,7 +73,7 @@ node_t* create_prog_node()
     return create_node(NODE_PROG, (data_union){});
 }
 
-node_t* create_num_node(double value)
+node_t* create_num_node(int value)
 {
     node_t* node = create_node(NODE_NUM, (data_union){.number = value});
     return node;
@@ -167,18 +167,8 @@ node_t* create_break_node()
     return create_node(NODE_BREAK, (data_union){});
 }
 
-node_t* create_cond_node()
-{
-    return create_node(NODE_COND, (data_union){});
-}
-
 node_t* destroy_and_null(node_t* node)
 {
     destroy_node(node);
     return nullptr;
-}
-
-bool is_close_to_zero (double number_being_checked)
-{
-    return (fabs(number_being_checked) < NUMBER_CLOSE_TO_ZERO);
 }

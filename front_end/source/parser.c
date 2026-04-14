@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "front_end.h"
-#include "node_functions.h"
+#include "tree.h"
 #include "tokenization.h"
 #include "parser.h"
 #include "macros.h"
@@ -39,6 +39,7 @@ error_code tokens_to_tree(list_t* list, node_t** node_ptr)
 node_t* get_prog(token_t** token)
 {
     node_t* prog = create_prog_node();
+    if (!prog) return nullptr;
 
     while (TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == FUNC)
     {
@@ -85,7 +86,7 @@ node_t* get_params(token_t** token)
     if (TOKEN_IS_ID)
     {
         node_t* first_arg = get_id(token);
-        if (!first_arg) destroy_and_null(params);
+        if (!first_arg) return destroy_and_null(params);
 
         node_add_child(params, first_arg);
     }
@@ -93,7 +94,7 @@ node_t* get_params(token_t** token)
     {
         *token = (*token)->next;
         node_t* arg = get_id(token);
-        if (!arg) destroy_and_null(params);
+        if (!arg) return destroy_and_null(params);
 
         node_add_child(params, arg);
     }
@@ -225,7 +226,7 @@ node_t* get_var_declare(token_t** token)
     {
         *token = (*token)->next;
         node_t* var_value = get_e(token);
-        if (!var_value) return destroy_and_null(var_value);
+        if (!var_value) return destroy_and_null(var_name);
 
         if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ';'))
         {
@@ -526,7 +527,7 @@ node_t* get_call(token_t** token)
 
     node_t* args = get_args(token);
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) destroy_and_null(args);
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(args);
     *token = (*token)->next;
 
     return create_call_node(func_id_num, args);
@@ -537,7 +538,8 @@ node_t* get_args(token_t** token)
     node_t* args = create_args_node();
 
     node_t* first_arg = get_e(token);
-    if (!first_arg) return nullptr;
+    if (!first_arg) return args;
+    
     node_add_child(args, first_arg);
 
     while (TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ',')
@@ -562,6 +564,8 @@ node_t* get_n(token_t** token)
 
 node_t* get_id(token_t** token)
 {
+    if (!(TOKEN_IS_ID)) return nullptr;
+
     node_t* value = create_var_node(TOKEN_ID_NUMBER);
     *token = (*token)->next;
 

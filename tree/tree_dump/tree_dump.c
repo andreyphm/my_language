@@ -4,10 +4,11 @@
 #include "parser.h"
 #include "front_end.h"
 #include "font.h"
-#include "dump.h"
 
 const int STACK_CAPACITY = 1000;
 const int COMMAND_CAPACITY = 100;
+
+const char* node_kind_to_str(node_kind kind);
 
 void tree_dump(node_t* const node, const char* const png_file_name, const identifier_t* const identifiers)
 {
@@ -73,7 +74,7 @@ void tree_dump(node_t* const node, const char* const png_file_name, const identi
                 break;
 
             case NODE_NUM:
-                fprintf(txt_file, " | <val> value = %lg}\", style=filled, fillcolor=\"#f8c331ff\"];\n", current->data_t.number);
+                fprintf(txt_file, " | <val> value = %d}\", style=filled, fillcolor=\"#f8c331ff\"];\n", current->data_t.number);
                 break;
 
             case NODE_RET:

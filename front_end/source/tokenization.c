@@ -76,11 +76,11 @@ void skip_spaces(const char** string)
 bool try_digit(const char** buffer, list_t* const list)
 {
     bool dot_already = false;
-    double value = 0;
+    int value = 0;
 
     if (isdigit(**buffer))
     {
-        sscanf(*buffer, "%lf", &value);
+        sscanf(*buffer, "%d", &value);
         list_push_back(NUM, (token_union){.number = value}, list);
 
         while (isdigit(**buffer))
