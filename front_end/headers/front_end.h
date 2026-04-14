@@ -158,7 +158,7 @@ struct identifier_t
 void identifiers_destroy(identifier_t** identifiers);
 
 bool is_close_to_zero(double number_being_checked);
-double remove_minus_before_zero(double number_being_checked);
+// double remove_minus_before_zero(double number_being_checked);
 
 const operator_t operators_array[] =
 {

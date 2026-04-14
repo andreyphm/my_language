@@ -161,11 +161,8 @@ node_t* get_if(token_t** token)
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(')) return nullptr;
     *token = (*token)->next;
 
-    node_t* cond = create_cond_node();
-
-    node_t* cond_expr = get_e(token);
-    if (!cond_expr) return nullptr;
-    node_add_child(cond, cond_expr);
+    node_t* cond = get_e(token);
+    if (!cond) return nullptr;
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(cond);
     *token = (*token)->next;
@@ -173,22 +170,21 @@ node_t* get_if(token_t** token)
     node_t* then_body = get_block(token);
     if (!then_body) return destroy_and_null(cond);
 
-    node_t* else_node = create_else_node();
+    node_t* else_body = nullptr;
     if (TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == ELSE)
     {
         *token = (*token)->next;
-        node_t* else_body = get_block(token);
+        else_body = get_block(token);
         if (!else_body)
         {
             destroy_node(cond);
             destroy_node(then_body);
-            destroy_node(else_node);
             return nullptr;
         }
-        node_add_child(else_node, else_body);
+        else_body->kind = NODE_ELSE;
     }    
 
-    return create_if_node(cond, then_body, else_node);
+    return create_if_node(cond, then_body, else_body);
 }
 
 node_t* get_while(token_t** token)
@@ -199,11 +195,8 @@ node_t* get_while(token_t** token)
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(')) return nullptr;
     *token = (*token)->next;
 
-    node_t* cond = create_cond_node();
-
-    node_t* cond_expr = get_e(token);
-    if (!cond_expr) return nullptr;
-    node_add_child(cond, cond_expr);
+    node_t* cond = get_e(token);
+    if (!cond) return nullptr;
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(cond);
     *token = (*token)->next;
