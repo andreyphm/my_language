@@ -8,7 +8,6 @@
 #include "font.h"
 
 void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file);
-void main_error_message(error_code error);
 
 int main(int argc, const char* argv[])
 {
@@ -20,7 +19,7 @@ int main(int argc, const char* argv[])
     node_t* tree = front_end_run(input_file, &identifiers); 
     if (!tree)
     {
-        main_error_message(TREE_NULLPTR);
+        error_message(TREE_NULLPTR);
         program_complete(&identifiers, &tree, input_file);
     }
 
@@ -37,9 +36,4 @@ void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* i
     destroy_node(*node_ptr);
     fclose(input_file);
     printf(MAKE_BOLD("COMMIT GITHUB\n"));
-}
-
-void main_error_message(error_code error)
-{
-    printf(MAKE_BOLD_RED("Program exit with fail: %s\n"), error_to_string(error));
 }

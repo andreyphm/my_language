@@ -1,7 +1,7 @@
-#ifndef SIMPLIFIER_H
-#define SIMPLIFIER_H
+#ifndef MIDDLE_END_H
+#define MIDDLE_END_H
 
-#include "front_end.h"
+#include "tree.h"
 
 #define FIRST_CHILD(node)           node->children[0]
 #define SECOND_CHILD(node)          node->children[1]
@@ -15,4 +15,4 @@ void middle_end_run(node_t* tree);
 
 node_t* simplify_node(node_t* node, bool* simplifications_ptr);
 
-#endif // SIMPLIFIER_H
+#endif // MIDDLE_END_H
