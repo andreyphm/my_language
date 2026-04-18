@@ -29,7 +29,7 @@ void exit_scope(scope_t** current)
     free(current_scope);  
 }
 
-error_code declare_var(scope_t* current, int decl_id, const char* var_name, node_t* decl_node)
+error_code declare_var(scope_t* current, const char* var_name, int decl_id, node_t* decl_node)
 {
     assert(current);
 
@@ -37,7 +37,7 @@ error_code declare_var(scope_t* current, int decl_id, const char* var_name, node
 
     while(current_decl)
     {
-        if (!strcmp(var_name, current_decl->name))
+        if (decl_id == current_decl->decl_id)
             return RE_DECLARING;
 
         current_decl = current_decl->next;
@@ -72,4 +72,56 @@ var_decl_t* seek_var(scope_t* current, int var_id)
 
     if (!current->parent) return nullptr;
     return seek_var(current->parent, var_id);
+}
+
+void build_scopes(node_t* tree, const identifier_t* const identifiers)
+{
+    scope_t* first_scope = (scope_t*) calloc(1, sizeof(scope_t));
+    assert(first_scope);
+
+    for (size_t i = 0; i < tree->child_count; i++)
+       analyze_func(tree->children[i], first_scope, identifiers); 
+}
+
+void analyze_func(node_t* func_node, scope_t* parent, const identifier_t* const identifiers)
+{
+    assert(func_node);
+    assert(parent);
+
+    scope_t* func_scope = (scope_t*) calloc(1, sizeof(scope_t));
+    assert(func_scope);
+
+    func_scope->parent = parent;
+
+    for (size_t i = 0; i < func_node->children[0]->child_count; i++)
+    {
+        declare_var(func_scope, 
+                    identifiers[func_node->children[0]->children[i]->data_t.id_number].name,
+                    func_node->children[0]->children[i]->data_t.id_number, 
+                    func_node->children[0]->children[i]);
+    }
+
+    analyze_block(func_node->children[1], func_scope, identifiers);
+}
+
+void analyze_block(node_t* block_node, scope_t* parent, const identifier_t* const identifiers)
+{
+    assert(block_node);
+    assert(parent);
+
+    scope_t* block_scope = (scope_t*) calloc(1, sizeof(scope_t));
+    assert(block_scope);
+
+    block_scope->parent = parent;
+
+    for (size_t i = 0; i < block_node->child_count; i++)
+        analyze_op(block_node->children[i], block_scope, identifiers);
+}
+
+void analyze_op(node_t* op_node, scope_t* parent, const identifier_t* const identifiers)
+{
+    assert(op_node);
+    assert(parent);
+
+
 }

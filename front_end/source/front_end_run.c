@@ -32,7 +32,7 @@ node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
         return nullptr;
     }
 
-    build_scopes(&tree);
+    // build_scopes(tree);
 
     return tree;
 }

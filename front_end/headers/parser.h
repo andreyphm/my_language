@@ -12,7 +12,6 @@ node_t* get_params(token_t** token);
 node_t* get_block(token_t** token);
 node_t* get_op(token_t** token);
 node_t* get_if(token_t** token);
-node_t* get_else(token_t** token);
 node_t* get_while(token_t** token);
 node_t* get_var_declare(token_t** token);
 node_t* get_ret(token_t** token);
