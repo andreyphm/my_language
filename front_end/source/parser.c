@@ -576,3 +576,13 @@ bool token_is_start_of_expr(token_t* const* const token)
 {
     return ((TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(') || TOKEN_IS_NUM || TOKEN_IS_ID);
 }
+
+void create_name_table(node_t** tree)
+{
+    
+}
+
+void push_to_name_table()
+{
+    
+}

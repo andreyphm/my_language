@@ -1,27 +1,9 @@
-func misha(y)
-{
-    return 0;
-}
-
 func main()
 {
-    var x = 1;
-    x = 5 + 6;
-    misha(x);
+    var x = 5;
 }
 
-func test_arithm()
+func misha()
 {
-    while (z > 0)
-    {
-        z = z - 1;
-    }
-    if (1) 
-    {
-        return 0;
-    }
-    else 
-    {
-        return 1;
-    }
+    var x = 6;
 }

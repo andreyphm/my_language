@@ -6,6 +6,7 @@
 #include "tree.h"
 #include "middle_end.h"
 #include "font.h"
+#include "back_end.h"
 
 void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file);
 
@@ -26,6 +27,8 @@ int main(int argc, const char* argv[])
     middle_end_run(tree);
     
     tree_dump(tree, TREE_DUMP_PNG, identifiers);
+
+    // back_end_run(tree);
 
     program_complete(&identifiers, &tree, input_file);
 }
