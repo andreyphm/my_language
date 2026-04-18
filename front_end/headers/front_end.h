@@ -12,7 +12,8 @@ enum error_code
 {
     NO_ERROR        = 0,
     SYNTAX_ERROR    = 1,
-    TREE_NULLPTR    = 2
+    TREE_NULLPTR    = 2,
+    RE_DECLARING    = 3
 };
 
 struct operator_t
