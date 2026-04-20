@@ -56,7 +56,7 @@ error_code declare_var(scope_t* current, const char* var_name, int decl_id, node
     return NO_ERROR;
 }
 
-var_decl_t* seek_var(scope_t* current, int var_id)
+var_decl_t* seek_var(const scope_t* const current, const int var_id)
 {
     assert(current);
 
@@ -74,7 +74,7 @@ var_decl_t* seek_var(scope_t* current, int var_id)
     return seek_var(current->parent, var_id);
 }
 
-void build_scopes(node_t* tree, const identifier_t* const identifiers)
+error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
 {
     scope_t* first_scope = (scope_t*) calloc(1, sizeof(scope_t));
     assert(first_scope);
@@ -83,7 +83,7 @@ void build_scopes(node_t* tree, const identifier_t* const identifiers)
        analyze_func(tree->children[i], first_scope, identifiers); 
 }
 
-void analyze_func(node_t* func_node, scope_t* parent, const identifier_t* const identifiers)
+error_code analyze_func(node_t* func_node, scope_t* parent, const identifier_t* const identifiers)
 {
     assert(func_node);
     assert(parent);
@@ -104,7 +104,7 @@ void analyze_func(node_t* func_node, scope_t* parent, const identifier_t* const 
     analyze_block(func_node->children[1], func_scope, identifiers);
 }
 
-void analyze_block(node_t* block_node, scope_t* parent, const identifier_t* const identifiers)
+error_code analyze_block(node_t* block_node, scope_t* parent, const identifier_t* const identifiers)
 {
     assert(block_node);
     assert(parent);
@@ -118,10 +118,67 @@ void analyze_block(node_t* block_node, scope_t* parent, const identifier_t* cons
         analyze_op(block_node->children[i], block_scope, identifiers);
 }
 
-void analyze_op(node_t* op_node, scope_t* parent, const identifier_t* const identifiers)
+error_code analyze_op(node_t* op_node, scope_t* parent, const identifier_t* const identifiers)
 {
     assert(op_node);
     assert(parent);
 
+    scope_t* op_scope = parent;
+    switch(op_node->kind)
+    {
+        case NODE_IF:       return analyze_if(op_node, parent, identifiers);
+        case NODE_WHILE:    return analyze_while(op_node, parent, identifiers);
+        case NODE_VAR_DECL:
+            declare_var(op_scope, identifiers[op_node->data_t.id_number].name,op_node->data_t.id_number, op_node);
+            break;
 
+        default: 
+    }
+}
+
+error_code analyze_if(node_t* if_node, scope_t* parent, const identifier_t* const identifiers)
+{
+    assert(if_node);
+    assert(parent);
+
+    scope_t* if_scope = (scope_t*) calloc(1, sizeof(scope_t));
+    assert(if_scope);
+    if_scope->parent = parent;
+
+    error_code cond_error = analyze_op(if_node->children[0], if_scope, identifiers);
+    if (cond_error) return cond_error;
+
+    error_code body_error = analyze_block(if_node->children[1], if_scope, identifiers);
+    if (body_error) return body_error;
+
+    if (if_node->children[2])
+    {
+        error_code else_error = analyze_block(if_node->children[2], if_scope, identifiers);
+        if (else_error) return else_error;
+    }
+
+    return NO_ERROR;
+}
+
+error_code analyze_while(node_t* while_node, scope_t* parent, const identifier_t* const identifiers)
+{
+    assert(while_node);
+    assert(parent);
+
+    scope_t* while_scope = (scope_t*) calloc(1, sizeof(scope_t));
+    assert(while_scope);
+    while_scope->parent = parent;
+
+    error_code cond_error = analyze_op(while_node->children[0], parent, identifiers);
+    if (cond_error) return cond_error;
+
+    error_code body_error = analyze_block(while_node->children[1], while_scope, identifiers);
+    if (body_error) return body_error;
+
+    return NO_ERROR;
+}
+
+error_code analyze_var_decl(node_t* var_decl_node, scope_t* parent, const identifier_t* const identifiers)
+{
+    
 }
