@@ -22,12 +22,13 @@ const char* error_to_string(error_code error)
 {
     switch(error)
     {
-        case SYNTAX_ERROR:
-            return "SYNTAX_ERROR";
-        case TREE_NULLPTR:
-            return "TREE_NULLPTR";
-        case NO_ERROR:
-        default:
-            return "NO_ERROR";
+        case SYNTAX_ERROR:              return "SYNTAX_ERROR";
+        case TREE_NULLPTR:              return "TREE_NULLPTR";
+        case MULTIPLE_VAR_DECLARATION:  return "MULTIPLE_VAR_DECLARATION";
+        case PROG_NODE_ERROR:           return "PROG_NODE_ERROR";
+        case UNDECLARED_VARIABLE:       return "UNDECLARED_VARIABLE";
+        case MULTIPLE_FUNC_DECLARATION: return "MULTIPLE_FUNC_DECLARATION";
+        case UNDECLARED_FUNCTION:       return "UNDECLARED_FUNCTION";
+        default:                        return "NO_ERROR";
     }
 }

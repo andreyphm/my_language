@@ -3,9 +3,9 @@
 #include "tokenization.h"
 #include "parser.h"
 #include "output.h"
-#include "tree.h"
 #include "list_dump.h"
 #include "middle_end.h"
+#include "build_scopes.h"
 
 node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
 {
@@ -18,8 +18,7 @@ node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
     {
         error_message(error);
         destroy_tree_and_id_array(identifiers, &tree);
-        fclose(input_file);
-        return 0;
+        return nullptr;
     }
     list_dump(&list, LIST_DUMP_TXT, LIST_DUMP_PNG, *identifiers);
 
@@ -28,11 +27,16 @@ node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
     {
         error_message(error);
         destroy_tree_and_id_array(identifiers, &tree);
-        fclose(input_file);
         return nullptr;
     }
 
-    // build_scopes(tree);
+    error = build_scopes(tree, *identifiers);
+    if (error)
+    {
+        error_message(error);
+        destroy_tree_and_id_array(identifiers, &tree);
+        return nullptr;
+    }
 
     return tree;
 }

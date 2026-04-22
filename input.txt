@@ -1,13 +1,14 @@
 func main()
 {
-    var x = 0;
-
-    if (x == 5)
+    var x = 3;
+    while (x == 1)
     {
-        x = x + 5;
-        while (x)
-        {
-            break;
-        }
+        find(x);
+        var x = 4;
     }
+}
+
+func find(y)
+{
+    y = 5;
 }

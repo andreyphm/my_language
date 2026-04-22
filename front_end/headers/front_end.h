@@ -10,10 +10,14 @@ const size_t FIRST_CHILDREN_NUMBER  = 3;
 
 enum error_code
 {
-    NO_ERROR        = 0,
-    SYNTAX_ERROR    = 1,
-    TREE_NULLPTR    = 2,
-    RE_DECLARING    = 3
+    NO_ERROR                    = 0,
+    SYNTAX_ERROR                = 1,
+    TREE_NULLPTR                = 2,
+    MULTIPLE_VAR_DECLARATION    = 3,
+    PROG_NODE_ERROR             = 4,
+    UNDECLARED_VARIABLE         = 5,
+    UNDECLARED_FUNCTION         = 6,
+    MULTIPLE_FUNC_DECLARATION   = 7
 };
 
 struct operator_t

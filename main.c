@@ -3,7 +3,6 @@
 #include "tokenization.h"
 #include "parser.h"
 #include "output.h"
-#include "tree.h"
 #include "middle_end.h"
 #include "font.h"
 #include "back_end.h"
@@ -20,15 +19,15 @@ int main(int argc, const char* argv[])
     node_t* tree = front_end_run(input_file, &identifiers); 
     if (!tree)
     {
-        error_message(TREE_NULLPTR);
-        program_complete(&identifiers, &tree, input_file);
+        fclose(output_file);
+        return 1;
     }
 
     middle_end_run(tree);
     
     tree_dump(tree, TREE_DUMP_PNG, identifiers);
 
-    back_end_run(tree, identifiers);
+    // back_end_run(tree, identifiers);
 
     program_complete(&identifiers, &tree, input_file);
 }
