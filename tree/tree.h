@@ -83,6 +83,7 @@ struct node_t
 {
     node_kind kind;
     data_union data_t;
+    int unique_id;
     node_t** children;
     size_t child_count;
     size_t child_capacity;

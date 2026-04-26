@@ -4,6 +4,7 @@ struct var_decl_t
 {
     const char* name;
     int decl_id;
+    int unique_id;
     node_t* decl_node;
     var_decl_t* next;
 };

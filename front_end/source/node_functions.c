@@ -16,6 +16,7 @@ node_t* create_node(node_kind kind, data_union data)
 
     node->kind = kind;
     node->data_t = data;
+    node->unique_id = -1;
     node->children = nullptr;
     node->child_count = 0;
     node->child_capacity = 0;

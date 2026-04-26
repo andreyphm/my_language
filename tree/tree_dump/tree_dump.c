@@ -69,8 +69,12 @@ void tree_dump(node_t* const node, const char* const png_file_name, const identi
                 break;
 
             case NODE_VAR:
-                fprintf(txt_file, " | <val> id = %d (%s)}\", style=filled, fillcolor=\"#36ff6fff\"];\n",
-                        current->data_t.id_number, identifiers ? identifiers[current->data_t.id_number].name : "UNKNOWN");
+                fprintf(txt_file, " | <val> uid = %d (%s)}\", style=filled, fillcolor=\"#36ff6fff\"];\n",
+                        current->unique_id, identifiers ? identifiers[current->data_t.id_number].name : "UNKNOWN");
+                break;
+
+            case NODE_VAR_DECL:
+                fprintf(txt_file, " | <uid> uid = %d}\", style=filled, fillcolor = \"#f1e724ff\"];\n", current->unique_id);
                 break;
 
             case NODE_NUM:
