@@ -14,13 +14,13 @@
 #define TOKEN_IS_NUM                (*token)->type == NUM
 #define TOKEN_IS_ID                 (*token)->type == ID
 #define TOKEN_IS_KEYWORD            (*token)->type == KEYWORD
-#define TOKEN_SPEC_SYMBOL           (*token)->data_t.spec_symbol
+#define TOKEN_SPEC_CODE             (*token)->data_t.spec
 #define TOKEN_OP_CODE               (*token)->data_t.op
 #define TOKEN_KEYWORD_CODE          (*token)->data_t.keyword
 #define TOKEN_NUM_VALUE             (*token)->data_t.number
 #define TOKEN_ID_NUMBER             (*token)->data_t.id_number
 #define NEXT_TOKEN_IS_SPEC          ((*token)->next)->type == SPEC
-#define NEXT_TOKEN_SPEC_SYMBOL      ((*token)->next)->data_t.spec_symbol
+#define NEXT_TOKEN_SPEC_CODE        ((*token)->next)->data_t.spec
 #define NEXT_TOKEN_IS_OP            ((*token)->next)->type == OP
 #define NEXT_TOKEN_OP_CODE          ((*token)->next)->data_t.op
 
@@ -49,7 +49,7 @@ node_t* get_prog(token_t** token)
         node_add_child(prog, func);
     }
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '$'))
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == PROGRAM_END))
         return destroy_and_null(prog);
 
     return prog;
@@ -64,13 +64,13 @@ node_t* get_func(token_t** token)
     int func_id_num = TOKEN_ID_NUMBER;
     *token = (*token)->next;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(')) return nullptr;
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN)) return nullptr;
     *token = (*token)->next;
 
     node_t* params = get_params(token);
     if (!params) return nullptr;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(params);
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN)) return destroy_and_null(params);
     *token = (*token)->next;
 
     node_t* func_body = get_block(token);
@@ -90,7 +90,7 @@ node_t* get_params(token_t** token)
 
         node_add_child(params, first_arg);
     }
-    while (TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ',')
+    while (TOKEN_IS_SPEC && TOKEN_SPEC_CODE == COMMA)
     {
         *token = (*token)->next;
         node_t* arg = get_id(token);
@@ -104,7 +104,7 @@ node_t* get_params(token_t** token)
 
 node_t* get_block(token_t** token)
 {
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '{')) return nullptr;
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_BRACE)) return nullptr;
     *token = (*token)->next;
 
     node_t* body = create_body_node();
@@ -119,7 +119,7 @@ node_t* get_block(token_t** token)
         node_add_child(body, op);
     }
     
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '}')) 
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_BRACE)) 
     {
         destroy_node(body);
         return nullptr;
@@ -147,7 +147,7 @@ node_t* get_op(token_t** token)
     node_t* value = get_e(token);
     if (!value) return nullptr;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ';')) 
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON)) 
         return destroy_and_null(value);
     *token = (*token)->next;
 
@@ -159,13 +159,13 @@ node_t* get_if(token_t** token)
     if (!(TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == IF)) return nullptr;
     *token = (*token)->next;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(')) return nullptr;
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN)) return nullptr;
     *token = (*token)->next;
 
     node_t* cond = get_e(token);
     if (!cond) return nullptr;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(cond);
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN)) return destroy_and_null(cond);
     *token = (*token)->next;
 
     node_t* then_body = get_block(token);
@@ -193,13 +193,13 @@ node_t* get_while(token_t** token)
     if (!(TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == WHILE)) return nullptr;
     *token = (*token)->next;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(')) return nullptr;
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN)) return nullptr;
     *token = (*token)->next;
 
     node_t* cond = get_e(token);
     if (!cond) return nullptr;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(cond);
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN)) return destroy_and_null(cond);
     *token = (*token)->next;
 
     node_t* then_body = get_block(token);
@@ -216,7 +216,7 @@ node_t* get_var_declare(token_t** token)
     node_t* var_name = get_id(token);
     if (!var_name) return nullptr;
 
-    if (TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ';')
+    if (TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON)
     {
         *token = (*token)->next;
         return create_var_decl_node(var_name, nullptr);
@@ -228,7 +228,7 @@ node_t* get_var_declare(token_t** token)
         node_t* var_value = get_e(token);
         if (!var_value) return destroy_and_null(var_name);
 
-        if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ';'))
+        if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON))
         {
             destroy_node(var_name);
             destroy_node(var_value);
@@ -247,7 +247,7 @@ node_t* get_ret(token_t** token)
     if (!(TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == RET)) return nullptr;
     *token = (*token)->next;
 
-    if (TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ';')
+    if (TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON)
     {
         *token = (*token)->next;
         return create_ret_node(nullptr);
@@ -256,7 +256,7 @@ node_t* get_ret(token_t** token)
     node_t* value = get_e(token);
     if (!value) return nullptr;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ';'))
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON))
         return destroy_and_null(value);
     *token = (*token)->next;
 
@@ -268,7 +268,7 @@ node_t* get_break(token_t** token)
     if (!(TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == BREAK)) return nullptr;
     *token = (*token)->next;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ';')) return nullptr;
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON)) return nullptr;
     *token = (*token)->next; 
 
     return create_break_node();
@@ -495,13 +495,13 @@ node_t* get_mul_div(token_t** token)
 
 node_t* get_p(token_t** token)
 {
-    if (TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(')
+    if (TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN)
     {
         *token = (*token)->next;
         node_t* value = get_e(token);
         if (!value) return nullptr;
 
-        if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(value);
+        if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN)) return destroy_and_null(value);
         *token = (*token)->next;
 
         return value;
@@ -510,7 +510,7 @@ node_t* get_p(token_t** token)
     else if (TOKEN_IS_NUM)
         return get_n(token);
 
-    else if (TOKEN_IS_ID && NEXT_TOKEN_IS_SPEC && NEXT_TOKEN_SPEC_SYMBOL == '(')
+    else if (TOKEN_IS_ID && NEXT_TOKEN_IS_SPEC && NEXT_TOKEN_SPEC_CODE == LEFT_PAREN)
         return get_call(token);
 
     return get_id(token);
@@ -522,12 +522,12 @@ node_t* get_call(token_t** token)
     int func_id_num = TOKEN_ID_NUMBER;
     *token = (*token)->next;
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(')) return nullptr;
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN)) return nullptr;
     *token = (*token)->next;
 
     node_t* args = get_args(token);
 
-    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ')')) return destroy_and_null(args);
+    if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN)) return destroy_and_null(args);
     *token = (*token)->next;
 
     return create_call_node(func_id_num, args);
@@ -542,7 +542,7 @@ node_t* get_args(token_t** token)
     
     node_add_child(args, first_arg);
 
-    while (TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == ',')
+    while (TOKEN_IS_SPEC && TOKEN_SPEC_CODE == COMMA)
     {
         *token = (*token)->next;
 
@@ -574,15 +574,5 @@ node_t* get_id(token_t** token)
 
 bool token_is_start_of_expr(token_t* const* const token)
 {
-    return ((TOKEN_IS_SPEC && TOKEN_SPEC_SYMBOL == '(') || TOKEN_IS_NUM || TOKEN_IS_ID);
-}
-
-void create_name_table(node_t** tree)
-{
-    
-}
-
-void push_to_name_table()
-{
-    
+    return ((TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN) || TOKEN_IS_NUM || TOKEN_IS_ID);
 }

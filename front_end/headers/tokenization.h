@@ -11,7 +11,7 @@ union token_union
     int id_number;
     operator_code op;
     keyword_code keyword;
-    char spec_symbol;
+    spec_code spec;
 };
 
 struct token_t
@@ -36,12 +36,11 @@ void skip_spaces(const char** string);
 bool try_digit(const char** buffer, list_t* const list);
 bool try_op(const char** buffer, list_t* const list);
 bool try_keyword(const char** buffer, list_t* const list);
-bool try_spec_symbol(const char** buffer, list_t* const list);
+bool try_spec(const char** buffer, list_t* const list);
 bool try_identifier(const char** buffer, list_t* const list, identifier_t* identifiers,
                                                 int* last_function_num, bool* is_functions);
 
-void init_operations_mask(unsigned char* array);
-void init_spec_symbols_mask(unsigned char* array);
+bool is_char(const char symbol);
 
 token_t* list_push_back(const type_data type, token_union data, list_t* const list);
 token_t* create_token(const type_data type, token_union data);

@@ -19,7 +19,7 @@ error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list
     buffer[buffer_len] = '$';
     original_ptr = buffer;
                     
-    list->head = create_token(SPEC, (token_union){.spec_symbol = '!'});
+    list->head = create_token(SPEC, (token_union){.spec = PROGRAM_START});
     list->tail = list->head;
 
     error_code error = tokenization(buffer, *identifiers_ptr, list);
@@ -27,7 +27,6 @@ error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list
     {
         free(original_ptr);
         list_destroy(list);
-        error_message(error);
         return error;
     }
 
@@ -48,7 +47,7 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
 
         if (try_digit(&buffer, list)        ||
             try_op(&buffer, list)           ||
-            try_spec_symbol(&buffer, list)  ||
+            try_spec(&buffer, list)         ||
             try_keyword(&buffer, list)      ||
             try_identifier(&buffer, list, identifiers, &last_identifier_num, &is_identifiers))
         {
@@ -58,7 +57,7 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
         else return SYNTAX_ERROR;
     }
 
-    list_push_back(SPEC, (token_union){.spec_symbol = '$'}, list);
+    list_push_back(SPEC, (token_union){.spec = PROGRAM_END}, list);
 
     token_t* new_head = list->head->next;
     free(list->head);
@@ -73,15 +72,22 @@ void skip_spaces(const char** string)
         (*string)++;
 }
 
+bool is_char(const char symbol)
+{
+    return (isalpha((unsigned char)symbol) ||
+            isdigit((unsigned char)symbol) ||
+            symbol == '_');
+}
+
 bool try_digit(const char** buffer, list_t* const list)
 {
+    const char* start_of_buffer = *buffer;
     bool dot_already = false;
     int value = 0;
 
     if (isdigit(**buffer))
     {
         sscanf(*buffer, "%d", &value);
-        list_push_back(NUM, (token_union){.number = value}, list);
 
         while (isdigit(**buffer))
         {
@@ -93,6 +99,13 @@ bool try_digit(const char** buffer, list_t* const list)
             }
         }
 
+        if (isalpha((unsigned char)**buffer) || **buffer == '_')
+        {
+            *buffer = start_of_buffer;
+            return false;
+        }
+
+        list_push_back(NUM, (token_union){.number = value}, list);
         return true;
     }
 
@@ -101,85 +114,80 @@ bool try_digit(const char** buffer, list_t* const list)
 
 bool try_op(const char** buffer, list_t* const list)
 {
-    static unsigned char is_op_symbol[256] = {};
-    static bool array_filled = false;
-    if (!array_filled)  
-    {
-        init_operations_mask(is_op_symbol);
-        array_filled = true;
-    }
-    const char* start_of_buffer = *buffer;
-    
-    if (is_op_symbol[(unsigned char)**buffer])
-    {
-        (*buffer)++;
+    size_t index = OP_ARRAY_SIZE;
+    size_t length = 0;
 
-        while (is_op_symbol[(unsigned char)**buffer])
-            (*buffer)++;
-
-        for (size_t i = 0; i < OP_ARRAY_SIZE; i++)
+    for (size_t i = 0; i < OP_ARRAY_SIZE; i++)
+    {
+        if (!strncmp(*buffer, operators_array[i].design, operators_array[i].strlen) &&
+            operators_array[i].strlen > length)
         {
-            if (!strncmp(operators_array[i].design, start_of_buffer, (size_t) operators_array[i].strlen))
-            {
-                list_push_back(OP, (token_union){.op = operators_array[i].code}, list);
-                return true;
-            }
-        }
+            // if (is_char((*buffer)[operators_array[i].strlen]))
+            //     continue;
 
-        *buffer = start_of_buffer;
-        return false;
+            index = i;
+            length = operators_array[i].strlen;
+        }
     }
 
-    return false;
+    if (index == OP_ARRAY_SIZE)
+        return false;
+
+    list_push_back(OP, (token_union){.op = (operator_code)operators_array[index].code}, list);
+    *buffer += length;
+    return true;
 }
 
 bool try_keyword(const char** buffer, list_t* const list)
 {
-    const char* start_of_buffer = *buffer;
+    size_t index = KEYWORD_ARRAY_SIZE;
+    size_t length = 0;
 
-    if (isalpha(**buffer))
+    for (size_t i = 0; i < KEYWORD_ARRAY_SIZE; i++)
     {
-        (*buffer)++;
-
-        while (isalpha(**buffer))
-            (*buffer)++;
-
-        size_t word_length = (size_t)(*buffer - start_of_buffer);
-        for (size_t i = 0; i < KEYWORD_ARRAY_SIZE; i++)
+        if (!strncmp(*buffer, keywords_array[i].design, keywords_array[i].strlen) &&
+            keywords_array[i].strlen > length)
         {
-            if (word_length == (size_t)keywords_array[i].strlen &&
-                !strncmp(keywords_array[i].design, start_of_buffer, (size_t) keywords_array[i].strlen))
-            {
-                list_push_back(KEYWORD, (token_union){.keyword = keywords_array[i].code}, list);
-                return true;
-            }
-        }
+            // if (is_char((*buffer)[keywords_array[i].strlen]))
+            //     continue;
 
-        *buffer = start_of_buffer;
-        return false;
+            index = i;
+            length = keywords_array[i].strlen;
+        }
     }
 
-    return false;
+    if (index == KEYWORD_ARRAY_SIZE)
+        return false;
+
+    list_push_back(KEYWORD, (token_union){.keyword = (keyword_code)keywords_array[index].code}, list);
+    *buffer += length;
+    return true;
 }
 
-bool try_spec_symbol(const char** buffer, list_t* const list)
+bool try_spec(const char** buffer, list_t* const list)
 {
-    static unsigned char is_spec_symbol[256] = {};
-    static bool array_filled = false;
-    if (!array_filled)  
+    size_t index = SPEC_ARRAY_SIZE;
+    size_t length = 0;
+
+    for (size_t i = 0; i < SPEC_ARRAY_SIZE; i++)
     {
-        init_spec_symbols_mask(is_spec_symbol);
-        array_filled = true;
+        if (!strncmp(*buffer, specs_array[i].design, specs_array[i].strlen) &&
+            specs_array[i].strlen > length)
+        {
+            // if (is_char((*buffer)[specs_array[i].strlen]))
+            //     continue;
+
+            index = i;
+            length = specs_array[i].strlen;
+        }
     }
 
-    if (is_spec_symbol[(unsigned char)**buffer])
-    {
-        list_push_back(SPEC, (token_union){.spec_symbol = **buffer}, list);
-        (*buffer)++;
-        return true;
-    }
+    if (index == SPEC_ARRAY_SIZE)
+        return false;
 
-    return false;
+    list_push_back(SPEC, (token_union){.spec = (spec_code)specs_array[index].code}, list);
+    *buffer += length;
+    return true;
 }
 
 bool try_identifier(const char** buffer, list_t* const list, identifier_t* identifiers, 
@@ -266,7 +274,7 @@ token_t* create_token(const type_data type, token_union data)
             break;
 
         case SPEC:
-            token->data_t.spec_symbol = data.spec_symbol;
+            token->data_t.spec = data.spec;
 
         default:
             break;
@@ -299,27 +307,17 @@ void identifiers_destroy(identifier_t** identifiers)
     *identifiers = nullptr;
 }
 
-void init_operations_mask(unsigned char* array)
-{
-    array[(unsigned char)'+'] = 1;
-    array[(unsigned char)'-'] = 1;
-    array[(unsigned char)'*'] = 1;
-    array[(unsigned char)'/'] = 1;
-    array[(unsigned char)'<'] = 1;
-    array[(unsigned char)'>'] = 1;
-    array[(unsigned char)'='] = 1;
-    array[(unsigned char)'&'] = 1;
-    array[(unsigned char)'|'] = 1;
-    array[(unsigned char)'^'] = 1;
-    array[(unsigned char)'!'] = 1;
-}
-
-void init_spec_symbols_mask(unsigned char* array)
-{
-    array[(unsigned char)'('] = 1;
-    array[(unsigned char)')'] = 1;
-    array[(unsigned char)'{'] = 1;
-    array[(unsigned char)'}'] = 1;
-    array[(unsigned char)';'] = 1;
-    array[(unsigned char)','] = 1;
-}
+// void init_operations_mask(unsigned char* array)
+// {
+//     array[(unsigned char)'+'] = 1;
+//     array[(unsigned char)'-'] = 1;
+//     array[(unsigned char)'*'] = 1;
+//     array[(unsigned char)'/'] = 1;
+//     array[(unsigned char)'<'] = 1;
+//     array[(unsigned char)'>'] = 1;
+//     array[(unsigned char)'='] = 1;
+//     array[(unsigned char)'&'] = 1;
+//     array[(unsigned char)'|'] = 1;
+//     array[(unsigned char)'^'] = 1;
+//     array[(unsigned char)'!'] = 1;
+// }

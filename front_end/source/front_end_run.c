@@ -4,7 +4,6 @@
 #include "parser.h"
 #include "output.h"
 #include "list_dump.h"
-#include "middle_end.h"
 #include "build_scopes.h"
 
 node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
@@ -18,6 +17,7 @@ node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
     {
         error_message(error);
         destroy_tree_and_id_array(identifiers, &tree);
+        // fprintf(stderr, "1\n");
         return nullptr;
     }
     list_dump(&list, LIST_DUMP_TXT, LIST_DUMP_PNG, *identifiers);

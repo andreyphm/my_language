@@ -20,17 +20,9 @@ enum error_code
     MULTIPLE_FUNC_DECLARATION   = 7
 };
 
-struct operator_t
+struct token_info_t
 {
-    operator_code code;
-    const char* name;
-    const char* design;
-    size_t strlen;
-};
-
-struct keyword_t
-{
-    keyword_code code;
+    int code;
     const char* name;
     const char* design;
     size_t strlen;
@@ -38,7 +30,7 @@ struct keyword_t
 
 void identifiers_destroy(identifier_t** identifiers);
 
-const operator_t operators_array[] =
+const token_info_t operators_array[] =
 {
     {ADD,           "ADD",              "+",    1},
     {SUB,           "SUB",              "-",    1},
@@ -62,7 +54,7 @@ const operator_t operators_array[] =
 
 const size_t OP_ARRAY_SIZE = sizeof(operators_array)/sizeof(operators_array[0]);
 
-const keyword_t keywords_array[] =
+const token_info_t keywords_array[] =
 {
     {IF,        "IF",       "if",       2},
     {ELSE,      "ELSE",     "else",     4},
@@ -75,6 +67,18 @@ const keyword_t keywords_array[] =
 };
 
 const size_t KEYWORD_ARRAY_SIZE = sizeof(keywords_array)/sizeof(keywords_array[0]);
+
+const token_info_t specs_array[] =
+{
+    {LEFT_BRACE,    "LEFT_BRACE",   "{",    1},
+    {RIGHT_BRACE,   "RIGHT_BRACE",  "}",    1},
+    {LEFT_PAREN,    "LEFT_PAREN",   "(",    1},
+    {RIGHT_PAREN,   "RIGHT_PAREN",  ")",    1},
+    {SEMMICOLON,    "SEMMICOLON",   ";",    1},
+    {COMMA,         "COMMA",        ",",    1}
+};
+
+const size_t SPEC_ARRAY_SIZE = sizeof(specs_array) / sizeof(specs_array[0]);
 
 node_t* front_end_run(FILE* input_file, identifier_t** identifiers);
 

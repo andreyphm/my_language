@@ -8,45 +8,57 @@
 
 enum operator_code
 {
-    ADD             = 0,
-    SUB             = 1,
-    MUL             = 2,
-    DIV             = 3,
-    IS_EQUAL        = 4,
-    ASSIGN          = 5,
-    LOGIC_OR        = 6,
-    LOGIC_AND       = 7,
-    IS_NOT_EQUAL    = 8,
-    SHR             = 9,
-    GREATER_EQUAL   = 10,
-    GREATER         = 11,
-    SHL             = 12,
-    LESS_EQUAL      = 13,
-    LESS            = 14,
-    BIT_OR          = 15,
-    BIT_XOR         = 16,
-    BIT_AND         = 17
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    IS_EQUAL,
+    ASSIGN,
+    LOGIC_OR,
+    LOGIC_AND,
+    IS_NOT_EQUAL,
+    SHR,
+    GREATER_EQUAL,
+    GREATER,
+    SHL,
+    LESS_EQUAL,
+    LESS,
+    BIT_OR,
+    BIT_XOR,
+    BIT_AND
 };
 
 enum keyword_code
 {
-    IF              = 0,
-    ELSE            = 1,
-    WHILE           = 2,
-    VAR_DECL        = 3,
-    RET             = 4,
-    BREAK           = 5,
-    CALL            = 6,
-    FUNC            = 7
+    IF,
+    ELSE,
+    WHILE,
+    VAR_DECL,
+    RET,
+    BREAK,
+    CALL,
+    FUNC
+};
+
+enum spec_code
+{
+    PROGRAM_START,
+    LEFT_BRACE,
+    RIGHT_BRACE,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    SEMMICOLON,
+    COMMA,
+    PROGRAM_END
 };
 
 enum type_data
 {
-    OP      = 1,
-    ID      = 2,
-    NUM     = 3,
-    KEYWORD = 4,
-    SPEC    = 5
+    OP,
+    ID,
+    NUM,
+    KEYWORD,
+    SPEC
 };
 
 enum node_kind

@@ -45,7 +45,7 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
             case SPEC:
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f673e9ff\","
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
-                fprintf(txt_file, "TYPE = SPEC | VALUE = %s | ", spec_to_str(list->current->data_t.spec_symbol));
+                fprintf(txt_file, "TYPE = SPEC | VALUE = %s | ", spec_to_str(list->current->data_t.spec));
             default:
                 break;
         }
@@ -76,19 +76,18 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
     printf(MAKE_BOLD_GREEN("List visualization saved to %s\n"), LIST_DUMP_PNG);
 }
 
-const char* spec_to_str(char symbol)
+const char* spec_to_str(spec_code spec)
 {
-    switch(symbol)
+    switch(spec)
     {
-        case '{': return "LEFT_BRACE";
-        case '}': return "RIGHT_BRACE";
-        case '(': return "LEFT_PAREN";
-        case ')': return "RIGHT_PAREN";
-        case ';': return "SEMMICOLON";
-        case ',': return "COMMA";
-        case '$': return "PROGRAM_END";
-        default:
-            static char buffer[2] = {symbol, '\0'};
-            return buffer;
+        case LEFT_BRACE:    return "LEFT_BRACE";
+        case RIGHT_BRACE:   return "RIGHT_BRACE";
+        case LEFT_PAREN:    return "LEFT_PAREN";
+        case RIGHT_PAREN:   return "RIGHT_PAREN";
+        case SEMMICOLON:    return "SEMMICOLON";
+        case COMMA:         return "COMMA";
+        case PROGRAM_END:   return "PROGRAM_END";
+
+        default:            return "UNKNOWN";
     }
 }

@@ -9,7 +9,7 @@
 void list_dump(list_t* const list, const char* const txt_file_name, const char* const png_file_name,
                const identifier_t* const identifiers);
 
-const char* spec_to_str(char symbol);
+const char* spec_to_str(spec_code spec);
 const char* node_kind_to_str(node_kind kind);
 
 #endif // DUMP_H
