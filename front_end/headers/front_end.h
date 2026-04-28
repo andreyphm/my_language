@@ -47,7 +47,7 @@ const token_info_t operators_array[] =
     TOKEN_INFO(GREATER_EQUAL, "GREATER_EQUAL",    ">="),
     TOKEN_INFO(GREATER,       "GREATER",           ">"),
     TOKEN_INFO(SHL,           "SHL",              "<<"),
-    TOKEN_INFO(LESS_EQUAL,    "GREATER",          ">="),
+    TOKEN_INFO(LESS_EQUAL,    "LESS_EQUAL",       ">="),
     TOKEN_INFO(LESS,          "LESS",              "<"),
     TOKEN_INFO(BIT_OR,        "BIT_OR",            "|"),
     TOKEN_INFO(BIT_XOR,       "BIT_XOR",           "^"),
