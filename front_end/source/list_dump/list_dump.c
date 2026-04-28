@@ -60,10 +60,9 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
 
     int list_capacity = node_number;
     fprintf(txt_file, "{\nedge[color = \"#149b5aff\", weight = 1000];\n");
+
     for (node_number = 1; node_number < list_capacity; node_number++)
-    {
         fprintf(txt_file, "node_%d -> node_%d\n", node_number, node_number + 1);
-    }
 
     fprintf(txt_file, "}\n");
     fprintf(txt_file, "}");

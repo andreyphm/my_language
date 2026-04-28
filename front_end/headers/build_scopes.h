@@ -1,3 +1,6 @@
+#ifndef BUILD_SCOPES_H
+#define BUILD_SCOPES_H
+
 #include "tree.h"
 
 struct var_decl_t
@@ -40,3 +43,5 @@ error_code analyze_if(node_t* if_node, scope_t* parent, const identifier_t* cons
 error_code analyze_while(node_t* while_node, scope_t* parent, const identifier_t* const identifiers);
 error_code analyze_var_decl(node_t* var_decl_node, scope_t* current, const identifier_t* const identifiers);
 error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t* const identifiers);
+
+#endif // BUILD_SCOPES_H

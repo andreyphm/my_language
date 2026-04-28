@@ -16,8 +16,7 @@ node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
     if (error) 
     {
         error_message(error);
-        destroy_tree_and_id_array(identifiers, &tree);
-        // fprintf(stderr, "1\n");
+        identifiers_destroy(identifiers);
         return nullptr;
     }
     list_dump(&list, LIST_DUMP_TXT, LIST_DUMP_PNG, *identifiers);

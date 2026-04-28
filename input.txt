@@ -4,11 +4,11 @@ func main()
     while (x == 1)
     {
         find(x);
-        var x = 4;
+        var x = 4 + 3;
     }
 }
 
-func find(x, y)
+func find(x, y, z)
 {
     y = 5;
     return x;

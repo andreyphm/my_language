@@ -140,6 +140,7 @@ node_t* get_op(token_t** token)
             case VAR_DECL:  return get_var_declare(token);
             case RET:       return get_ret(token);
             case BREAK:     return get_break(token);
+
             default:        return nullptr;
         }
     }
@@ -426,6 +427,7 @@ node_t* get_less_greater(token_t** token)
             case LESS:
                 value = create_op_node(op, value, value_2);
                 break;
+
             default:
                 destroy_node(value);
                 destroy_node(value_2);

@@ -29,6 +29,7 @@ const char* error_to_string(error_code error)
         case UNDECLARED_VARIABLE:       return "UNDECLARED_VARIABLE";
         case MULTIPLE_FUNC_DECLARATION: return "MULTIPLE_FUNC_DECLARATION";
         case UNDECLARED_FUNCTION:       return "UNDECLARED_FUNCTION";
+        
         default:                        return "NO_ERROR";
     }
 }

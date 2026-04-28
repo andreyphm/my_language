@@ -122,9 +122,6 @@ bool try_op(const char** buffer, list_t* const list)
         if (!strncmp(*buffer, operators_array[i].design, operators_array[i].strlen) &&
             operators_array[i].strlen > length)
         {
-            // if (is_char((*buffer)[operators_array[i].strlen]))
-            //     continue;
-
             index = i;
             length = operators_array[i].strlen;
         }
@@ -148,9 +145,6 @@ bool try_keyword(const char** buffer, list_t* const list)
         if (!strncmp(*buffer, keywords_array[i].design, keywords_array[i].strlen) &&
             keywords_array[i].strlen > length)
         {
-            // if (is_char((*buffer)[keywords_array[i].strlen]))
-            //     continue;
-
             index = i;
             length = keywords_array[i].strlen;
         }
@@ -174,9 +168,6 @@ bool try_spec(const char** buffer, list_t* const list)
         if (!strncmp(*buffer, specs_array[i].design, specs_array[i].strlen) &&
             specs_array[i].strlen > length)
         {
-            // if (is_char((*buffer)[specs_array[i].strlen]))
-            //     continue;
-
             index = i;
             length = specs_array[i].strlen;
         }
@@ -306,18 +297,3 @@ void identifiers_destroy(identifier_t** identifiers)
     free(*identifiers);
     *identifiers = nullptr;
 }
-
-// void init_operations_mask(unsigned char* array)
-// {
-//     array[(unsigned char)'+'] = 1;
-//     array[(unsigned char)'-'] = 1;
-//     array[(unsigned char)'*'] = 1;
-//     array[(unsigned char)'/'] = 1;
-//     array[(unsigned char)'<'] = 1;
-//     array[(unsigned char)'>'] = 1;
-//     array[(unsigned char)'='] = 1;
-//     array[(unsigned char)'&'] = 1;
-//     array[(unsigned char)'|'] = 1;
-//     array[(unsigned char)'^'] = 1;
-//     array[(unsigned char)'!'] = 1;
-// }

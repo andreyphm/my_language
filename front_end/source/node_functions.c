@@ -76,14 +76,12 @@ node_t* create_prog_node()
 
 node_t* create_num_node(int value)
 {
-    node_t* node = create_node(NODE_NUM, (data_union){.number = value});
-    return node;
+    return create_node(NODE_NUM, (data_union){.number = value});
 }
 
 node_t* create_var_node(int var_id)
 {
-    node_t* node = create_node(NODE_VAR, (data_union){.id_number = var_id});
-    return node;
+    return create_node(NODE_VAR, (data_union){.id_number = var_id});
 }
 
 node_t* create_op_node(operator_code op, node_t* left, node_t* right)
