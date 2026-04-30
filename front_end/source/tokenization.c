@@ -83,11 +83,11 @@ bool try_digit(const char** buffer, list_t* const list)
 {
     const char* start_of_buffer = *buffer;
     bool dot_already = false;
-    int value = 0;
+    double value = 0;
 
     if (isdigit(**buffer))
     {
-        sscanf(*buffer, "%d", &value);
+        sscanf(*buffer, "%lf", &value);
 
         while (isdigit(**buffer))
         {

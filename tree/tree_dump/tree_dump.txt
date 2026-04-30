@@ -57,7 +57,7 @@ digraph G {
     n15 [label="{ <type> VAR_DECL | <uid> uid = 0}", style=filled, fillcolor = "#f1e724ff"];
     n15 -> n27 [color="black", constraint=true];
     n15 -> n28 [color="black", constraint=true];
-    n28 [label="{ <type> NUM | <val> value = 3}", style=filled, fillcolor="#f8c331ff"];
+    n28 [label="{ <type> NUM | <val> value = 3.74}", style=filled, fillcolor="#f8c331ff"];
     n27 [label="{ <type> VAR | <val> uid = 0 (x)}", style=filled, fillcolor="#36ff6fff"];
     n13 [label="{ <type> ARGS}", style=filled, fillcolor="#09be76ff"];
 }

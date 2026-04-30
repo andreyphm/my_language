@@ -85,7 +85,7 @@ enum node_kind
 
 union data_union
 {
-    int number;
+    double number;
     int id_number;
     operator_code op;
     keyword_code keyword;
@@ -114,7 +114,7 @@ void node_reserve(node_t* node, size_t new_capacity);
 void node_add_child(node_t* parent, node_t* child);
 
 node_t* create_prog_node();
-node_t* create_num_node(int value);
+node_t* create_num_node(double value);
 node_t* create_var_node(int var_id);
 node_t* create_op_node(operator_code op, node_t* left, node_t* right);
 node_t* create_body_node();

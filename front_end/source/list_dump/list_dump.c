@@ -40,7 +40,7 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
             case NUM:
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f8c331ff\","
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
-                fprintf(txt_file, "TYPE = NUM | VALUE = %d | ", list->current->data_t.number);
+                fprintf(txt_file, "TYPE = NUM | VALUE = %lg | ", list->current->data_t.number);
                 break;  
             case SPEC:
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f673e9ff\","

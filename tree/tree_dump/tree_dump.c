@@ -78,7 +78,7 @@ void tree_dump(node_t* const node, const char* const png_file_name, const identi
                 break;
 
             case NODE_NUM:
-                fprintf(txt_file, " | <val> value = %d}\", style=filled, fillcolor=\"#f8c331ff\"];\n", current->data_t.number);
+                fprintf(txt_file, " | <val> value = %lg}\", style=filled, fillcolor=\"#f8c331ff\"];\n", current->data_t.number);
                 break;
 
             case NODE_RET:

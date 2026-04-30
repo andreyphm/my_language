@@ -3,6 +3,8 @@
 
 #include "tree.h"
 
+const int NUMBER_CLOSE_TO_ZERO = 10e-12;
+
 #define FIRST_CHILD(node)           node->children[0]
 #define SECOND_CHILD(node)          node->children[1]
 #define IS_NUM_NODE_(node)          (node->kind == NODE_NUM)
@@ -14,5 +16,6 @@
 void middle_end_run(node_t* tree);
 
 node_t* simplify_node(node_t* node, bool* simplifications_ptr);
+bool is_close_to_zero (double number_being_checked);
 
 #endif // MIDDLE_END_H

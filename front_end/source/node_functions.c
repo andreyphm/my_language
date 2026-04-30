@@ -74,7 +74,7 @@ node_t* create_prog_node()
     return create_node(NODE_PROG, (data_union){});
 }
 
-node_t* create_num_node(int value)
+node_t* create_num_node(double value)
 {
     return create_node(NODE_NUM, (data_union){.number = value});
 }

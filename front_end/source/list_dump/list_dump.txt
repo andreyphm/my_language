@@ -18,7 +18,7 @@ node_7 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", s
 {next = 0x603000000190 | prev = 0x603000000130}" ];
 node_8 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = ASSIGN | ADDRESS = 0x603000000190 |
 {next = 0x6030000001c0 | prev = 0x603000000160}" ];
-node_9 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 3 | ADDRESS = 0x6030000001c0 |
+node_9 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 3.74 | ADDRESS = 0x6030000001c0 |
 {next = 0x6030000001f0 | prev = 0x603000000190}" ];
 node_10 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | ADDRESS = 0x6030000001f0 |
 {next = 0x603000000220 | prev = 0x6030000001c0}" ];

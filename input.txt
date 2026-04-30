@@ -1,6 +1,6 @@
 func main()
 {
-    var x = 3;
+    var x = 3.74;
     while (x == 1)
     {
         find(x);

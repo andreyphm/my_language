@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 #include "middle_end.h"
 #include "tree.h"
@@ -16,8 +17,8 @@ node_t* simplify_node(node_t* node, bool* simplifications)
             if (IS_NUM_NODE_(FIRST_CHILD(node)) && IS_NUM_NODE_(SECOND_CHILD(node)))
             {
                 *simplifications = true;
-                int left_number  = NUM_VAL_(FIRST_CHILD(node));
-                int right_number = NUM_VAL_(SECOND_CHILD(node));
+                double left_number  = NUM_VAL_(FIRST_CHILD(node));
+                double right_number = NUM_VAL_(SECOND_CHILD(node));
                 operator_code op_code = OP_VAL_(node);
                 destroy_node(node);
 
@@ -33,15 +34,15 @@ node_t* simplify_node(node_t* node, bool* simplifications)
             switch(OP_VAL_(node))
             {
                 case MUL:
-                    if ((IS_NUM_NODE_(FIRST_CHILD(node)) && NUM_VAL_(FIRST_CHILD(node)) == 0) || 
-                        (IS_NUM_NODE_(SECOND_CHILD(node)) && NUM_VAL_(SECOND_CHILD(node)) == 0))
+                    if ((IS_NUM_NODE_(FIRST_CHILD(node)) && is_close_to_zero(NUM_VAL_(FIRST_CHILD(node)))) || 
+                        (IS_NUM_NODE_(SECOND_CHILD(node)) && is_close_to_zero(NUM_VAL_(SECOND_CHILD(node)))))
                     {
                         *simplifications = true;
                         destroy_node(node);
                         return NUM_NODE_(0);
                     }
 
-                    else if (IS_NUM_NODE_(SECOND_CHILD(node)) && NUM_VAL_(SECOND_CHILD(node)) == 1)
+                    else if (IS_NUM_NODE_(SECOND_CHILD(node)) && is_close_to_zero(NUM_VAL_(SECOND_CHILD(node)) - 1))
                     {
                         *simplifications = true;
                         node_t* new_node = copy_node(FIRST_CHILD(node));
@@ -49,7 +50,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                         return new_node;
                     }
 
-                    else if (IS_NUM_NODE_(FIRST_CHILD(node)) && NUM_VAL_(FIRST_CHILD(node)) == 1)
+                    else if (IS_NUM_NODE_(FIRST_CHILD(node)) && is_close_to_zero(NUM_VAL_(FIRST_CHILD(node)) - 1))
                     {
                         *simplifications = true;
                         node_t* new_node = copy_node(SECOND_CHILD(node));
@@ -59,7 +60,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                     break;
 
                 case ADD:
-                    if ((IS_NUM_NODE_(SECOND_CHILD(node)) && NUM_VAL_(SECOND_CHILD(node)) == 0))
+                    if ((IS_NUM_NODE_(SECOND_CHILD(node)) && is_close_to_zero(NUM_VAL_(SECOND_CHILD(node)))))
                     {
                         *simplifications = true;
                         node_t* new_node = copy_node(FIRST_CHILD(node));
@@ -67,7 +68,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                         return new_node;
                     }
 
-                    else if (IS_NUM_NODE_(FIRST_CHILD(node)) && NUM_VAL_(FIRST_CHILD(node)) == 0)
+                    else if (IS_NUM_NODE_(FIRST_CHILD(node)) && is_close_to_zero(NUM_VAL_(FIRST_CHILD(node))))
                     {
                         *simplifications = true;
                         node_t* right_node = copy_node(SECOND_CHILD(node));
@@ -77,7 +78,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                     break;
 
                 case DIV:
-                    if (IS_NUM_NODE_(FIRST_CHILD(node)) && NUM_VAL_(FIRST_CHILD(node)) == 0)
+                    if (IS_NUM_NODE_(FIRST_CHILD(node)) && is_close_to_zero(NUM_VAL_(FIRST_CHILD(node))))
                     {
                         *simplifications = true;
                         destroy_node(node);
@@ -85,7 +86,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                     }
                     break;
                 case SUB:
-                    if ((IS_NUM_NODE_(SECOND_CHILD(node)) && NUM_VAL_(SECOND_CHILD(node)) == 0))
+                    if ((IS_NUM_NODE_(SECOND_CHILD(node)) && is_close_to_zero(NUM_VAL_(SECOND_CHILD(node)))))
                     {
                         *simplifications = true;
                         node_t* new_node = copy_node(FIRST_CHILD(node));
@@ -93,7 +94,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                         return new_node;
                     }
 
-                    else if (IS_NUM_NODE_(FIRST_CHILD(node)) && NUM_VAL_(FIRST_CHILD(node)) == 0)
+                    else if (IS_NUM_NODE_(FIRST_CHILD(node)) && is_close_to_zero(NUM_VAL_(FIRST_CHILD(node))))
                     {
                         *simplifications = true;
                         node_t* right_node = copy_node(FIRST_CHILD(node));
@@ -156,3 +157,7 @@ node_t* copy_node(node_t* node)
     return new_node;
 }
 
+bool is_close_to_zero (double number_being_checked)
+{
+    return (fabs(number_being_checked) < NUMBER_CLOSE_TO_ZERO);
+}
