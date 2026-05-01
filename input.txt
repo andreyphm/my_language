@@ -1,17 +1,4 @@
 func main()
 {
-    var x = 4;
-    while (x > 0)
-    {
-        var y = 4;
-    }
-
-    var z = 3;
-
-    while(1)
-    {
-        var z = 15;
-    }
-    var c = 4;
     return 0;
 }

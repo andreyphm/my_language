@@ -11,9 +11,13 @@ struct func_stack_frame
 
 void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* const identifiers);
 
-void gen_prog(node_t* prog_node, FILE* const output_file, const identifier_t* const identifiers);
-void gen_func(node_t* func_node, FILE* const output_file, const identifier_t* const identifiers);
+void gen_prog(node_t* prog_node, const identifier_t* const identifiers);
+void gen_func(node_t* func_node, const identifier_t* const identifiers);
+void gen_block(node_t* block_node, const identifier_t* const identifiers);
+void gen_op(node_t* op_node, const identifier_t* const identifiers);
+void gen_expr(node_t* expr_node);
 
 size_t count_local_vars(node_t* current);
+size_t align_up_16(size_t number);
 
 #endif // BACK_END_H
