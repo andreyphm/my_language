@@ -1,15 +1,17 @@
 func main()
 {
-    var x = 3.74;
-    while (x == 1)
+    var x = 4;
+    while (x > 0)
     {
-        find(x);
-        var x = 4 + 3;
+        var y = 4;
     }
-}
 
-func find(x, y, z)
-{
-    y = 5;
-    return x;
+    var z = 3;
+
+    while(1)
+    {
+        var z = 15;
+    }
+    var c = 4;
+    return 0;
 }

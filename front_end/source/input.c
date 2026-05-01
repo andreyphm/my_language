@@ -8,7 +8,7 @@
 #include "input.h"
 
 #define DEFAULT_INPUT_FILE  "input.txt"
-#define DEFAULT_OUTPUT_FILE "output.txt"
+#define DEFAULT_OUTPUT_FILE "output.asm"
 
 void clear_input_buffer()
 {

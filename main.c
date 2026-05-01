@@ -27,7 +27,7 @@ int main(int argc, const char* argv[])
     
     tree_dump(tree, TREE_DUMP_PNG, identifiers);
 
-    // back_end_run(tree, identifiers);
+    back_end_run(tree, output_file, identifiers);
 
     program_complete(&identifiers, &tree, input_file);
 }

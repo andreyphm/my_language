@@ -3,7 +3,7 @@
 
 #include "tree.h"
 
-const int NUMBER_CLOSE_TO_ZERO = 10e-12;
+const double NUMBER_CLOSE_TO_ZERO = 10e-12;
 
 #define FIRST_CHILD(node)           node->children[0]
 #define SECOND_CHILD(node)          node->children[1]
