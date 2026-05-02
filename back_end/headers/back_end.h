@@ -17,6 +17,8 @@ void gen_block(node_t* block_node, const identifier_t* const identifiers);
 void gen_op(node_t* op_node, const identifier_t* const identifiers);
 void gen_expr(node_t* expr_node);
 
+void op_node_to_asm(node_t* expr_node);
+
 size_t count_local_vars(node_t* current);
 size_t align_up_16(size_t number);
 

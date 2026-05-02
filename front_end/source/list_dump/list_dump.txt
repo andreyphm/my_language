@@ -26,12 +26,16 @@ node_11 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", 
 {next = 0x603000000250 | prev = 0x6030000001f0}" ];
 node_12 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (x) | ADDRESS = 0x603000000250 |
 {next = 0x603000000280 | prev = 0x603000000220}" ];
-node_13 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | ADDRESS = 0x603000000280 |
+node_13 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = DIV | ADDRESS = 0x603000000280 |
 {next = 0x6030000002b0 | prev = 0x603000000250}" ];
-node_14 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | ADDRESS = 0x6030000002b0 |
+node_14 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 4 | ADDRESS = 0x6030000002b0 |
 {next = 0x6030000002e0 | prev = 0x603000000280}" ];
-node_15 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = PROGRAM_END | ADDRESS = 0x6030000002e0 |
-{next = (nil) | prev = 0x6030000002b0}" ];
+node_15 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | ADDRESS = 0x6030000002e0 |
+{next = 0x603000000310 | prev = 0x6030000002b0}" ];
+node_16 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | ADDRESS = 0x603000000310 |
+{next = 0x603000000340 | prev = 0x6030000002e0}" ];
+node_17 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = PROGRAM_END | ADDRESS = 0x603000000340 |
+{next = (nil) | prev = 0x603000000310}" ];
 {
 edge[color = "#149b5aff", weight = 1000];
 node_1 -> node_2
@@ -48,5 +52,7 @@ node_11 -> node_12
 node_12 -> node_13
 node_13 -> node_14
 node_14 -> node_15
+node_15 -> node_16
+node_16 -> node_17
 }
 }

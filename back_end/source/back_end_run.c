@@ -45,7 +45,7 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers)
                          "func_%zu:\n"
                          "\tpush rbp\n"
                          "\tmov rbp, rsp\n"
-                         "\tsub rsp, %zu\n",
+                         "\tsub rsp, %zu\t\t; Stack preparation\n\n",
                          identifiers[func_node->data_t.id_number].name,
                          func_counter,
                          local_vars_stack_size);
@@ -55,7 +55,8 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers)
     text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
                          "\nfunc_end_%zu:\n"
                          "\tadd rsp, %zu\n"
-                         "\tret\n\n",
+                         "\tpop rbp\n"
+                         "\tret\t\t; Stack free\n\n",
                          func_counter,
                          local_vars_stack_size);
 }
@@ -73,6 +74,8 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
     switch (op_node->kind)
     {
         case NODE_RET:
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                         ";========== RET ==========\n");
             if (op_node->child_count >= 1)
                 gen_expr(op_node->children[0]);
             else
@@ -83,12 +86,19 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             break;
 
         case NODE_VAR_DECL:
+        {
+            node_t* var_node = op_node->children[0];
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                         ";========== VAR_DECL_ID %d ==========\n", var_node->unique_id);
             if (op_node->child_count >= 2)
             {
                 gen_expr(op_node->children[1]);
                 text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\tmovsd [rbp - %zu], xmm0\n", (size_t)(op_node->unique_id + 1) * sizeof(double));
+                                             "\tmovsd [rbp - %zu], xmm0\t\t; variable_%d (\"%s\") init\n\n",
+                                             (size_t)(op_node->unique_id + 1) * sizeof(double),
+                                             var_node->unique_id, identifiers[var_node->data_t.id_number].name);
             }
+        }
 
         default:
             break;
@@ -114,9 +124,50 @@ void gen_expr(node_t* expr_node)
                                          "\tmovsd xmm0, [rbp - %zu]\n", (size_t)(expr_node->unique_id + 1) * sizeof(double));
             break;
 
+        case NODE_OP:
+            op_node_to_asm(expr_node);
+            break;
+
         default:
             break;
     }
+}
+
+void op_node_to_asm(node_t* expr_node)
+{
+    gen_expr(expr_node->children[1]);
+    text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                 "\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n\n");
+    gen_expr(expr_node->children[0]);
+
+    switch(expr_node->data_t.op)
+    {
+        case ADD:
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\taddsd xmm0, xmm1");
+            break;
+
+        case SUB:
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\tsubsd xmm0, xmm1");
+            break;
+
+        case MUL:
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\tmulsd xmm0, xmm1");
+            break;
+
+        case DIV:
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\tdivsd xmm0, xmm1");
+            break;
+
+        default:
+            break;
+    }
+
+    text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\t\t; Operation end\n\n");
 }
 
 size_t count_local_vars(node_t* current)

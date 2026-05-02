@@ -1,5 +1,5 @@
 func main()
 {
     var x = 4.5;
-    return x;
+    return x/4;
 }

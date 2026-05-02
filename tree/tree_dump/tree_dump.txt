@@ -13,11 +13,15 @@ digraph G {
     n3 -> n5 [color="black", constraint=true];
     n5 [label="{ <type> RET}", style=filled, fillcolor="#f07f7fff"];
     n5 -> n6 [color="black", constraint=true];
-    n6 [label="{ <type> VAR | <val> uid = 0 (x)}", style=filled, fillcolor="#36ff6fff"];
-    n4 [label="{ <type> VAR_DECL | <uid> uid = 0}", style=filled, fillcolor = "#f1e724ff"];
-    n4 -> n7 [color="black", constraint=true];
-    n4 -> n8 [color="black", constraint=true];
-    n8 [label="{ <type> NUM | <val> value = 4.5}", style=filled, fillcolor="#f8c331ff"];
+    n6 [label="{ <type> OP | <val> DIV}", style=filled, fillcolor="#b7e5f3ff"];
+    n6 -> n7 [color="black", constraint=true];
+    n6 -> n8 [color="black", constraint=true];
+    n8 [label="{ <type> NUM | <val> value = 4}", style=filled, fillcolor="#f8c331ff"];
     n7 [label="{ <type> VAR | <val> uid = 0 (x)}", style=filled, fillcolor="#36ff6fff"];
+    n4 [label="{ <type> VAR_DECL | <uid> uid = 0}", style=filled, fillcolor = "#f1e724ff"];
+    n4 -> n9 [color="black", constraint=true];
+    n4 -> n10 [color="black", constraint=true];
+    n10 [label="{ <type> NUM | <val> value = 4.5}", style=filled, fillcolor="#f8c331ff"];
+    n9 [label="{ <type> VAR | <val> uid = 0 (x)}", style=filled, fillcolor="#36ff6fff"];
     n2 [label="{ <type> ARGS}", style=filled, fillcolor="#09be76ff"];
 }
