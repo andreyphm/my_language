@@ -10,8 +10,14 @@ digraph G {
     n1 -> n3 [color="black", constraint=true];
     n3 [label="{ <type> BODY}", style=filled, fillcolor="#09be76ff"];
     n3 -> n4 [color="black", constraint=true];
-    n4 [label="{ <type> RET}", style=filled, fillcolor="#f07f7fff"];
-    n4 -> n5 [color="black", constraint=true];
-    n5 [label="{ <type> NUM | <val> value = 0}", style=filled, fillcolor="#f8c331ff"];
+    n3 -> n5 [color="black", constraint=true];
+    n5 [label="{ <type> RET}", style=filled, fillcolor="#f07f7fff"];
+    n5 -> n6 [color="black", constraint=true];
+    n6 [label="{ <type> VAR | <val> uid = 0 (x)}", style=filled, fillcolor="#36ff6fff"];
+    n4 [label="{ <type> VAR_DECL | <uid> uid = 0}", style=filled, fillcolor = "#f1e724ff"];
+    n4 -> n7 [color="black", constraint=true];
+    n4 -> n8 [color="black", constraint=true];
+    n8 [label="{ <type> NUM | <val> value = 4.5}", style=filled, fillcolor="#f8c331ff"];
+    n7 [label="{ <type> VAR | <val> uid = 0 (x)}", style=filled, fillcolor="#36ff6fff"];
     n2 [label="{ <type> ARGS}", style=filled, fillcolor="#09be76ff"];
 }

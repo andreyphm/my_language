@@ -3,6 +3,7 @@
 
 static size_t func_counter  = 0;
 static size_t const_counter = 0;
+static size_t local_vars_counter = 0;
 
 static char text_buffer[10000] = "";
 static size_t text_pos = 0;
@@ -13,7 +14,7 @@ static size_t rodata_pos = 0;
 void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* const identifiers)
 {
     text_pos += (size_t)snprintf(text_buffer, sizeof(text_buffer) - text_pos, "section .text\n\n");
-    rodata_pos += (size_t)snprintf(rodata_buffer, sizeof(rodata_buffer) - rodata_pos, "\nsection .rodata\n\n");
+    rodata_pos += (size_t)snprintf(rodata_buffer, sizeof(rodata_buffer) - rodata_pos, "section .rodata\n\n");
 
     gen_prog(tree, identifiers);
 
@@ -36,7 +37,8 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers)
     func_counter++;
 
     size_t body_local_vars = count_local_vars(func_node->children[1]);
-    size_t local_vars_stack_size = (func_node->children[0]->child_count + body_local_vars) * sizeof(double);
+    local_vars_counter = func_node->children[0]->child_count + body_local_vars;
+    size_t local_vars_stack_size = align_up_16(local_vars_counter * sizeof(double));
 
     text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
                          ";========== FUNCTION \"%s\" ==========\n"
@@ -46,15 +48,16 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers)
                          "\tsub rsp, %zu\n",
                          identifiers[func_node->data_t.id_number].name,
                          func_counter,
-                         align_up_16(local_vars_stack_size));
+                         local_vars_stack_size);
 
     gen_block(func_node->children[1], identifiers);
 
-    // fprintf(output_file, ";==========RETURN %s==========\n"
-    //                      "add rsp, %zu\n"
-    //                      "ret\n\n",
-    //                      identifiers[func_node->data_t.id_number].name,
-    //                      align_up_16(local_vars_stack_size));
+    text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                         "\nfunc_end_%zu:\n"
+                         "\tadd rsp, %zu\n"
+                         "\tret\n\n",
+                         func_counter,
+                         local_vars_stack_size);
 }
 
 void gen_block(node_t* block_node, const identifier_t* const identifiers)
@@ -73,11 +76,22 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             if (op_node->child_count >= 1)
                 gen_expr(op_node->children[0]);
             else
-                text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos, "\txorpd xmm0, xmm0\n");
-            return;
+                text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                             "\txorpd xmm0, xmm0\n");
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\tjmp func_end_%zu\n", func_counter);
+            break;
+
+        case NODE_VAR_DECL:
+            if (op_node->child_count >= 2)
+            {
+                gen_expr(op_node->children[1]);
+                text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\tmovsd [rbp - %zu], xmm0\n", (size_t)(op_node->unique_id + 1) * sizeof(double));
+            }
 
         default:
-            return;
+            break;
     }
 }
 
@@ -87,14 +101,21 @@ void gen_expr(node_t* expr_node)
     {
         case NODE_NUM:
             text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                 "\tmovsd xmm0, [rel const_%zu]\n", const_counter);
+                                         "\tmovsd xmm0, [rel const_%zu]\n",
+                                         const_counter);
             rodata_pos += (size_t)snprintf(rodata_buffer + rodata_pos, sizeof(rodata_buffer) - rodata_pos,
                                    "const_%zu:\n"
                                    "\tdq %.17g\n", const_counter, expr_node->data_t.number);
             const_counter++;
+            break;
+
+        case NODE_VAR:
+            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
+                                         "\tmovsd xmm0, [rbp - %zu]\n", (size_t)(expr_node->unique_id + 1) * sizeof(double));
+            break;
 
         default:
-            return;
+            break;
     }
 }
 

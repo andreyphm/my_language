@@ -9,7 +9,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
 {
     if (!node) return nullptr;
     if (!node->children) return node;
-    if (!FIRST_CHILD(node) || !SECOND_CHILD(node)) return node;
+    // if (!FIRST_CHILD(node) || !SECOND_CHILD(node)) return node;
 
     switch(node->kind)
     {
