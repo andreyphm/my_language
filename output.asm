@@ -6,15 +6,16 @@ func_1:
 	mov rbp, rsp
 	sub rsp, 16		; Stack preparation
 
-;========== VAR_DECL_ID 0 "x"==========
+;========== VAR_DECL_ID 0 "x" ==========
 	movsd xmm0, [rel const_0]
 	movsd [rbp - 8], xmm0		; variable_0 init
 
-	movsd xmm0, [rbp - 8]
-	movsd xmm1, xmm0		; Save right value in xmm1
+;========== IF_0 ==========
 	movsd xmm0, [rel const_1]
+	movsd xmm1, xmm0		; Save right value in xmm1
+	movsd xmm0, [rbp - 8]
 	ucomisd xmm0, xmm1
-	jb .cmp_true_0
+	je .cmp_true_0
 
 	movsd xmm0, [rel const_false]
 	jmp cmp_end_0
@@ -24,11 +25,22 @@ cmp_true_0:
 
 cmp_end_0:		; Operation complete
 
-	movsd [rbp - 8], xmm0		; Operation complete
+	ucomisd xmm0, [rel const_false]
+	je if_end_0
 
 ;========== RET ==========
-	movsd xmm0, [rbp - 8]
+	movsd xmm0, [rel const_2]
 	jmp func_end_1
+
+	jmp if_else_end_0
+
+if_end_0:
+;========== ELSE_0 ==========
+;========== RET ==========
+	movsd xmm0, [rel const_3]
+	jmp func_end_1
+
+if_else_end_0:
 
 func_end_1:
 	add rsp, 16
@@ -44,4 +56,8 @@ const_false:
 const_0:
 	dq 0.0000000000000000
 const_1:
-	dq 5.0000000000000000
+	dq 0.0000000000000000
+const_2:
+	dq 1.0000000000000000
+const_3:
+	dq 0.0000000000000000

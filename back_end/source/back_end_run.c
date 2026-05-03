@@ -18,6 +18,7 @@ static size_t func_counter  = 0;
 static size_t const_counter = 0;
 static size_t local_vars_counter = 0;
 static size_t cmp_counter = 0;
+static size_t if_counter = 0;
 
 static char text_buffer[10000] = "";
 static size_t text_pos = 0;
@@ -28,6 +29,7 @@ static size_t rodata_pos = 0;
 void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* const identifiers)
 {
     printf_to_text_buffer("section .text\n\n");
+
     printf_to_rodata_buffer("section .rodata\n\n"
                             "const_true:\n"
                             "\tdq 1.0\n"
@@ -104,13 +106,40 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             if (op_node->child_count >= 2)
             {
                 node_t* var_node = op_node->children[0];
-                printf_to_text_buffer(";========== VAR_DECL_ID %d \"%s\"==========\n",
+                printf_to_text_buffer(";========== VAR_DECL_ID %d \"%s\" ==========\n",
                                       var_node->unique_id, identifiers[var_node->data_t.id_number].name);
 
                 gen_expr(op_node->children[1]);
                 printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; variable_%d init\n\n",
                                       (size_t)(op_node->unique_id + 1) * sizeof(double), var_node->unique_id);
             }
+            break;
+
+        case NODE_IF:
+        {
+            size_t if_id = if_counter++;
+            printf_to_text_buffer(";========== IF_%zu ==========\n", if_id);
+
+            gen_expr(op_node->children[0]);
+            printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
+                                  "\tje if_end_%zu\n\n", if_id);
+
+            gen_block(op_node->children[1], identifiers);
+
+            if (op_node->child_count >= 3)
+                printf_to_text_buffer("\tjmp if_else_end_%zu\n\n", if_id);
+
+            printf_to_text_buffer("if_end_%zu:\n", if_id);
+
+            if (op_node->child_count >= 3)
+            {
+                printf_to_text_buffer(";========== ELSE_%zu ==========\n", if_id);
+
+                gen_block(op_node->children[2], identifiers);
+
+                printf_to_text_buffer("if_else_end_%zu:\n\n", if_id);
+            }
+        }
             break;
 
         case NODE_OP:
@@ -191,6 +220,7 @@ void op_node_to_asm(node_t* expr_node)
         case LESS_EQUAL:
         case LESS:
         {
+            size_t cmp_id = cmp_counter++;
             printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
             gen_expr(expr_node->children[0]);
 
@@ -203,8 +233,7 @@ void op_node_to_asm(node_t* expr_node)
                                   "cmp_true_%zu:\n"
                                   "\tmovsd xmm0, [rel const_true]\n\n"
                                   "cmp_end_%zu:",
-                                  jump_word, cmp_counter, cmp_counter, cmp_counter, cmp_counter);
-            cmp_counter++;
+                                  jump_word, cmp_id, cmp_id, cmp_id, cmp_id);
         }
 
         default:
