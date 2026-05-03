@@ -2,5 +2,7 @@ func main()
 {
     var x = 0;
 
-    x = x + 4;
+    x = 5 < x;
+
+    return x;
 }

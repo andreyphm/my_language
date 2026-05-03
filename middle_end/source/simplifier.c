@@ -24,10 +24,18 @@ node_t* simplify_node(node_t* node, bool* simplifications)
 
                 switch(op_code)
                 {
-                    case ADD: return NUM_NODE_(left_number + right_number);
-                    case SUB: return NUM_NODE_(left_number - right_number);
-                    case MUL: return NUM_NODE_(left_number * right_number);
-                    case DIV: return NUM_NODE_(left_number / right_number);
+                    case ADD:           return NUM_NODE_(left_number + right_number);
+                    case SUB:           return NUM_NODE_(left_number - right_number);
+                    case MUL:           return NUM_NODE_(left_number * right_number);
+                    case DIV:           return NUM_NODE_(left_number / right_number);
+                    case IS_EQUAL:      return NUM_NODE_(is_close_to_zero(left_number - right_number));
+                    case IS_NOT_EQUAL:  return NUM_NODE_(!is_close_to_zero(left_number - right_number));
+                    case LOGIC_OR:      return NUM_NODE_(!is_close_to_zero(left_number) || !is_close_to_zero(right_number));
+                    case LOGIC_AND:     return NUM_NODE_(!is_close_to_zero(left_number) && !is_close_to_zero(right_number));
+                    case GREATER_EQUAL: return NUM_NODE_(left_number > right_number || is_close_to_zero(left_number - right_number));
+                    case GREATER:       return NUM_NODE_(left_number > right_number);
+                    case LESS_EQUAL:    return NUM_NODE_(left_number < right_number || is_close_to_zero(left_number - right_number));
+                    case LESS:          return NUM_NODE_(left_number < right_number);
                     default:  break;
                 }
             }

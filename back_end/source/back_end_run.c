@@ -2,9 +2,22 @@
 #include "font.h"
 #include "stdarg.h"
 
+static const cond_op cond_op_array[] =
+{
+    {IS_EQUAL,       "je"},
+    {IS_NOT_EQUAL,  "jne"},
+    {GREATER_EQUAL, "jae"},
+    {GREATER,        "ja"},
+    {LESS_EQUAL,    "jbe"},
+    {LESS,           "jb"}
+};
+
+const size_t COND_OP_ARRAY_SIZE = sizeof(cond_op_array) / sizeof(cond_op_array[0]);
+
 static size_t func_counter  = 0;
 static size_t const_counter = 0;
 static size_t local_vars_counter = 0;
+static size_t cmp_counter = 0;
 
 static char text_buffer[10000] = "";
 static size_t text_pos = 0;
@@ -14,8 +27,12 @@ static size_t rodata_pos = 0;
 
 void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* const identifiers)
 {
-    text_pos += (size_t)snprintf(text_buffer, sizeof(text_buffer) - text_pos, "section .text\n\n");
-    rodata_pos += (size_t)snprintf(rodata_buffer, sizeof(rodata_buffer) - rodata_pos, "section .rodata\n\n");
+    printf_to_text_buffer("section .text\n\n");
+    printf_to_rodata_buffer("section .rodata\n\n"
+                            "const_true:\n"
+                            "\tdq 1.0\n"
+                            "const_false:\n"
+                            "\tdq 0.0\n");
 
     gen_prog(tree, identifiers);
 
@@ -84,7 +101,6 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             break;
 
         case NODE_VAR_DECL:
-        {
             if (op_node->child_count >= 2)
             {
                 node_t* var_node = op_node->children[0];
@@ -95,9 +111,7 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
                 printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; variable_%d init\n\n",
                                       (size_t)(op_node->unique_id + 1) * sizeof(double), var_node->unique_id);
             }
-
             break;
-        }
 
         case NODE_OP:
             op_node_to_asm(op_node);
@@ -170,11 +184,45 @@ void op_node_to_asm(node_t* expr_node)
                                   (size_t)(expr_node->children[0]->unique_id + 1) * sizeof(double));
             break;
 
+        case IS_EQUAL:
+        case IS_NOT_EQUAL:
+        case GREATER_EQUAL:
+        case GREATER:
+        case LESS_EQUAL:
+        case LESS:
+        {
+            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+            gen_expr(expr_node->children[0]);
+
+            const char* jump_word = gen_jump_command(expr_node->data_t.op);
+
+            printf_to_text_buffer("\tucomisd xmm0, xmm1\n"
+                                  "\t%s .cmp_true_%zu\n\n"
+                                  "\tmovsd xmm0, [rel const_false]\n"
+                                  "\tjmp cmp_end_%zu\n\n"
+                                  "cmp_true_%zu:\n"
+                                  "\tmovsd xmm0, [rel const_true]\n\n"
+                                  "cmp_end_%zu:",
+                                  jump_word, cmp_counter, cmp_counter, cmp_counter, cmp_counter);
+            cmp_counter++;
+        }
+
         default:
             break;
     }
 
     printf_to_text_buffer("\t\t; Operation complete\n\n");
+}
+
+const char* gen_jump_command(operator_code op)
+{
+    for (size_t i = 0; i < COND_OP_ARRAY_SIZE; i++)
+    {
+        if (cond_op_array[i].op == op)
+            return cond_op_array[i].jump_command;
+    }
+
+    return "UNKNOWN_JUMP_COMMAND";
 }
 
 size_t count_local_vars(node_t* current)
