@@ -223,53 +223,57 @@ void op_node_to_asm(node_t* expr_node)
     {
         case ADD:
         {
-            current_rbp_offset += sizeof(double);
-            size_t rbp_offset = current_rbp_offset;
-            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+            printf_to_text_buffer("\tsub rsp, %zu\n"
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  sizeof(double));
 
             gen_expr(expr_node->children[0]);
-            current_rbp_offset -= sizeof(double);
 
-            printf_to_text_buffer("\taddsd xmm0, [rbp - %zu]", rbp_offset);
+            printf_to_text_buffer("\taddsd xmm0, [rsp]\n"
+                                  "\tadd rsp, %zu",
+                                  sizeof(double));
             break;
         }
 
         case SUB:
         {
-            current_rbp_offset += sizeof(double);
-            size_t rbp_offset = current_rbp_offset;
-            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+            printf_to_text_buffer("\tsub rsp, %zu\n"
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  sizeof(double));
 
             gen_expr(expr_node->children[0]);
-            current_rbp_offset -= sizeof(double);
 
-            printf_to_text_buffer("\tsubsd xmm0, [rbp - %zu]", rbp_offset);
+            printf_to_text_buffer("\tsubsd xmm0, [rsp]\n"
+                                  "\tadd rsp, %zu",
+                                  sizeof(double));
             break;
         }
 
         case MUL:
         {
-            current_rbp_offset += sizeof(double);
-            size_t rbp_offset = current_rbp_offset;
-            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+            printf_to_text_buffer("\tsub rsp, %zu\n"
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  sizeof(double));
 
             gen_expr(expr_node->children[0]);
-            current_rbp_offset -= sizeof(double);
 
-            printf_to_text_buffer("\tmulsd xmm0, [rbp - %zu]", rbp_offset);
+            printf_to_text_buffer("\tmulsd xmm0, [rsp]\n"
+                                  "\tadd rsp, %zu",
+                                  sizeof(double));
             break;
         }
 
         case DIV:
         {
-            current_rbp_offset += sizeof(double);
-            size_t rbp_offset = current_rbp_offset;
-            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+            printf_to_text_buffer("\tsub rsp, %zu\n"
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  sizeof(double));
 
             gen_expr(expr_node->children[0]);
-            current_rbp_offset -= sizeof(double);
 
-            printf_to_text_buffer("\tdivsd xmm0, [rbp - %zu]", rbp_offset);
+            printf_to_text_buffer("\tdivsd xmm0, [rsp]\n"
+                                  "\tadd rsp, %zu",
+                                  sizeof(double));
             break;
         }
 
@@ -286,23 +290,23 @@ void op_node_to_asm(node_t* expr_node)
         case LESS:
         {
             size_t cmp_id = ++cmp_counter;
-            current_rbp_offset += sizeof(double);
-            size_t rbp_offset = current_rbp_offset;
-            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+            printf_to_text_buffer("\tsub rsp, %zu\n"
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  sizeof(double));
 
             gen_expr(expr_node->children[0]);
-            current_rbp_offset -= sizeof(double);
 
             const char* jump_word = gen_jump_command(expr_node->data_t.op);
 
-            printf_to_text_buffer("\tucomisd xmm0, [rbp - %zu]\n"
+            printf_to_text_buffer("\tucomisd xmm0, [rsp]\n"
                                   "\t%s .cmp_true_%zu\n\n"
                                   "\tmovsd xmm0, [rel const_false]\n"
                                   "\tjmp .cmp_end_%zu\n\n"
                                   ".cmp_true_%zu:\n"
                                   "\tmovsd xmm0, [rel const_true]\n\n"
-                                  ".cmp_end_%zu:",
-                                  rbp_offset, jump_word, cmp_id, cmp_id, cmp_id, cmp_id);
+                                  ".cmp_end_%zu:\n"
+                                  "\tadd rsp, %zu",
+                                  jump_word, cmp_id, cmp_id, cmp_id, cmp_id, sizeof(double));
         }
 
         default:

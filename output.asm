@@ -16,9 +16,10 @@ func_1:
 
 ;========== WHILE_1 ==========
 	movsd xmm0, [rel const_2]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 8]
-	ucomisd xmm0, [rbp - 24]
+	ucomisd xmm0, [rsp]
 	jb .cmp_true_1
 
 	movsd xmm0, [rel const_false]
@@ -27,16 +28,19 @@ func_1:
 .cmp_true_1:
 	movsd xmm0, [rel const_true]
 
-.cmp_end_1:		; Operation complete
+.cmp_end_1:
+	add rsp, 8		; Operation complete
 
 	ucomisd xmm0, [rel const_false]
 	je .while_end_1
 
 .while_loop_1:
 	movsd xmm0, [rel const_3]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 8]
-	addsd xmm0, [rbp - 24]		; Operation complete
+	addsd xmm0, [rsp]
+	add rsp, 8		; Operation complete
 
 	movsd [rbp - 8], xmm0		; Operation complete
 
@@ -45,9 +49,10 @@ func_1:
 
 ;========== WHILE_2 ==========
 	movsd xmm0, [rel const_5]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 16]
-	ucomisd xmm0, [rbp - 24]
+	ucomisd xmm0, [rsp]
 	jb .cmp_true_2
 
 	movsd xmm0, [rel const_false]
@@ -56,24 +61,28 @@ func_1:
 .cmp_true_2:
 	movsd xmm0, [rel const_true]
 
-.cmp_end_2:		; Operation complete
+.cmp_end_2:
+	add rsp, 8		; Operation complete
 
 	ucomisd xmm0, [rel const_false]
 	je .while_end_2
 
 .while_loop_2:
 	movsd xmm0, [rel const_6]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 16]
-	addsd xmm0, [rbp - 24]		; Operation complete
+	addsd xmm0, [rsp]
+	add rsp, 8		; Operation complete
 
 	movsd [rbp - 16], xmm0		; Operation complete
 
 ;========== IF_1 ==========
 	movsd xmm0, [rel const_7]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 16]
-	ucomisd xmm0, [rbp - 24]
+	ucomisd xmm0, [rsp]
 	je .cmp_true_3
 
 	movsd xmm0, [rel const_false]
@@ -82,7 +91,8 @@ func_1:
 .cmp_true_3:
 	movsd xmm0, [rel const_true]
 
-.cmp_end_3:		; Operation complete
+.cmp_end_3:
+	add rsp, 8		; Operation complete
 
 	ucomisd xmm0, [rel const_false]
 	je .if_end_1
@@ -92,9 +102,10 @@ jmp .while_end_2
 
 .if_end_1:
 	movsd xmm0, [rel const_8]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 16]
-	ucomisd xmm0, [rbp - 24]
+	ucomisd xmm0, [rsp]
 	jb .cmp_true_4
 
 	movsd xmm0, [rel const_false]
@@ -103,7 +114,8 @@ jmp .while_end_2
 .cmp_true_4:
 	movsd xmm0, [rel const_true]
 
-.cmp_end_4:		; Operation complete
+.cmp_end_4:
+	add rsp, 8		; Operation complete
 
 	ucomisd xmm0, [rel const_false]
 	jne .while_loop_2
@@ -111,9 +123,10 @@ jmp .while_end_2
 .while_end_2:
 
 	movsd xmm0, [rel const_9]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 8]
-	ucomisd xmm0, [rbp - 24]
+	ucomisd xmm0, [rsp]
 	jb .cmp_true_5
 
 	movsd xmm0, [rel const_false]
@@ -122,7 +135,8 @@ jmp .while_end_2
 .cmp_true_5:
 	movsd xmm0, [rel const_true]
 
-.cmp_end_5:		; Operation complete
+.cmp_end_5:
+	add rsp, 8		; Operation complete
 
 	ucomisd xmm0, [rel const_false]
 	jne .while_loop_1
@@ -131,13 +145,17 @@ jmp .while_end_2
 
 ;========== RET ==========
 	movsd xmm0, [rbp - 16]
-	movsd [rbp - 24], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rel const_10]
-	movsd [rbp - 32], xmm0		; Save value in stack
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
 	movsd xmm0, [rbp - 8]
-	mulsd xmm0, [rbp - 32]		; Operation complete
+	mulsd xmm0, [rsp]
+	add rsp, 8		; Operation complete
 
-	addsd xmm0, [rbp - 24]		; Operation complete
+	addsd xmm0, [rsp]
+	add rsp, 8		; Operation complete
 
 	jmp func_end_1
 
