@@ -19,6 +19,7 @@ static size_t const_counter = 0;
 static size_t local_vars_counter = 0;
 static size_t cmp_counter = 0;
 static size_t if_counter = 0;
+static size_t while_counter = 0;
 
 static char text_buffer[10000] = "";
 static size_t text_pos = 0;
@@ -122,14 +123,14 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
 
             gen_expr(op_node->children[0]);
             printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
-                                  "\tje if_end_%zu\n\n", if_id);
+                                  "\tje .if_end_%zu\n\n", if_id);
 
             gen_block(op_node->children[1], identifiers);
 
             if (op_node->child_count >= 3)
-                printf_to_text_buffer("\tjmp if_else_end_%zu\n\n", if_id);
+                printf_to_text_buffer("\tjmp .if_else_end_%zu\n\n", if_id);
 
-            printf_to_text_buffer("if_end_%zu:\n", if_id);
+            printf_to_text_buffer(".if_end_%zu:\n", if_id);
 
             if (op_node->child_count >= 3)
             {
@@ -137,10 +138,30 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
 
                 gen_block(op_node->children[2], identifiers);
 
-                printf_to_text_buffer("if_else_end_%zu:\n\n", if_id);
+                printf_to_text_buffer(".if_else_end_%zu:\n\n", if_id);
             }
         }
             break;
+
+        case NODE_WHILE:
+        {
+            size_t while_id = while_counter++;
+            printf_to_text_buffer(";========== WHILE_%zu ==========\n", while_id); 
+
+            gen_expr(op_node->children[0]);
+            printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
+                                  "\tje .while_end_%zu\n\n", while_id);
+
+            printf_to_text_buffer(".while_loop_%zu:\n", while_id);
+            gen_block(op_node->children[1], identifiers);
+
+            gen_expr(op_node->children[0]);
+            printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
+                                  "\tjne .while_loop_%zu\n\n", while_id);
+
+            printf_to_text_buffer(".while_end_%zu:\n\n", while_id);
+            break;
+        }
 
         case NODE_OP:
             op_node_to_asm(op_node);
@@ -229,10 +250,10 @@ void op_node_to_asm(node_t* expr_node)
             printf_to_text_buffer("\tucomisd xmm0, xmm1\n"
                                   "\t%s .cmp_true_%zu\n\n"
                                   "\tmovsd xmm0, [rel const_false]\n"
-                                  "\tjmp cmp_end_%zu\n\n"
-                                  "cmp_true_%zu:\n"
+                                  "\tjmp .cmp_end_%zu\n\n"
+                                  ".cmp_true_%zu:\n"
                                   "\tmovsd xmm0, [rel const_true]\n\n"
-                                  "cmp_end_%zu:",
+                                  ".cmp_end_%zu:",
                                   jump_word, cmp_id, cmp_id, cmp_id, cmp_id);
         }
 
