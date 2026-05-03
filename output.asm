@@ -42,6 +42,6 @@ const_true:
 const_false:
 	dq 0.0
 const_0:
-	dq 0
+	dq 0.0000000000000000
 const_1:
-	dq 5
+	dq 5.0000000000000000

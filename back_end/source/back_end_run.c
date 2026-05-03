@@ -12,7 +12,7 @@ static const cond_op cond_op_array[] =
     {LESS,           "jb"}
 };
 
-const size_t COND_OP_ARRAY_SIZE = sizeof(cond_op_array) / sizeof(cond_op_array[0]);
+static const size_t COND_OP_ARRAY_SIZE = sizeof(cond_op_array) / sizeof(cond_op_array[0]);
 
 static size_t func_counter  = 0;
 static size_t const_counter = 0;
@@ -131,7 +131,7 @@ void gen_expr(node_t* expr_node)
                                   const_counter);
 
             printf_to_rodata_buffer("const_%zu:\n"
-                                    "\tdq %.17g\n",
+                                    "\tdq %#.17g\n",
                                     const_counter, expr_node->data_t.number);
             const_counter++;
             break;
