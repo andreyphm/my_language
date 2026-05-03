@@ -6,18 +6,16 @@ func_1:
 	mov rbp, rsp
 	sub rsp, 16		; Stack preparation
 
-;========== VAR_DECL_ID 0 ==========
+;========== VAR_DECL_ID 0 "x"==========
 	movsd xmm0, [rel const_0]
-	movsd [rbp - 8], xmm0		; variable_0 ("x") init
+	movsd [rbp - 8], xmm0		; variable_0 init
 
-;========== RET ==========
 	movsd xmm0, [rel const_1]
 	movsd xmm1, xmm0		; Save right value in xmm1
-
 	movsd xmm0, [rbp - 8]
-	divsd xmm0, xmm1		; Operation end
+	addsd xmm0, xmm1		; Operation complete
 
-	jmp func_end_1
+	movsd [rbp - 8], xmm0		; Operation complete
 
 func_end_1:
 	add rsp, 16
@@ -27,6 +25,6 @@ func_end_1:
 section .rodata
 
 const_0:
-	dq 4.5
+	dq 0
 const_1:
 	dq 4

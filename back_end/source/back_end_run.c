@@ -1,5 +1,6 @@
 #include "back_end.h"
 #include "font.h"
+#include "stdarg.h"
 
 static size_t func_counter  = 0;
 static size_t const_counter = 0;
@@ -40,25 +41,23 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers)
     local_vars_counter = func_node->children[0]->child_count + body_local_vars;
     size_t local_vars_stack_size = align_up_16(local_vars_counter * sizeof(double));
 
-    text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                         ";========== FUNCTION \"%s\" ==========\n"
-                         "func_%zu:\n"
-                         "\tpush rbp\n"
-                         "\tmov rbp, rsp\n"
-                         "\tsub rsp, %zu\t\t; Stack preparation\n\n",
-                         identifiers[func_node->data_t.id_number].name,
-                         func_counter,
-                         local_vars_stack_size);
+    printf_to_text_buffer(";========== FUNCTION \"%s\" ==========\n"
+                          "func_%zu:\n"
+                          "\tpush rbp\n"
+                          "\tmov rbp, rsp\n"
+                          "\tsub rsp, %zu\t\t; Stack preparation\n\n",
+                          identifiers[func_node->data_t.id_number].name,
+                          func_counter,
+                          local_vars_stack_size);
 
     gen_block(func_node->children[1], identifiers);
 
-    text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                         "\nfunc_end_%zu:\n"
-                         "\tadd rsp, %zu\n"
-                         "\tpop rbp\n"
-                         "\tret\t\t; Stack free\n\n",
-                         func_counter,
-                         local_vars_stack_size);
+    printf_to_text_buffer("func_end_%zu:\n"
+                          "\tadd rsp, %zu\n"
+                          "\tpop rbp\n"
+                          "\tret\t\t; Stack free\n\n",
+                          func_counter,
+                          local_vars_stack_size);
 }
 
 void gen_block(node_t* block_node, const identifier_t* const identifiers)
@@ -74,31 +73,35 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
     switch (op_node->kind)
     {
         case NODE_RET:
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                         ";========== RET ==========\n");
+            printf_to_text_buffer(";========== RET ==========\n");
+
             if (op_node->child_count >= 1)
                 gen_expr(op_node->children[0]);
             else
-                text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                             "\txorpd xmm0, xmm0\n");
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\tjmp func_end_%zu\n", func_counter);
+                printf_to_text_buffer("\txorpd xmm0, xmm0\n");
+
+            printf_to_text_buffer("\tjmp func_end_%zu\n\n", func_counter);
             break;
 
         case NODE_VAR_DECL:
         {
-            node_t* var_node = op_node->children[0];
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                         ";========== VAR_DECL_ID %d ==========\n", var_node->unique_id);
             if (op_node->child_count >= 2)
             {
+                node_t* var_node = op_node->children[0];
+                printf_to_text_buffer(";========== VAR_DECL_ID %d \"%s\"==========\n",
+                                      var_node->unique_id, identifiers[var_node->data_t.id_number].name);
+
                 gen_expr(op_node->children[1]);
-                text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                             "\tmovsd [rbp - %zu], xmm0\t\t; variable_%d (\"%s\") init\n\n",
-                                             (size_t)(op_node->unique_id + 1) * sizeof(double),
-                                             var_node->unique_id, identifiers[var_node->data_t.id_number].name);
+                printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; variable_%d init\n\n",
+                                      (size_t)(op_node->unique_id + 1) * sizeof(double), var_node->unique_id);
             }
+
+            break;
         }
+
+        case NODE_OP:
+            op_node_to_asm(op_node);
+            break;
 
         default:
             break;
@@ -110,18 +113,17 @@ void gen_expr(node_t* expr_node)
     switch(expr_node->kind)
     {
         case NODE_NUM:
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\tmovsd xmm0, [rel const_%zu]\n",
-                                         const_counter);
-            rodata_pos += (size_t)snprintf(rodata_buffer + rodata_pos, sizeof(rodata_buffer) - rodata_pos,
-                                   "const_%zu:\n"
-                                   "\tdq %.17g\n", const_counter, expr_node->data_t.number);
+            printf_to_text_buffer("\tmovsd xmm0, [rel const_%zu]\n",
+                                  const_counter);
+
+            printf_to_rodata_buffer("const_%zu:\n"
+                                    "\tdq %.17g\n",
+                                    const_counter, expr_node->data_t.number);
             const_counter++;
             break;
 
         case NODE_VAR:
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\tmovsd xmm0, [rbp - %zu]\n", (size_t)(expr_node->unique_id + 1) * sizeof(double));
+            printf_to_text_buffer("\tmovsd xmm0, [rbp - %zu]\n", (size_t)(expr_node->unique_id + 1) * sizeof(double));
             break;
 
         case NODE_OP:
@@ -136,38 +138,43 @@ void gen_expr(node_t* expr_node)
 void op_node_to_asm(node_t* expr_node)
 {
     gen_expr(expr_node->children[1]);
-    text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                 "\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n\n");
-    gen_expr(expr_node->children[0]);
 
     switch(expr_node->data_t.op)
     {
         case ADD:
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\taddsd xmm0, xmm1");
+            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+            gen_expr(expr_node->children[0]);
+            printf_to_text_buffer("\taddsd xmm0, xmm1");
             break;
 
         case SUB:
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\tsubsd xmm0, xmm1");
+            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+            gen_expr(expr_node->children[0]);
+            printf_to_text_buffer("\tsubsd xmm0, xmm1");
             break;
 
         case MUL:
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\tmulsd xmm0, xmm1");
+            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+            gen_expr(expr_node->children[0]);
+            printf_to_text_buffer("\tmulsd xmm0, xmm1");
             break;
 
         case DIV:
-            text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\tdivsd xmm0, xmm1");
+            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+            gen_expr(expr_node->children[0]);
+            printf_to_text_buffer("\tdivsd xmm0, xmm1");
+            break;
+
+        case ASSIGN:
+            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0",
+                                  (size_t)(expr_node->children[0]->unique_id + 1) * sizeof(double));
             break;
 
         default:
             break;
     }
 
-    text_pos += (size_t)snprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos,
-                                         "\t\t; Operation end\n\n");
+    printf_to_text_buffer("\t\t; Operation complete\n\n");
 }
 
 size_t count_local_vars(node_t* current)
@@ -186,4 +193,20 @@ size_t count_local_vars(node_t* current)
 size_t align_up_16(size_t number)
 {
     return (number + 15) / 16 * 16;
+}
+
+void printf_to_text_buffer(const char* format, ...)
+{
+    va_list v_list = {};
+    va_start(v_list, format);
+    text_pos += (size_t)vsnprintf(text_buffer + text_pos, sizeof(text_buffer) - text_pos, format, v_list);
+    va_end(v_list);
+}
+
+void printf_to_rodata_buffer(const char* format, ...)
+{
+    va_list v_list = {};
+    va_start(v_list, format);
+    rodata_pos += (size_t)vsnprintf(rodata_buffer + rodata_pos, sizeof(rodata_buffer) - rodata_pos, format, v_list);
+    va_end(v_list);
 }

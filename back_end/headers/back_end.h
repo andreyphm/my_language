@@ -22,4 +22,7 @@ void op_node_to_asm(node_t* expr_node);
 size_t count_local_vars(node_t* current);
 size_t align_up_16(size_t number);
 
+void printf_to_text_buffer(const char* format, ...);
+void printf_to_rodata_buffer(const char* format, ...);
+
 #endif // BACK_END_H
