@@ -20,6 +20,8 @@ static size_t local_vars_counter = 0;
 static size_t cmp_counter = 0;
 static size_t if_counter = 0;
 static size_t while_counter = 0;
+static size_t while_stack_counter = 0;
+static size_t current_rbp_offset = 0;
 
 static char text_buffer[10000] = "";
 static size_t text_pos = 0;
@@ -55,7 +57,7 @@ void gen_prog(node_t* prog_node, const identifier_t* const identifiers)
 
 void gen_func(node_t* func_node, const identifier_t* const identifiers)
 {
-    func_counter++;
+    size_t func_id = ++func_counter;
 
     size_t body_local_vars = count_local_vars(func_node->children[1]);
     local_vars_counter = func_node->children[0]->child_count + body_local_vars;
@@ -67,16 +69,19 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers)
                           "\tmov rbp, rsp\n"
                           "\tsub rsp, %zu\t\t; Stack preparation\n\n",
                           identifiers[func_node->data_t.id_number].name,
-                          func_counter,
+                          func_id,
                           local_vars_stack_size);
 
+    current_rbp_offset += local_vars_stack_size;
+
     gen_block(func_node->children[1], identifiers);
+    current_rbp_offset -= local_vars_stack_size;
 
     printf_to_text_buffer("func_end_%zu:\n"
                           "\tadd rsp, %zu\n"
                           "\tpop rbp\n"
                           "\tret\t\t; Stack free\n\n",
-                          func_counter,
+                          func_id,
                           local_vars_stack_size);
 }
 
@@ -118,7 +123,7 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
 
         case NODE_IF:
         {
-            size_t if_id = if_counter++;
+            size_t if_id = ++if_counter;
             printf_to_text_buffer(";========== IF_%zu ==========\n", if_id);
 
             gen_expr(op_node->children[0]);
@@ -145,7 +150,8 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
 
         case NODE_WHILE:
         {
-            size_t while_id = while_counter++;
+            size_t while_id = ++while_counter;
+            while_stack_counter++;
             printf_to_text_buffer(";========== WHILE_%zu ==========\n", while_id); 
 
             gen_expr(op_node->children[0]);
@@ -162,6 +168,16 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             printf_to_text_buffer(".while_end_%zu:\n\n", while_id);
             break;
         }
+
+        case NODE_BREAK:
+            printf_to_text_buffer(";========== BREAK ==========\n"
+                                  "jmp .while_end_%zu\n\n", while_stack_counter);
+            while_stack_counter--;
+            break;
+
+        case NODE_CALL:
+            printf_to_text_buffer("call %s\n\n", identifiers[op_node->data_t.id_number].name);
+            break;   
 
         case NODE_OP:
             op_node_to_asm(op_node);
@@ -206,28 +222,56 @@ void op_node_to_asm(node_t* expr_node)
     switch(expr_node->data_t.op)
     {
         case ADD:
-            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+        {
+            current_rbp_offset += sizeof(double);
+            size_t rbp_offset = current_rbp_offset;
+            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+
             gen_expr(expr_node->children[0]);
-            printf_to_text_buffer("\taddsd xmm0, xmm1");
+            current_rbp_offset -= sizeof(double);
+
+            printf_to_text_buffer("\taddsd xmm0, [rbp - %zu]", rbp_offset);
             break;
+        }
 
         case SUB:
-            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+        {
+            current_rbp_offset += sizeof(double);
+            size_t rbp_offset = current_rbp_offset;
+            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+
             gen_expr(expr_node->children[0]);
-            printf_to_text_buffer("\tsubsd xmm0, xmm1");
+            current_rbp_offset -= sizeof(double);
+
+            printf_to_text_buffer("\tsubsd xmm0, [rbp - %zu]", rbp_offset);
             break;
+        }
 
         case MUL:
-            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+        {
+            current_rbp_offset += sizeof(double);
+            size_t rbp_offset = current_rbp_offset;
+            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+
             gen_expr(expr_node->children[0]);
-            printf_to_text_buffer("\tmulsd xmm0, xmm1");
+            current_rbp_offset -= sizeof(double);
+
+            printf_to_text_buffer("\tmulsd xmm0, [rbp - %zu]", rbp_offset);
             break;
+        }
 
         case DIV:
-            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+        {
+            current_rbp_offset += sizeof(double);
+            size_t rbp_offset = current_rbp_offset;
+            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+
             gen_expr(expr_node->children[0]);
-            printf_to_text_buffer("\tdivsd xmm0, xmm1");
+            current_rbp_offset -= sizeof(double);
+
+            printf_to_text_buffer("\tdivsd xmm0, [rbp - %zu]", rbp_offset);
             break;
+        }
 
         case ASSIGN:
             printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0",
@@ -241,20 +285,24 @@ void op_node_to_asm(node_t* expr_node)
         case LESS_EQUAL:
         case LESS:
         {
-            size_t cmp_id = cmp_counter++;
-            printf_to_text_buffer("\tmovsd xmm1, xmm0\t\t; Save right value in xmm1\n");
+            size_t cmp_id = ++cmp_counter;
+            current_rbp_offset += sizeof(double);
+            size_t rbp_offset = current_rbp_offset;
+            printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; Save value in stack\n", rbp_offset);
+
             gen_expr(expr_node->children[0]);
+            current_rbp_offset -= sizeof(double);
 
             const char* jump_word = gen_jump_command(expr_node->data_t.op);
 
-            printf_to_text_buffer("\tucomisd xmm0, xmm1\n"
+            printf_to_text_buffer("\tucomisd xmm0, [rbp - %zu]\n"
                                   "\t%s .cmp_true_%zu\n\n"
                                   "\tmovsd xmm0, [rel const_false]\n"
                                   "\tjmp .cmp_end_%zu\n\n"
                                   ".cmp_true_%zu:\n"
                                   "\tmovsd xmm0, [rel const_true]\n\n"
                                   ".cmp_end_%zu:",
-                                  jump_word, cmp_id, cmp_id, cmp_id, cmp_id);
+                                  rbp_offset, jump_word, cmp_id, cmp_id, cmp_id, cmp_id);
         }
 
         default:
