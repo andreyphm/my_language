@@ -273,7 +273,7 @@ void op_node_to_asm(node_t* expr_node)
 
         case ASSIGN:
             printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0",
-                                  (size_t)(expr_node->children[0]->data_t.variable.unique_id + 1) * sizeof(double));
+                                  expr_node->children[0]->data_t.variable.stack_offset);
             break;
 
         case IS_EQUAL:
