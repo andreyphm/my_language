@@ -21,8 +21,8 @@ void gen_prog(node_t* prog_node, const identifier_t* const identifiers);
 void gen_func(node_t* func_node, const identifier_t* const identifiers);
 void gen_block(node_t* block_node, const identifier_t* const identifiers);
 void gen_op(node_t* op_node, const identifier_t* const identifiers);
-void gen_expr(node_t* expr_node);
-void op_node_to_asm(node_t* expr_node);
+void gen_expr(node_t* expr_node, const identifier_t* const identifiers);
+void op_node_to_asm(node_t* expr_node, const identifier_t* const identifiers);
 const char* gen_jump_command(operator_code op);
 
 size_t count_local_vars(node_t* current);

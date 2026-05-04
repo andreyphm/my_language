@@ -1,11 +1,9 @@
-func main()
+func add(a, b)
 {
-    var x = 0;
-    koshka();
+    return a + b;
 }
 
-func koshka()
+func main()
 {
-    var x = 3;
-    return;
+    return add(10, 20);
 }

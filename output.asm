@@ -1,38 +1,52 @@
 section .text
 
-;========== FUNCTION "main" ==========
+;========== FUNCTION "add" ==========
 func_0:
 	push rbp
 	mov rbp, rsp
 	sub rsp, 16		; Stack preparation
 
-;========== VAR_DECL_ID 0 "x" ==========
-	movsd xmm0, [rel const_0]
-	movsd [rbp - 8], xmm0		; variable_0 init
+	movsd xmm0, [rbp + 16]
+	movsd [rbp - 8], xmm0		; Take argument 1
 
-	call func_2
+	movsd xmm0, [rbp + 24]
+	movsd [rbp - 16], xmm0		; Take argument 2
+
+;========== RET ==========
+	movsd xmm0, [rbp - 16]
+	sub rsp, 8
+	movsd [rsp], xmm0		; Save temporary value
+	movsd xmm0, [rbp - 8]
+	addsd xmm0, [rsp]
+	add rsp, 8		; Operation complete
+
+	jmp func_end_0
 
 func_end_0:
 	add rsp, 16
 	pop rbp
 	ret		; Stack free
 
-;========== FUNCTION "koshka" ==========
-func_2:
+;========== FUNCTION "main" ==========
+func_3:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 16		; Stack preparation
-
-;========== VAR_DECL_ID 1 "x" ==========
-	movsd xmm0, [rel const_1]
-	movsd [rbp - 8], xmm0		; variable_1 init
+	sub rsp, 0		; Stack preparation
 
 ;========== RET ==========
-	xorpd xmm0, xmm0
-	jmp func_end_2
+;===== CALL "add" =====
+	sub rsp, 16
+	movsd xmm0, [rel const_0]
+	movsd [rsp + 0], xmm0		; Save func argument
+	movsd xmm0, [rel const_1]
+	movsd [rsp + 8], xmm0		; Save func argument
+	call func_0
 
-func_end_2:
 	add rsp, 16
+	jmp func_end_3
+
+func_end_3:
+	add rsp, 0
 	pop rbp
 	ret		; Stack free
 
@@ -43,6 +57,6 @@ const_true:
 const_false:
 	dq 0.0
 const_0:
-	dq 0.0000000000000000
+	dq 10.000000000000000
 const_1:
-	dq 3.0000000000000000
+	dq 20.000000000000000
