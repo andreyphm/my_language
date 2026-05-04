@@ -132,7 +132,7 @@ node_t* copy_node(node_t* node)
     assert(new_node);
 
     new_node->kind = node->kind;
-    new_node->unique_id = node->unique_id;
+    new_node->data_t.variable.unique_id = node->data_t.variable.unique_id;
 
     switch(new_node->kind)
     {

@@ -3,6 +3,7 @@
 #include "tokenization.h"
 #include "parser.h"
 #include "output.h"
+#include "build_scopes.h"
 #include "middle_end.h"
 #include "font.h"
 #include "back_end.h"

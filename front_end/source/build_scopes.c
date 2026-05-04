@@ -6,6 +6,7 @@
 #include "build_scopes.h"
 
 static int var_unique_id = 0;
+static size_t current_stack_offset = 0;
 
 void enter_scope(scope_t** current)
 {
@@ -71,11 +72,17 @@ error_code declare_var(scope_t* current, const char* var_name, int decl_id, node
 
     var_decl_t* decl_var = (var_decl_t*) calloc(1, sizeof(var_decl_t));
     assert(decl_var);
+    current_stack_offset += sizeof(double);
 
     decl_var->name = var_name;
     decl_var->decl_id = decl_id;
     decl_var->unique_id = var_unique_id++;
+    decl_var->stack_offset = current_stack_offset;
     decl_var->decl_node = decl_node;
+
+    decl_node->data_t.variable.id_number = decl_id;
+    decl_node->data_t.variable.unique_id = decl_var->unique_id;
+    decl_node->data_t.variable.stack_offset = current_stack_offset;
 
     decl_var->next = current->decl_var;
     current->decl_var = decl_var;
@@ -165,8 +172,8 @@ error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
         node_t* func_node = tree->children[i];
 
         error_code error = declare_func(prog_scope,
-                                        identifiers[func_node->data_t.id_number].name,
-                                        func_node->data_t.id_number,
+                                        identifiers[func_node->data_t.function.id_number].name,
+                                        func_node->data_t.function.id_number,
                                         func_node);
         if (error)
         {
@@ -177,6 +184,7 @@ error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
 
     for (size_t i = 0; i < tree->child_count; i++)
     {
+       current_stack_offset = 0;
        error_code error = analyze_func(tree->children[i], prog_scope, identifiers);
        if (error) 
        {
@@ -203,16 +211,14 @@ error_code analyze_func(node_t* func_node, scope_t* parent, const identifier_t* 
     for (size_t i = 0; i < func_node->children[0]->child_count; i++)
     {
         node_t* param_node = func_node->children[0]->children[i];
-        int param_id = param_node->data_t.id_number;
+        int param_id = param_node->data_t.variable.id_number;
 
-        error_code error =  declare_var(func_scope, identifiers[param_id].name, param_id, param_node);
+        error_code error = declare_var(func_scope, identifiers[param_id].name, param_id, param_node);
         if (error) 
         {
             destroy_scope(func_scope);
             return error;
         }
-
-        param_node->unique_id = func_scope->decl_var->unique_id;
     }
 
     error_code block_error = analyze_block(func_node->children[1], func_scope, identifiers);
@@ -221,6 +227,8 @@ error_code analyze_func(node_t* func_node, scope_t* parent, const identifier_t* 
         destroy_scope(func_scope);
         return block_error;
     }
+
+    func_node->data_t.function.frame_size = current_stack_offset;
 
     destroy_scope(func_scope);
     return NO_ERROR;
@@ -358,13 +366,16 @@ error_code analyze_var_decl(node_t* var_decl_node, scope_t* current, const ident
     assert(identifiers);
 
     node_t* var_node = var_decl_node->children[0];
-    int var_id = var_node->data_t.id_number;
+    int var_id = var_node->data_t.variable.id_number;
 
     error_code var_decl_error = declare_var(current, identifiers[var_id].name, var_id, var_decl_node);
     if (var_decl_error) return var_decl_error;
 
-    var_node->unique_id = current->decl_var->unique_id;
-    var_decl_node->unique_id = current->decl_var->unique_id;
+    var_node->data_t.variable.unique_id = current->decl_var->unique_id;
+    var_node->data_t.variable.stack_offset = current->decl_var->stack_offset;
+
+    var_decl_node->data_t.variable.unique_id = current->decl_var->unique_id;
+    var_decl_node->data_t.variable.stack_offset = current->decl_var->stack_offset;
 
     if (var_decl_node->child_count > 1)
     {
@@ -388,11 +399,12 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
 
         case NODE_VAR:
         {
-            var_decl_t* var_decl = seek_var(current, expr_node->data_t.id_number);
+            var_decl_t* var_decl = seek_var(current, expr_node->data_t.variable.id_number);
             if (!var_decl)
                 return UNDECLARED_VARIABLE;
 
-            expr_node->unique_id = var_decl->unique_id;
+            expr_node->data_t.variable.unique_id = var_decl->unique_id;
+            expr_node->data_t.variable.stack_offset = var_decl->stack_offset;
             return NO_ERROR;
         }
 
@@ -405,7 +417,7 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
             return NO_ERROR;
 
         case NODE_CALL:
-            if (!seek_func(current, expr_node->data_t.id_number))
+            if (!seek_func(current, expr_node->data_t.function.id_number))
                     return UNDECLARED_FUNCTION;
             for (size_t i = 0; i < expr_node->children[0]->child_count; i++)
             {

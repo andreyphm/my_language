@@ -14,14 +14,12 @@ static const cond_op cond_op_array[] =
 
 static const size_t COND_OP_ARRAY_SIZE = sizeof(cond_op_array) / sizeof(cond_op_array[0]);
 
-static size_t func_counter  = 0;
 static size_t const_counter = 0;
-static size_t local_vars_counter = 0;
 static size_t cmp_counter = 0;
 static size_t if_counter = 0;
 static size_t while_counter = 0;
 static size_t while_stack_counter = 0;
-static size_t current_rbp_offset = 0;
+static size_t current_func_id = 0;
 
 static char text_buffer[10000] = "";
 static size_t text_pos = 0;
@@ -57,32 +55,27 @@ void gen_prog(node_t* prog_node, const identifier_t* const identifiers)
 
 void gen_func(node_t* func_node, const identifier_t* const identifiers)
 {
-    size_t func_id = ++func_counter;
-
-    size_t body_local_vars = count_local_vars(func_node->children[1]);
-    local_vars_counter = func_node->children[0]->child_count + body_local_vars;
-    size_t local_vars_stack_size = align_up_16(local_vars_counter * sizeof(double));
+    size_t func_id = (size_t)func_node->data_t.function.id_number;
+    current_func_id = func_id;
+    size_t frame_size = align_up_16(func_node->data_t.function.frame_size);
 
     printf_to_text_buffer(";========== FUNCTION \"%s\" ==========\n"
                           "func_%zu:\n"
                           "\tpush rbp\n"
                           "\tmov rbp, rsp\n"
                           "\tsub rsp, %zu\t\t; Stack preparation\n\n",
-                          identifiers[func_node->data_t.id_number].name,
+                          identifiers[func_node->data_t.function.id_number].name,
                           func_id,
-                          local_vars_stack_size);
-
-    current_rbp_offset += local_vars_stack_size;
+                          frame_size);
 
     gen_block(func_node->children[1], identifiers);
-    current_rbp_offset -= local_vars_stack_size;
 
     printf_to_text_buffer("func_end_%zu:\n"
                           "\tadd rsp, %zu\n"
                           "\tpop rbp\n"
                           "\tret\t\t; Stack free\n\n",
                           func_id,
-                          local_vars_stack_size);
+                          frame_size);
 }
 
 void gen_block(node_t* block_node, const identifier_t* const identifiers)
@@ -105,7 +98,7 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             else
                 printf_to_text_buffer("\txorpd xmm0, xmm0\n");
 
-            printf_to_text_buffer("\tjmp func_end_%zu\n\n", func_counter);
+            printf_to_text_buffer("\tjmp func_end_%zu\n\n", current_func_id);
             break;
 
         case NODE_VAR_DECL:
@@ -113,11 +106,12 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             {
                 node_t* var_node = op_node->children[0];
                 printf_to_text_buffer(";========== VAR_DECL_ID %d \"%s\" ==========\n",
-                                      var_node->unique_id, identifiers[var_node->data_t.id_number].name);
+                                      var_node->data_t.variable.unique_id, identifiers[var_node->data_t.variable.id_number].name);
 
                 gen_expr(op_node->children[1]);
                 printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; variable_%d init\n\n",
-                                      (size_t)(op_node->unique_id + 1) * sizeof(double), var_node->unique_id);
+                                      op_node->data_t.variable.stack_offset,
+                                      var_node->data_t.variable.unique_id);
             }
             break;
 
@@ -171,12 +165,12 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
 
         case NODE_BREAK:
             printf_to_text_buffer(";========== BREAK ==========\n"
-                                  "jmp .while_end_%zu\n\n", while_stack_counter);
+                                  "\tjmp .while_end_%zu\n\n", while_stack_counter);
             while_stack_counter--;
             break;
 
         case NODE_CALL:
-            printf_to_text_buffer("call %s\n\n", identifiers[op_node->data_t.id_number].name);
+            printf_to_text_buffer("\tcall func_%zu\n\n", op_node->data_t.function.id_number);
             break;   
 
         case NODE_OP:
@@ -203,7 +197,7 @@ void gen_expr(node_t* expr_node)
             break;
 
         case NODE_VAR:
-            printf_to_text_buffer("\tmovsd xmm0, [rbp - %zu]\n", (size_t)(expr_node->unique_id + 1) * sizeof(double));
+            printf_to_text_buffer("\tmovsd xmm0, [rbp - %zu]\n", expr_node->data_t.variable.stack_offset);
             break;
 
         case NODE_OP:
@@ -279,7 +273,7 @@ void op_node_to_asm(node_t* expr_node)
 
         case ASSIGN:
             printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0",
-                                  (size_t)(expr_node->children[0]->unique_id + 1) * sizeof(double));
+                                  (size_t)(expr_node->children[0]->data_t.variable.unique_id + 1) * sizeof(double));
             break;
 
         case IS_EQUAL:
@@ -325,19 +319,6 @@ const char* gen_jump_command(operator_code op)
     }
 
     return "UNKNOWN_JUMP_COMMAND";
-}
-
-size_t count_local_vars(node_t* current)
-{
-    size_t local_vars = 0;
-    if (current->child_count <= 0) return 0;
-    
-    for (size_t i = 0; i < current->child_count; i++)
-        local_vars += count_local_vars(current->children[i]);
-
-    if (current->kind == NODE_VAR_DECL) return 1;
-
-    return local_vars;
 }
 
 size_t align_up_16(size_t number)

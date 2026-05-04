@@ -16,7 +16,6 @@ node_t* create_node(node_kind kind, data_union data)
 
     node->kind = kind;
     node->data_t = data;
-    node->unique_id = -1;
     node->children = nullptr;
     node->child_count = 0;
     node->child_capacity = 0;
@@ -81,7 +80,11 @@ node_t* create_num_node(double value)
 
 node_t* create_var_node(int var_id)
 {
-    return create_node(NODE_VAR, (data_union){.id_number = var_id});
+    data_union data = {};
+    data.variable.id_number = var_id;
+    data.variable.stack_offset = 0;
+    data.variable.unique_id = -1;
+    return create_node(NODE_VAR, data);
 }
 
 node_t* create_op_node(operator_code op, node_t* left, node_t* right)
@@ -105,7 +108,11 @@ node_t* create_args_node()
 
 node_t* create_func_node(int func_id_num, node_t* args, node_t* body)
 {
-    node_t* node = create_node(NODE_FUNC, (data_union){.id_number = func_id_num});
+    data_union data = {};
+    data.function.id_number = func_id_num;
+    data.function.frame_size = 0;
+
+    node_t* node = create_node(NODE_FUNC, data);
     node_add_child(node, args);
     node_add_child(node, body);
 
@@ -114,7 +121,11 @@ node_t* create_func_node(int func_id_num, node_t* args, node_t* body)
 
 node_t* create_call_node(int func_id_num, node_t* args)
 {
-    node_t* node = create_node(NODE_CALL, (data_union){.id_number = func_id_num});
+    data_union data = {};
+    data.function.id_number = func_id_num;
+    data.function.frame_size = 0;
+
+    node_t* node = create_node(NODE_CALL, data);
     node_add_child(node, args);
 
     return node;

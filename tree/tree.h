@@ -83,19 +83,32 @@ enum node_kind
     NODE_BREAK    
 };
 
+struct var_t
+{
+    int id_number;
+    int unique_id;
+    size_t stack_offset;
+};
+
+struct func_t
+{
+    int id_number;
+    size_t frame_size;
+};
+
 union data_union
 {
     double number;
-    int id_number;
     operator_code op;
     keyword_code keyword;
+    func_t function;
+    var_t variable;
 };
 
 struct node_t
 {
     node_kind kind;
     data_union data_t;
-    int unique_id;
     node_t** children;
     size_t child_count;
     size_t child_capacity;
