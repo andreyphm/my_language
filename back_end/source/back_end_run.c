@@ -117,6 +117,7 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
                                       var_node->data_t.variable.unique_id, identifiers[var_node->data_t.variable.id_number].name);
 
                 gen_expr(op_node->children[1], identifiers);
+
                 printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; variable_%d init\n\n",
                                       op_node->data_t.variable.stack_offset,
                                       var_node->data_t.variable.unique_id);
@@ -129,6 +130,7 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
             printf_to_text_buffer(";========== IF_%zu ==========\n", if_id);
 
             gen_expr(op_node->children[0], identifiers);
+
             printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
                                   "\tje .if_end_%zu\n\n", if_id);
 
@@ -158,16 +160,17 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers)
 
             gen_expr(op_node->children[0], identifiers);
             printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
-                                  "\tje .while_end_%zu\n\n", while_id);
+                                  "\tje .while_end_%zu\n\n"
+                                  ".while_loop_%zu:\n",
+                                  while_id, while_id);
 
-            printf_to_text_buffer(".while_loop_%zu:\n", while_id);
             gen_block(op_node->children[1], identifiers);
 
             gen_expr(op_node->children[0], identifiers);
             printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
-                                  "\tjne .while_loop_%zu\n\n", while_id);
-
-            printf_to_text_buffer(".while_end_%zu:\n\n", while_id);
+                                  "\tjne .while_loop_%zu\n\n"
+                                  ".while_end_%zu:\n\n",
+                                  while_id, while_id);
             break;
         }
 
@@ -191,8 +194,7 @@ void gen_expr(node_t* expr_node, const identifier_t* const identifiers)
     switch(expr_node->kind)
     {
         case NODE_NUM:
-            printf_to_text_buffer("\tmovsd xmm0, [rel const_%zu]\n",
-                                  const_counter);
+            printf_to_text_buffer("\tmovsd xmm0, [rel const_%zu]\n", const_counter);
 
             printf_to_rodata_buffer("const_%zu:\n"
                                     "\tdq %#.17g\n",
@@ -214,15 +216,15 @@ void gen_expr(node_t* expr_node, const identifier_t* const identifiers)
             if (args_node->child_count >= 1)
             {
                 printf_to_text_buffer(";===== CALL \"%s\" =====\n"
-                                      "\tsub rsp, %zu\n",
+                                      "\tsub rsp, %zu\n\n",
                                       identifiers[expr_node->data_t.function.id_number].name,
                                       args_node->child_count * sizeof(double));
 
                 for (size_t i = 0; i < args_node->child_count; i++)
                 {
                     gen_expr(args_node->children[i], identifiers);
-                    printf_to_text_buffer("\tmovsd [rsp + %zu], xmm0\t\t; Save func argument\n",
-                                          i * sizeof(double));
+                    printf_to_text_buffer("\tmovsd [rsp + %zu], xmm0\t\t; Save func argument %zu\n\n",
+                                          i * sizeof(double), i + 1);
                 }
             }
             printf_to_text_buffer("\tcall func_%zu\n\n"
@@ -246,7 +248,7 @@ void op_node_to_asm(node_t* expr_node, const identifier_t* const identifiers)
         case ADD:
         {
             printf_to_text_buffer("\tsub rsp, %zu\n"
-                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
                                   sizeof(double));
 
             gen_expr(expr_node->children[0], identifiers);
@@ -260,7 +262,7 @@ void op_node_to_asm(node_t* expr_node, const identifier_t* const identifiers)
         case SUB:
         {
             printf_to_text_buffer("\tsub rsp, %zu\n"
-                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
                                   sizeof(double));
 
             gen_expr(expr_node->children[0], identifiers);
@@ -274,7 +276,7 @@ void op_node_to_asm(node_t* expr_node, const identifier_t* const identifiers)
         case MUL:
         {
             printf_to_text_buffer("\tsub rsp, %zu\n"
-                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
                                   sizeof(double));
 
             gen_expr(expr_node->children[0], identifiers);
@@ -288,7 +290,7 @@ void op_node_to_asm(node_t* expr_node, const identifier_t* const identifiers)
         case DIV:
         {
             printf_to_text_buffer("\tsub rsp, %zu\n"
-                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
                                   sizeof(double));
 
             gen_expr(expr_node->children[0], identifiers);
@@ -313,7 +315,7 @@ void op_node_to_asm(node_t* expr_node, const identifier_t* const identifiers)
         {
             size_t cmp_id = ++cmp_counter;
             printf_to_text_buffer("\tsub rsp, %zu\n"
-                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n",
+                                  "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
                                   sizeof(double));
 
             gen_expr(expr_node->children[0], identifiers);

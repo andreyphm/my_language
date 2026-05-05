@@ -141,7 +141,7 @@ node_t* copy_node(node_t* node)
             break;
 
         case NODE_VAR:
-            new_node->data_t.id_number = node->data_t.id_number;
+            new_node->data_t.variable.id_number = node->data_t.variable.id_number;
             break;
 
         case NODE_NUM:

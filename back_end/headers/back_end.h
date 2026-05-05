@@ -3,12 +3,6 @@
 
 #include "tree.h"
 
-struct func_stack_frame
-{
-    size_t frame_size;
-    
-};
-
 struct cond_op
 {
     operator_code op;

@@ -12,14 +12,14 @@ const size_t FIRST_CHILDREN_NUMBER  = 3;
 
 enum error_code
 {
-    NO_ERROR                    = 0,
-    SYNTAX_ERROR                = 1,
-    TREE_NULLPTR                = 2,
-    MULTIPLE_VAR_DECLARATION    = 3,
-    PROG_NODE_ERROR             = 4,
-    UNDECLARED_VARIABLE         = 5,
-    UNDECLARED_FUNCTION         = 6,
-    MULTIPLE_FUNC_DECLARATION   = 7
+    NO_ERROR = 0,
+    SYNTAX_ERROR,
+    TREE_NULLPTR,
+    MULTIPLE_VAR_DECLARATION,
+    PROG_NODE_ERROR,
+    UNDECLARED_VARIABLE,
+    UNDECLARED_FUNCTION,
+    MULTIPLE_FUNC_DECLARATION
 };
 
 struct token_info_t
@@ -47,7 +47,7 @@ const token_info_t operators_array[] =
     TOKEN_INFO(GREATER_EQUAL, "GREATER_EQUAL",    ">="),
     TOKEN_INFO(GREATER,       "GREATER",           ">"),
     TOKEN_INFO(SHL,           "SHL",              "<<"),
-    TOKEN_INFO(LESS_EQUAL,    "LESS_EQUAL",       ">="),
+    TOKEN_INFO(LESS_EQUAL,    "LESS_EQUAL",       "<="),
     TOKEN_INFO(LESS,          "LESS",              "<"),
     TOKEN_INFO(BIT_OR,        "BIT_OR",            "|"),
     TOKEN_INFO(BIT_XOR,       "BIT_XOR",           "^"),

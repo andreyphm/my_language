@@ -3,7 +3,19 @@ func add(a, b)
     return a + b;
 }
 
+func fact(n)
+{
+    if (n <= 1)
+    {
+        return 1;
+    }
+    else
+    {
+        return n * fact(n - 1);
+    }
+}
+
 func main()
 {
-    return add(10, 20);
+    return add(fact(5), fact(3));
 }

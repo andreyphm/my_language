@@ -51,7 +51,7 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
         }
 
         fprintf(txt_file, "ADDRESS = %p |\n", list->current);
-        fprintf(txt_file, "{next = %p | prev = %p}\" ];\n", list->current->next, list->current->prev);
+        fprintf(txt_file, "{next = %p}\" ];\n", list->current->next);
 
         if (list->current == list->tail)
             break;

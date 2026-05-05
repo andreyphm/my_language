@@ -18,7 +18,6 @@ struct token_t
 {
     type_data type;
     token_union data_t;
-    token_t* prev;
     token_t* next;
 };
 
