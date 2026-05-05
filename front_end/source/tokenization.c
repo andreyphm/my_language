@@ -37,7 +37,7 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
     bool is_identifiers = false;
     int last_identifier_num = 0;
 
-    lexer_state_t lexer_state =
+    lexer_state_t position =
     {
         .line_number = 1,
         .column_number = 1
@@ -45,43 +45,43 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
 
     while (*buffer != '$')
     {
-        skip_spaces(&buffer, &lexer_state);
+        skip_spaces(&buffer, &position);
         if (*buffer == '$') break;
 
         const char* start_of_buffer = buffer;
 
-        if (try_digit(&buffer, list, lexer_state)   ||
-            try_op(&buffer, list, lexer_state)      ||
-            try_spec(&buffer, list, lexer_state)    ||
-            try_keyword(&buffer, list, lexer_state) ||
-            try_identifier(&buffer, list, lexer_state, identifiers, &last_identifier_num, &is_identifiers))
+        if (try_digit(&buffer, list, position)   ||
+            try_op(&buffer, list, position)      ||
+            try_spec(&buffer, list, position)    ||
+            try_keyword(&buffer, list, position) ||
+            try_identifier(&buffer, list, position, identifiers, &last_identifier_num, &is_identifiers))
         {
-            lexer_state.column_number += (size_t)(buffer - start_of_buffer);
+            position.column_number += (size_t)(buffer - start_of_buffer);
             continue;
         }
 
         else return SYNTAX_ERROR;
     }
 
-    list_push_back(SPEC, (token_union){.spec = PROGRAM_END}, lexer_state, list);
+    list_push_back(SPEC, (token_union){.spec = PROGRAM_END}, position, list);
 
     return NO_ERROR;
 }
 
-void skip_spaces(const char** string, lexer_state_t* const lexer_state)
+void skip_spaces(const char** string, lexer_state_t* const position)
 {
-    assert(lexer_state);
+    assert(position);
 
     while (isspace(**string))
     {
         if (**string == '\n')
         {
-            (lexer_state->column_number) = 1;
-            (lexer_state->line_number)++;
+            (position->column_number) = 1;
+            (position->line_number)++;
         }
 
         else
-            (lexer_state->column_number)++;
+            (position->column_number)++;
 
         (*string)++;
     }
@@ -94,7 +94,7 @@ bool is_char(const char symbol)
             symbol == '_');
 }
 
-bool try_digit(const char** buffer, list_t* const list, const lexer_state_t lexer_state)
+bool try_digit(const char** buffer, list_t* const list, const lexer_state_t position)
 {
     const char* start_of_buffer = *buffer;
     bool dot_already = false;
@@ -121,14 +121,14 @@ bool try_digit(const char** buffer, list_t* const list, const lexer_state_t lexe
             return false;
         }
 
-        list_push_back(NUM, (token_union){.number = value}, lexer_state, list);
+        list_push_back(NUM, (token_union){.number = value}, position, list);
         return true;
     }
 
     return false;
 }
 
-bool try_op(const char** buffer, list_t* const list, const lexer_state_t lexer_state)
+bool try_op(const char** buffer, list_t* const list, const lexer_state_t position)
 {
     size_t index = OP_ARRAY_SIZE;
     size_t length = 0;
@@ -146,12 +146,12 @@ bool try_op(const char** buffer, list_t* const list, const lexer_state_t lexer_s
     if (index == OP_ARRAY_SIZE)
         return false;
 
-    list_push_back(OP, (token_union){.op = (operator_code)operators_array[index].code}, lexer_state, list);
+    list_push_back(OP, (token_union){.op = (operator_code)operators_array[index].code}, position, list);
     *buffer += length;
     return true;
 }
 
-bool try_keyword(const char** buffer, list_t* const list, const lexer_state_t lexer_state)
+bool try_keyword(const char** buffer, list_t* const list, const lexer_state_t position)
 {
     size_t index = KEYWORD_ARRAY_SIZE;
     size_t length = 0;
@@ -169,12 +169,12 @@ bool try_keyword(const char** buffer, list_t* const list, const lexer_state_t le
     if (index == KEYWORD_ARRAY_SIZE)
         return false;
 
-    list_push_back(KEYWORD, (token_union){.keyword = (keyword_code)keywords_array[index].code}, lexer_state, list);
+    list_push_back(KEYWORD, (token_union){.keyword = (keyword_code)keywords_array[index].code}, position, list);
     *buffer += length;
     return true;
 }
 
-bool try_spec(const char** buffer, list_t* const list, const lexer_state_t lexer_state)
+bool try_spec(const char** buffer, list_t* const list, const lexer_state_t position)
 {
     size_t index = SPEC_ARRAY_SIZE;
     size_t length = 0;
@@ -192,12 +192,12 @@ bool try_spec(const char** buffer, list_t* const list, const lexer_state_t lexer
     if (index == SPEC_ARRAY_SIZE)
         return false;
 
-    list_push_back(SPEC, (token_union){.spec = (spec_code)specs_array[index].code}, lexer_state, list);
+    list_push_back(SPEC, (token_union){.spec = (spec_code)specs_array[index].code}, position, list);
     *buffer += length;
     return true;
 }
 
-bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t lexer_state,
+bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t position,
                     identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers)
 {
     const char* start_of_buffer = *buffer;
@@ -218,7 +218,7 @@ bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t
         {
             if (identifiers[i].length == name_length && !strncmp(identifiers[i].name, start_of_buffer, name_length))
             {
-                list_push_back(ID, (token_union){.id_number = i}, lexer_state, list);
+                list_push_back(ID, (token_union){.id_number = i}, position, list);
                 return true;
             }
         }
@@ -226,14 +226,14 @@ bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t
 
     if (!*is_identifiers)
     {
-        list_push_back(ID, (token_union){.id_number = 0}, lexer_state, list);
+        list_push_back(ID, (token_union){.id_number = 0}, position, list);
         *is_identifiers = true;
     }
 
     else
     {
         (*last_identifier_num)++;
-        list_push_back(ID, (token_union){.id_number = *last_identifier_num}, lexer_state, list);
+        list_push_back(ID, (token_union){.id_number = *last_identifier_num}, position, list);
     }
 
     identifiers[*last_identifier_num].name = strndup(start_of_buffer, name_length);
@@ -243,11 +243,11 @@ bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t
     return true;
 }
 
-token_t* list_push_back(const type_data type, token_union data, const lexer_state_t lexer_state, list_t* const list)
+token_t* list_push_back(const type_data type, token_union data, const lexer_state_t position, list_t* const list)
 {
     assert(list);
 
-    token_t* const token = create_token(type, data, lexer_state);
+    token_t* const token = create_token(type, data, position);
 
     if (!list->head && !list->current && !list->tail)
     {
@@ -262,15 +262,15 @@ token_t* list_push_back(const type_data type, token_union data, const lexer_stat
     return token;
 }
 
-token_t* create_token(const type_data type, token_union data, const lexer_state_t lexer_state)
+token_t* create_token(const type_data type, token_union data, const lexer_state_t position)
 {
     token_t* const token = (token_t*) calloc(1, sizeof(token_t));
 
     token->type = type;
-    token->lexer_state = {};
+    token->position = {};
 
-    token->lexer_state.column_number = lexer_state.column_number;
-    token->lexer_state.line_number = lexer_state.line_number;
+    token->position.column_number = position.column_number;
+    token->position.line_number = position.line_number;
 
     switch(type)
     {

@@ -141,7 +141,7 @@ node_t* create_var_decl_node(node_t* var, node_t* init);
 node_t* create_ret_node(node_t* expr);
 node_t* create_break_node();
 
-node_t* destroy_and_null(node_t* node);
+void destroy_nodes(size_t count, ...);
 void destroy_node(node_t* node);
 
 void tree_dump(node_t* const node, const char* const png_file_name, const identifier_t* const identifiers);

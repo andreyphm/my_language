@@ -32,6 +32,9 @@ node_t* get_call(token_t** token);
 node_t* get_args(token_t** token);
 node_t* get_n(token_t** token);
 node_t* get_id(token_t** token);
+
 bool token_is_start_of_expr(token_t* const* const token);
+const char* seek_spec_design(spec_code code);
+void report_error(const token_t* const token, const char* format, ...);
 
 #endif // PARSER_H

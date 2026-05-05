@@ -8,6 +8,7 @@
 #include "front_end.h"
 #include "font.h"
 #include "macros.h"
+#include "stdarg.h"
 
 node_t* create_node(node_kind kind, data_union data)
 {
@@ -177,8 +178,16 @@ node_t* create_break_node()
     return create_node(NODE_BREAK, (data_union){});
 }
 
-node_t* destroy_and_null(node_t* node)
+void destroy_nodes(size_t count, ...)
 {
-    destroy_node(node);
-    return nullptr;
+    va_list args = {};
+    va_start(args, count);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        node_t* current = va_arg(args, node_t*);
+        destroy_node(current);
+    }
+
+    va_end(args);
 }
