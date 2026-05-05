@@ -50,6 +50,8 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
                 break;
         }
 
+        fprintf(txt_file, "{line = %zu | column = %zu} |\n",
+                          list->current->lexer_state.line_number, list->current->lexer_state.column_number);
         fprintf(txt_file, "ADDRESS = %p |\n", list->current);
         fprintf(txt_file, "{next = %p}\" ];\n", list->current->next);
 

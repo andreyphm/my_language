@@ -14,10 +14,17 @@ union token_union
     spec_code spec;
 };
 
+struct lexer_state_t
+{
+    size_t line_number;
+    size_t column_number;
+};
+
 struct token_t
 {
     type_data type;
     token_union data_t;
+    lexer_state_t lexer_state; 
     token_t* next;
 };
 
@@ -30,19 +37,19 @@ struct list_t
 
 error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list);
 error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* const list);
-void skip_spaces(const char** string);
+void skip_spaces(const char** string, lexer_state_t* const lexer_state);
 
-bool try_digit(const char** buffer, list_t* const list);
-bool try_op(const char** buffer, list_t* const list);
-bool try_keyword(const char** buffer, list_t* const list);
-bool try_spec(const char** buffer, list_t* const list);
-bool try_identifier(const char** buffer, list_t* const list, identifier_t* identifiers,
-                                                int* last_function_num, bool* is_functions);
+bool try_digit(const char** buffer, list_t* const list, const lexer_state_t lexer_state);
+bool try_op(const char** buffer, list_t* const list, const lexer_state_t lexer_state);
+bool try_keyword(const char** buffer, list_t* const list, const lexer_state_t lexer_state);
+bool try_spec(const char** buffer, list_t* const list, const lexer_state_t lexer_state);
+bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t lexer_state,
+                    identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers);
 
 bool is_char(const char symbol);
 
-token_t* list_push_back(const type_data type, token_union data, list_t* const list);
-token_t* create_token(const type_data type, token_union data);
+token_t* list_push_back(const type_data type, token_union data, const lexer_state_t lexer_state, list_t* const list);
+token_t* create_token(const type_data type, token_union data, const lexer_state_t lexer_state);
 void list_destroy(list_t* list);
 
 #endif //TOKENIZATION_H
