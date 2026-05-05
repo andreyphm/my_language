@@ -4,6 +4,8 @@
 #define BOLD "\033[1m"
 #define BOLD_GREEN "\033[1;32m"
 #define BOLD_RED "\033[1;31m"
+#define RED_TEXT "\033[31m"
+#define RESET_COLOR "\033[39m"
 #define RESET_FONT "\033[0m"
 
 #define MAKE_BOLD(ARG) BOLD ARG RESET_FONT
