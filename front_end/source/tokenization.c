@@ -37,10 +37,11 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
     bool is_identifiers = false;
     int last_identifier_num = 0;
 
-    lexer_state_t position =
+    position_t position =
     {
         .line_number = 1,
-        .column_number = 1
+        .column_number = 1,
+        .length = 0
     };
 
     while (*buffer != '$')
@@ -50,11 +51,11 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
 
         const char* start_of_buffer = buffer;
 
-        if (try_digit(&buffer, list, position)   ||
-            try_op(&buffer, list, position)      ||
-            try_spec(&buffer, list, position)    ||
-            try_keyword(&buffer, list, position) ||
-            try_identifier(&buffer, list, position, identifiers, &last_identifier_num, &is_identifiers))
+        if (try_digit(&buffer, list, &position)   ||
+            try_op(&buffer, list, &position)      ||
+            try_spec(&buffer, list, &position)    ||
+            try_keyword(&buffer, list, &position) ||
+            try_identifier(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers))
         {
             position.column_number += (size_t)(buffer - start_of_buffer);
             continue;
@@ -63,12 +64,12 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
         else return SYNTAX_ERROR;
     }
 
-    list_push_back(SPEC, (token_union){.spec = PROGRAM_END}, position, list);
+    list_push_back(SPEC, (token_union){.spec = PROGRAM_END}, &position, list);
 
     return NO_ERROR;
 }
 
-void skip_spaces(const char** string, lexer_state_t* const position)
+void skip_spaces(const char** string, position_t* const position)
 {
     assert(position);
 
@@ -94,7 +95,7 @@ bool is_char(const char symbol)
             symbol == '_');
 }
 
-bool try_digit(const char** buffer, list_t* const list, const lexer_state_t position)
+bool try_digit(const char** buffer, list_t* const list, position_t* const position)
 {
     const char* start_of_buffer = *buffer;
     bool dot_already = false;
@@ -121,6 +122,7 @@ bool try_digit(const char** buffer, list_t* const list, const lexer_state_t posi
             return false;
         }
 
+        position->length = (size_t)(*buffer - start_of_buffer);
         list_push_back(NUM, (token_union){.number = value}, position, list);
         return true;
     }
@@ -128,7 +130,7 @@ bool try_digit(const char** buffer, list_t* const list, const lexer_state_t posi
     return false;
 }
 
-bool try_op(const char** buffer, list_t* const list, const lexer_state_t position)
+bool try_op(const char** buffer, list_t* const list, position_t* const position)
 {
     size_t index = OP_ARRAY_SIZE;
     size_t length = 0;
@@ -146,12 +148,13 @@ bool try_op(const char** buffer, list_t* const list, const lexer_state_t positio
     if (index == OP_ARRAY_SIZE)
         return false;
 
-    list_push_back(OP, (token_union){.op = (operator_code)operators_array[index].code}, position, list);
+    position->length = length;
     *buffer += length;
+    list_push_back(OP, (token_union){.op = (operator_code)operators_array[index].code}, position, list);
     return true;
 }
 
-bool try_keyword(const char** buffer, list_t* const list, const lexer_state_t position)
+bool try_keyword(const char** buffer, list_t* const list, position_t* const position)
 {
     size_t index = KEYWORD_ARRAY_SIZE;
     size_t length = 0;
@@ -169,12 +172,13 @@ bool try_keyword(const char** buffer, list_t* const list, const lexer_state_t po
     if (index == KEYWORD_ARRAY_SIZE)
         return false;
 
-    list_push_back(KEYWORD, (token_union){.keyword = (keyword_code)keywords_array[index].code}, position, list);
+    position->length = length;
     *buffer += length;
+    list_push_back(KEYWORD, (token_union){.keyword = (keyword_code)keywords_array[index].code}, position, list);
     return true;
 }
 
-bool try_spec(const char** buffer, list_t* const list, const lexer_state_t position)
+bool try_spec(const char** buffer, list_t* const list, position_t* const position)
 {
     size_t index = SPEC_ARRAY_SIZE;
     size_t length = 0;
@@ -192,12 +196,13 @@ bool try_spec(const char** buffer, list_t* const list, const lexer_state_t posit
     if (index == SPEC_ARRAY_SIZE)
         return false;
 
-    list_push_back(SPEC, (token_union){.spec = (spec_code)specs_array[index].code}, position, list);
+    position->length = length;
     *buffer += length;
+    list_push_back(SPEC, (token_union){.spec = (spec_code)specs_array[index].code}, position, list);
     return true;
 }
 
-bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t position,
+bool try_identifier(const char** buffer, list_t* const list, position_t* const position,
                     identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers)
 {
     const char* start_of_buffer = *buffer;
@@ -210,7 +215,8 @@ bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t
     while (isalpha(**buffer) || **buffer == '_' || isdigit(**buffer))
         (*buffer)++;
 
-    size_t name_length = (size_t) (*buffer - start_of_buffer);
+    size_t name_length = (size_t)(*buffer - start_of_buffer);
+    position->length = name_length;
 
     if (*is_identifiers)
     {
@@ -243,7 +249,7 @@ bool try_identifier(const char** buffer, list_t* const list, const lexer_state_t
     return true;
 }
 
-token_t* list_push_back(const type_data type, token_union data, const lexer_state_t position, list_t* const list)
+token_t* list_push_back(const type_data type, token_union data, const position_t* const position, list_t* const list)
 {
     assert(list);
 
@@ -254,6 +260,8 @@ token_t* list_push_back(const type_data type, token_union data, const lexer_stat
         list->head = token;
         list->tail = token;
         list->current = token;
+
+        return token;
     }
 
     list->tail->next = token;
@@ -262,15 +270,16 @@ token_t* list_push_back(const type_data type, token_union data, const lexer_stat
     return token;
 }
 
-token_t* create_token(const type_data type, token_union data, const lexer_state_t position)
+token_t* create_token(const type_data type, token_union data, const position_t* const position)
 {
     token_t* const token = (token_t*) calloc(1, sizeof(token_t));
 
     token->type = type;
     token->position = {};
 
-    token->position.column_number = position.column_number;
-    token->position.line_number = position.line_number;
+    token->position.column_number = position->column_number;
+    token->position.line_number = position->line_number;
+    token->position.length = position->length;
 
     switch(type)
     {

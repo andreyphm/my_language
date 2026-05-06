@@ -79,7 +79,7 @@ node_t* get_func(token_t** token)
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN))
     {
         report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to start function arguments block",
-                     seek_spec_design(LEFT_PAREN));
+                             seek_spec_design(LEFT_PAREN));
         return nullptr;
     }
     *token = (*token)->next;
@@ -90,7 +90,7 @@ node_t* get_func(token_t** token)
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN))
     {
         report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to end function arguments block",
-                     seek_spec_design(RIGHT_PAREN));
+                             seek_spec_design(RIGHT_PAREN));
         destroy_node(params);
         return nullptr;
     }
@@ -141,7 +141,8 @@ node_t* get_block(token_t** token)
 {
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_BRACE))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to start block", seek_spec_design(LEFT_BRACE));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to start block",
+                             seek_spec_design(LEFT_BRACE));
         return nullptr;
     }
     *token = (*token)->next;
@@ -164,7 +165,8 @@ node_t* get_block(token_t** token)
     
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_BRACE)) 
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to end block", seek_spec_design(RIGHT_BRACE));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to end block",
+                             seek_spec_design(RIGHT_BRACE));
         destroy_node(body);
         return nullptr;
     }
@@ -194,7 +196,8 @@ node_t* get_op(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after expression", seek_spec_design(SEMMICOLON));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after expression",
+                             seek_spec_design(SEMMICOLON));
         destroy_node(value);
         return nullptr;
     }
@@ -210,7 +213,8 @@ node_t* get_if(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"if\"", seek_spec_design(LEFT_PAREN));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"if\"",
+                             seek_spec_design(LEFT_PAREN));
         return nullptr;
     }
     *token = (*token)->next;
@@ -220,7 +224,8 @@ node_t* get_if(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to end \"if\" condition", seek_spec_design(RIGHT_PAREN));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to end \"if\" condition",
+                     seek_spec_design(RIGHT_PAREN));
         destroy_node(cond);
         return nullptr;
     }
@@ -256,7 +261,8 @@ node_t* get_while(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"while\"", seek_spec_design(LEFT_PAREN));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"while\"",
+                             seek_spec_design(LEFT_PAREN));
         return nullptr;
     }
     *token = (*token)->next;
@@ -266,7 +272,8 @@ node_t* get_while(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to end \"while\" condition", seek_spec_design(RIGHT_PAREN));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" to end \"while\" condition",
+                             seek_spec_design(RIGHT_PAREN));
         destroy_node(cond);
         return nullptr;
     }
@@ -312,7 +319,8 @@ node_t* get_var_declare(token_t** token)
 
         if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON))
         {
-            report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after variable declaration", seek_spec_design(SEMMICOLON));
+            report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after variable declaration",
+                                 seek_spec_design(SEMMICOLON));
             destroy_nodes(2, var_name, var_value);
             return nullptr;
         }
@@ -321,7 +329,8 @@ node_t* get_var_declare(token_t** token)
         return create_var_decl_node(var_name, var_value);
     }
 
-    report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after variable declaration", seek_spec_design(SEMMICOLON));
+    report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after variable declaration",
+                         seek_spec_design(SEMMICOLON));
     destroy_node(var_name);
     return nullptr;
 }
@@ -342,7 +351,8 @@ node_t* get_ret(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"return\" expression", seek_spec_design(SEMMICOLON));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"return\" expression",
+                             seek_spec_design(SEMMICOLON));
         destroy_node(value);
         return nullptr;
     }
@@ -358,7 +368,8 @@ node_t* get_break(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == SEMMICOLON))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"break\"", seek_spec_design(SEMMICOLON));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" after \"break\"",
+                             seek_spec_design(SEMMICOLON));
         return nullptr;
     }
     *token = (*token)->next; 
@@ -639,7 +650,8 @@ node_t* get_p(token_t** token)
 
         if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN))
         {
-            report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\"", seek_spec_design(RIGHT_PAREN));
+            report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\"",
+                                 seek_spec_design(RIGHT_PAREN));
             destroy_node(value);
             return nullptr;
         }
@@ -665,7 +677,8 @@ node_t* get_call(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == LEFT_PAREN))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" in function call", seek_spec_design(LEFT_PAREN));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" in function call",
+                             seek_spec_design(LEFT_PAREN));
         return nullptr;
     }
     *token = (*token)->next;
@@ -674,7 +687,8 @@ node_t* get_call(token_t** token)
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == RIGHT_PAREN))
     {
-        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" in function call", seek_spec_design(RIGHT_PAREN));
+        report_error(*token, "expected \"" RED_TEXT "%s" RESET_COLOR "\" in function call",
+                             seek_spec_design(RIGHT_PAREN));
         destroy_node(args);
         return nullptr;
     }
