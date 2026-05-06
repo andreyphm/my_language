@@ -35,6 +35,8 @@ node_t* get_id(token_t** token);
 
 bool token_is_start_of_expr(token_t* const* const token);
 const char* seek_spec_design(spec_code code);
-void report_error(const token_t* const token, const char* format, ...);
+void vreport_error(const position_t* const position, const char* format, va_list v_list);
+void report_error_on_token(const token_t* const token, const char* format, ...);
+void report_error_after_token(const token_t* const token, const char* format, ...);
 
 #endif // PARSER_H

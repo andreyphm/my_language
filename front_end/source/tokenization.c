@@ -264,6 +264,7 @@ token_t* list_push_back(const type_data type, token_union data, const position_t
         return token;
     }
 
+    token->prev = list->tail;
     list->tail->next = token;
     list->tail = token;
 
@@ -307,6 +308,7 @@ token_t* create_token(const type_data type, token_union data, const position_t* 
     }
 
     token->next = nullptr;
+    token->prev = nullptr;
 
     return token;
 }

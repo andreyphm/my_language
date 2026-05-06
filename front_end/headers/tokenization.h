@@ -27,6 +27,7 @@ struct token_t
     token_union data_t;
     position_t position; 
     token_t* next;
+    token_t* prev;
 };
 
 struct list_t
