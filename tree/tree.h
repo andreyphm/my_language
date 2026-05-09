@@ -58,7 +58,8 @@ enum type_data
     ID,
     NUM,
     KEYWORD,
-    SPEC
+    SPEC,
+    INCLUDE
 };
 
 enum node_kind

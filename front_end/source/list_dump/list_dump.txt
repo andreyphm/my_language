@@ -2,153 +2,156 @@ digraph structs
 {
 rankdir = LR;
 graph[bgcolor="#e0e0e9ff"];
-node_1 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = FUNC | {line = 1 | column = 1 | length = 4} |
+node_1 [style=filled, penwidth = 3, fillcolor="#9575ffff",color = "#3f6969ff", shape=record, label= " TYPE = INCLUDE | ID_NUM = 0 (my_stdlib) | {line = 1 | column = 1 | length = 20} |
 ADDRESS = 0x606000000020 |
 {next = 0x606000000080 | prev = (nil)}" ];
-node_2 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 0 (fact) | {line = 1 | column = 6 | length = 4} |
+node_2 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = FUNC | {line = 3 | column = 1 | length = 4} |
 ADDRESS = 0x606000000080 |
 {next = 0x6060000000e0 | prev = 0x606000000020}" ];
-node_3 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 1 | column = 10 | length = 1} |
+node_3 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (fact) | {line = 3 | column = 6 | length = 4} |
 ADDRESS = 0x6060000000e0 |
 {next = 0x606000000140 | prev = 0x606000000080}" ];
-node_4 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (n) | {line = 1 | column = 11 | length = 1} |
+node_4 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 3 | column = 10 | length = 1} |
 ADDRESS = 0x606000000140 |
 {next = 0x6060000001a0 | prev = 0x6060000000e0}" ];
-node_5 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 1 | column = 12 | length = 1} |
+node_5 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 2 (n) | {line = 3 | column = 11 | length = 1} |
 ADDRESS = 0x6060000001a0 |
 {next = 0x606000000200 | prev = 0x606000000140}" ];
-node_6 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 2 | column = 1 | length = 1} |
+node_6 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 3 | column = 12 | length = 1} |
 ADDRESS = 0x606000000200 |
 {next = 0x606000000260 | prev = 0x6060000001a0}" ];
-node_7 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = IF | {line = 3 | column = 5 | length = 2} |
+node_7 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 4 | column = 1 | length = 1} |
 ADDRESS = 0x606000000260 |
 {next = 0x6060000002c0 | prev = 0x606000000200}" ];
-node_8 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 3 | column = 8 | length = 1} |
+node_8 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = IF | {line = 5 | column = 5 | length = 2} |
 ADDRESS = 0x6060000002c0 |
 {next = 0x606000000320 | prev = 0x606000000260}" ];
-node_9 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (n) | {line = 3 | column = 9 | length = 1} |
+node_9 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 5 | column = 8 | length = 1} |
 ADDRESS = 0x606000000320 |
 {next = 0x606000000380 | prev = 0x6060000002c0}" ];
-node_10 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = LESS_EQUAL | {line = 3 | column = 11 | length = 2} |
+node_10 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 2 (n) | {line = 5 | column = 9 | length = 1} |
 ADDRESS = 0x606000000380 |
 {next = 0x6060000003e0 | prev = 0x606000000320}" ];
-node_11 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 1 | {line = 3 | column = 14 | length = 1} |
+node_11 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = LESS_EQUAL | {line = 5 | column = 11 | length = 2} |
 ADDRESS = 0x6060000003e0 |
 {next = 0x606000000440 | prev = 0x606000000380}" ];
-node_12 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 3 | column = 15 | length = 1} |
+node_12 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 1 | {line = 5 | column = 14 | length = 1} |
 ADDRESS = 0x606000000440 |
 {next = 0x6060000004a0 | prev = 0x6060000003e0}" ];
-node_13 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 4 | column = 5 | length = 1} |
+node_13 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 5 | column = 15 | length = 1} |
 ADDRESS = 0x6060000004a0 |
 {next = 0x606000000500 | prev = 0x606000000440}" ];
-node_14 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = RET | {line = 5 | column = 9 | length = 6} |
+node_14 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 6 | column = 5 | length = 1} |
 ADDRESS = 0x606000000500 |
 {next = 0x606000000560 | prev = 0x6060000004a0}" ];
-node_15 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 1 | {line = 5 | column = 16 | length = 1} |
+node_15 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = RET | {line = 7 | column = 9 | length = 6} |
 ADDRESS = 0x606000000560 |
 {next = 0x6060000005c0 | prev = 0x606000000500}" ];
-node_16 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | {line = 5 | column = 17 | length = 1} |
+node_16 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 1 | {line = 7 | column = 16 | length = 1} |
 ADDRESS = 0x6060000005c0 |
 {next = 0x606000000620 | prev = 0x606000000560}" ];
-node_17 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 6 | column = 5 | length = 1} |
+node_17 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | {line = 7 | column = 17 | length = 1} |
 ADDRESS = 0x606000000620 |
 {next = 0x606000000680 | prev = 0x6060000005c0}" ];
-node_18 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = ELSE | {line = 7 | column = 5 | length = 4} |
+node_18 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 8 | column = 5 | length = 1} |
 ADDRESS = 0x606000000680 |
 {next = 0x6060000006e0 | prev = 0x606000000620}" ];
-node_19 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 8 | column = 5 | length = 1} |
+node_19 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = ELSE | {line = 9 | column = 5 | length = 4} |
 ADDRESS = 0x6060000006e0 |
 {next = 0x606000000740 | prev = 0x606000000680}" ];
-node_20 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = RET | {line = 9 | column = 9 | length = 6} |
+node_20 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 10 | column = 5 | length = 1} |
 ADDRESS = 0x606000000740 |
 {next = 0x6060000007a0 | prev = 0x6060000006e0}" ];
-node_21 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (n) | {line = 9 | column = 16 | length = 1} |
+node_21 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = RET | {line = 11 | column = 9 | length = 6} |
 ADDRESS = 0x6060000007a0 |
 {next = 0x606000000800 | prev = 0x606000000740}" ];
-node_22 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = MUL | {line = 9 | column = 18 | length = 1} |
+node_22 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 2 (n) | {line = 11 | column = 16 | length = 1} |
 ADDRESS = 0x606000000800 |
 {next = 0x606000000860 | prev = 0x6060000007a0}" ];
-node_23 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 0 (fact) | {line = 9 | column = 20 | length = 4} |
+node_23 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = MUL | {line = 11 | column = 18 | length = 1} |
 ADDRESS = 0x606000000860 |
 {next = 0x6060000008c0 | prev = 0x606000000800}" ];
-node_24 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 9 | column = 24 | length = 1} |
+node_24 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (fact) | {line = 11 | column = 20 | length = 4} |
 ADDRESS = 0x6060000008c0 |
 {next = 0x606000000920 | prev = 0x606000000860}" ];
-node_25 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (n) | {line = 9 | column = 25 | length = 1} |
+node_25 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 11 | column = 24 | length = 1} |
 ADDRESS = 0x606000000920 |
 {next = 0x606000000980 | prev = 0x6060000008c0}" ];
-node_26 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = SUB | {line = 9 | column = 27 | length = 1} |
+node_26 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 2 (n) | {line = 11 | column = 25 | length = 1} |
 ADDRESS = 0x606000000980 |
 {next = 0x6060000009e0 | prev = 0x606000000920}" ];
-node_27 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 1 | {line = 9 | column = 29 | length = 1} |
+node_27 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = SUB | {line = 11 | column = 27 | length = 1} |
 ADDRESS = 0x6060000009e0 |
 {next = 0x606000000a40 | prev = 0x606000000980}" ];
-node_28 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 9 | column = 30 | length = 1} |
+node_28 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 1 | {line = 11 | column = 29 | length = 1} |
 ADDRESS = 0x606000000a40 |
 {next = 0x606000000aa0 | prev = 0x6060000009e0}" ];
-node_29 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | {line = 9 | column = 31 | length = 1} |
+node_29 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 11 | column = 30 | length = 1} |
 ADDRESS = 0x606000000aa0 |
 {next = 0x606000000b00 | prev = 0x606000000a40}" ];
-node_30 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 10 | column = 5 | length = 1} |
+node_30 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | {line = 11 | column = 31 | length = 1} |
 ADDRESS = 0x606000000b00 |
 {next = 0x606000000b60 | prev = 0x606000000aa0}" ];
-node_31 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 11 | column = 1 | length = 1} |
+node_31 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 12 | column = 5 | length = 1} |
 ADDRESS = 0x606000000b60 |
 {next = 0x606000000bc0 | prev = 0x606000000b00}" ];
-node_32 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = FUNC | {line = 13 | column = 1 | length = 4} |
+node_32 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 13 | column = 1 | length = 1} |
 ADDRESS = 0x606000000bc0 |
 {next = 0x606000000c20 | prev = 0x606000000b60}" ];
-node_33 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 2 (main) | {line = 13 | column = 6 | length = 4} |
+node_33 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = FUNC | {line = 15 | column = 1 | length = 4} |
 ADDRESS = 0x606000000c20 |
 {next = 0x606000000c80 | prev = 0x606000000bc0}" ];
-node_34 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 13 | column = 10 | length = 1} |
+node_34 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 3 (main) | {line = 15 | column = 6 | length = 4} |
 ADDRESS = 0x606000000c80 |
 {next = 0x606000000ce0 | prev = 0x606000000c20}" ];
-node_35 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 13 | column = 11 | length = 1} |
+node_35 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 15 | column = 10 | length = 1} |
 ADDRESS = 0x606000000ce0 |
 {next = 0x606000000d40 | prev = 0x606000000c80}" ];
-node_36 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 14 | column = 1 | length = 1} |
+node_36 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 15 | column = 11 | length = 1} |
 ADDRESS = 0x606000000d40 |
 {next = 0x606000000da0 | prev = 0x606000000ce0}" ];
-node_37 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = RET | {line = 15 | column = 5 | length = 6} |
+node_37 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_BRACE | {line = 16 | column = 1 | length = 1} |
 ADDRESS = 0x606000000da0 |
 {next = 0x606000000e00 | prev = 0x606000000d40}" ];
-node_38 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 0 (fact) | {line = 15 | column = 12 | length = 4} |
+node_38 [style=filled, penwidth = 3, fillcolor="#f1e724ff",color = "#3f6969ff", shape=record, label= " TYPE = KEYWORD | KEYWORD_CODE = RET | {line = 17 | column = 5 | length = 6} |
 ADDRESS = 0x606000000e00 |
 {next = 0x606000000e60 | prev = 0x606000000da0}" ];
-node_39 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 15 | column = 16 | length = 1} |
+node_39 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (fact) | {line = 17 | column = 12 | length = 4} |
 ADDRESS = 0x606000000e60 |
 {next = 0x606000000ec0 | prev = 0x606000000e00}" ];
-node_40 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 5 | {line = 15 | column = 17 | length = 1} |
+node_40 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 17 | column = 16 | length = 1} |
 ADDRESS = 0x606000000ec0 |
 {next = 0x606000000f20 | prev = 0x606000000e60}" ];
-node_41 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 15 | column = 18 | length = 1} |
+node_41 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 5 | {line = 17 | column = 17 | length = 1} |
 ADDRESS = 0x606000000f20 |
 {next = 0x606000000f80 | prev = 0x606000000ec0}" ];
-node_42 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = ADD | {line = 15 | column = 20 | length = 1} |
+node_42 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 17 | column = 18 | length = 1} |
 ADDRESS = 0x606000000f80 |
 {next = 0x606000000fe0 | prev = 0x606000000f20}" ];
-node_43 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 0 (fact) | {line = 15 | column = 22 | length = 4} |
+node_43 [style=filled, penwidth = 3, fillcolor="#b7e5f3ff",color = "#3f6969ff", shape=record, label= " TYPE = OP | OP_CODE = ADD | {line = 17 | column = 20 | length = 1} |
 ADDRESS = 0x606000000fe0 |
 {next = 0x606000001040 | prev = 0x606000000f80}" ];
-node_44 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 15 | column = 26 | length = 1} |
+node_44 [style=filled, penwidth = 3, fillcolor="#36ff6fff",color = "#3f6969ff", shape=record, label= " TYPE = ID | ID_NUM = 1 (fact) | {line = 17 | column = 22 | length = 4} |
 ADDRESS = 0x606000001040 |
 {next = 0x6060000010a0 | prev = 0x606000000fe0}" ];
-node_45 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 3 | {line = 15 | column = 27 | length = 1} |
+node_45 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = LEFT_PAREN | {line = 17 | column = 26 | length = 1} |
 ADDRESS = 0x6060000010a0 |
 {next = 0x606000001100 | prev = 0x606000001040}" ];
-node_46 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 15 | column = 28 | length = 1} |
+node_46 [style=filled, penwidth = 3, fillcolor="#f8c331ff",color = "#3f6969ff", shape=record, label= " TYPE = NUM | VALUE = 3 | {line = 17 | column = 27 | length = 1} |
 ADDRESS = 0x606000001100 |
 {next = 0x606000001160 | prev = 0x6060000010a0}" ];
-node_47 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | {line = 15 | column = 29 | length = 1} |
+node_47 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_PAREN | {line = 17 | column = 28 | length = 1} |
 ADDRESS = 0x606000001160 |
 {next = 0x6060000011c0 | prev = 0x606000001100}" ];
-node_48 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 16 | column = 1 | length = 1} |
+node_48 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = SEMMICOLON | {line = 17 | column = 29 | length = 1} |
 ADDRESS = 0x6060000011c0 |
 {next = 0x606000001220 | prev = 0x606000001160}" ];
-node_49 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = PROGRAM_END | {line = 17 | column = 1 | length = 1} |
+node_49 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = RIGHT_BRACE | {line = 18 | column = 1 | length = 1} |
 ADDRESS = 0x606000001220 |
-{next = (nil) | prev = 0x6060000011c0}" ];
+{next = 0x606000001280 | prev = 0x6060000011c0}" ];
+node_50 [style=filled, penwidth = 3, fillcolor="#f673e9ff",color = "#3f6969ff", shape=record, label= " TYPE = SPEC | VALUE = PROGRAM_END | {line = 19 | column = 1 | length = 1} |
+ADDRESS = 0x606000001280 |
+{next = (nil) | prev = 0x606000001220}" ];
 {
 edge[color = "#149b5aff", weight = 1000];
 node_1 -> node_2
@@ -199,5 +202,6 @@ node_45 -> node_46
 node_46 -> node_47
 node_47 -> node_48
 node_48 -> node_49
+node_49 -> node_50
 }
 }

@@ -22,7 +22,9 @@ static size_t rodata_pos = 0;
 
 void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* const identifiers)
 {
-    printf_to_text_buffer("section .text\n\n");
+    printf_to_text_buffer(";========== PROGRAM START ==========;\n"
+                          ";======== GitHub: andreyphm ========;\n\n"
+                          "section .text\n\n");
 
     printf_to_rodata_buffer("section .rodata\n\n"
                             "const_true:\n"
@@ -33,6 +35,8 @@ void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* con
     counters_t counters = {};
 
     gen_prog(tree, identifiers, &counters);
+
+    printf_to_text_buffer(";========== PROGRAM END ==========;\n");
 
     fwrite(text_buffer, sizeof(char), text_pos, output_file);
     fwrite(rodata_buffer, sizeof(char), rodata_pos, output_file);
@@ -109,7 +113,8 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers, counters_t* 
             {
                 node_t* var_node = op_node->children[0];
                 printf_to_text_buffer(";========== VAR_DECL_ID %d \"%s\" ==========\n",
-                                      var_node->data_t.variable.unique_id, identifiers[var_node->data_t.variable.id_number].name);
+                                      var_node->data_t.variable.unique_id,
+                                      identifiers[var_node->data_t.variable.id_number].name);
 
                 gen_expr(op_node->children[1], identifiers, counters);
 
@@ -171,7 +176,8 @@ void gen_op(node_t* op_node, const identifier_t* const identifiers, counters_t* 
 
         case NODE_BREAK:
             printf_to_text_buffer(";========== BREAK ==========\n"
-                                  "\tjmp .while_end_%zu\n\n", counters->while_stack_counter);
+                                  "\tjmp .while_end_%zu\n\n",
+                                  counters->while_stack_counter);
             counters->while_stack_counter--;
             break;
 
@@ -193,7 +199,8 @@ void gen_expr(node_t* expr_node, const identifier_t* const identifiers, counters
 
             printf_to_rodata_buffer("const_%zu:\n"
                                     "\tdq %#.17g\n",
-                                    counters->const_counter, expr_node->data_t.number);
+                                    counters->const_counter,
+                                    expr_node->data_t.number);
             counters->const_counter++;
             break;
 

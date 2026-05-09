@@ -41,10 +41,14 @@ error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list
 error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* const list);
 void skip_spaces(const char** string, position_t* const position);
 
+bool try_include(const char** buffer, list_t* const list, position_t* const position,
+                 identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers);
 bool try_digit(const char** buffer, list_t* const list, position_t* const position);
 bool try_op(const char** buffer, list_t* const list, position_t* const position);
 bool try_keyword(const char** buffer, list_t* const list, position_t* const position);
 bool try_spec(const char** buffer, list_t* const list, position_t* const position);
+bool read_identifier(const char** buffer, position_t* const position, identifier_t* identifiers,
+                     int* last_identifier_num, bool* is_identifiers, int* id_number);
 bool try_identifier(const char** buffer, list_t* const list, position_t* const position,
                     identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers);
 

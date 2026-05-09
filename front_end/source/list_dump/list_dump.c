@@ -30,7 +30,7 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#36ff6fff\","
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
                 fprintf(txt_file, "TYPE = ID | ID_NUM = %d (%s) | ", list->current->data_t.id_number, 
-                                                                        identifiers[list->current->data_t.id_number].name);
+                                                                     identifiers[list->current->data_t.id_number].name);
                 break;
             case KEYWORD:
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f1e724ff\","
@@ -46,6 +46,12 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
                 fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#f673e9ff\","
                    "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
                 fprintf(txt_file, "TYPE = SPEC | VALUE = %s | ", spec_to_str(list->current->data_t.spec));
+                break;
+            case INCLUDE:
+                fprintf(txt_file, "node_%d [style=filled, penwidth = 3, fillcolor=\"#9575ffff\","
+                   "color = \"#3f6969ff\", shape=record, label= \" ", node_number);
+                fprintf(txt_file, "TYPE = INCLUDE | ID_NUM = %d (%s) | ", list->current->data_t.id_number, 
+                                                                          identifiers[list->current->data_t.id_number].name);
             default:
                 break;
         }

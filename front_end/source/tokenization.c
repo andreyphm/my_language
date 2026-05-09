@@ -7,6 +7,10 @@
 #include "font.h"
 #include "output.h"
 
+static const char* INCLUDE_STR = "#include";
+static const char* DIR_LEFT_BORDER_STR = "\"";
+static const char* DIR_RIGHT_BORDER_STR = "\"";
+
 error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list)
 {
     char* buffer = nullptr;
@@ -51,11 +55,12 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
 
         const char* start_of_buffer = buffer;
 
-        if (try_digit(&buffer, list, &position)   ||
-            try_op(&buffer, list, &position)      ||
-            try_spec(&buffer, list, &position)    ||
-            try_keyword(&buffer, list, &position) ||
-            try_identifier(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers))
+        if (try_digit(&buffer, list, &position)                                                           ||
+            try_op(&buffer, list, &position)                                                              ||
+            try_spec(&buffer, list, &position)                                                            ||
+            try_keyword(&buffer, list, &position)                                                         ||
+            try_identifier(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers)  ||
+            try_include(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers))
         {
             position.column_number += (size_t)(buffer - start_of_buffer);
             continue;
@@ -94,6 +99,51 @@ bool is_char(const char symbol)
             isdigit((unsigned char)symbol) ||
             symbol == '_');
 }
+
+bool try_include(const char** buffer, list_t* const list, position_t* const position,
+                 identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers)
+{
+    const char* start_of_buffer = *buffer;
+    position_t start_position = *position;
+
+    if (strncmp(*buffer, INCLUDE_STR, strlen(INCLUDE_STR)))
+    {
+        *buffer = start_of_buffer;
+        return false;
+    }
+
+    *buffer += strlen(INCLUDE_STR);
+    skip_spaces(buffer, position);
+
+    if (strncmp(*buffer, DIR_LEFT_BORDER_STR, strlen(DIR_LEFT_BORDER_STR)))
+    {
+        *buffer = start_of_buffer;
+        *position = start_position;
+        return false;
+    }
+    *buffer += strlen(DIR_LEFT_BORDER_STR);
+
+    int id_number = 0;
+    if (!read_identifier(buffer, position, identifiers, last_identifier_num, is_identifiers, &id_number))
+    {
+        *buffer = start_of_buffer;
+        *position = start_position;
+        return false;
+    }
+    
+    if (strncmp(*buffer, DIR_RIGHT_BORDER_STR, strlen(DIR_RIGHT_BORDER_STR)))
+    {
+        *buffer = start_of_buffer;
+        *position = start_position;
+        return false;
+    }
+    *buffer += strlen(DIR_RIGHT_BORDER_STR);
+
+    *position = start_position;
+    position->length = (size_t)(*buffer - start_of_buffer);
+    list_push_back(INCLUDE, (token_union){.id_number = id_number}, position, list);
+    return true;
+} 
 
 bool try_digit(const char** buffer, list_t* const list, position_t* const position)
 {
@@ -202,49 +252,55 @@ bool try_spec(const char** buffer, list_t* const list, position_t* const positio
     return true;
 }
 
-bool try_identifier(const char** buffer, list_t* const list, position_t* const position,
-                    identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers)
+bool read_identifier(const char** buffer, position_t* const position, identifier_t* identifiers,
+                     int* last_identifier_num, bool* is_identifiers, int* id_number)
 {
-    const char* start_of_buffer = *buffer;
-
     if (!(isalpha(**buffer) || **buffer == '_'))
         return false;
+
+    const char* start_of_buffer = *buffer;
 
     (*buffer)++;
 
     while (isalpha(**buffer) || **buffer == '_' || isdigit(**buffer))
         (*buffer)++;
 
-    size_t name_length = (size_t)(*buffer - start_of_buffer);
-    position->length = name_length;
+    position->length = (size_t)(*buffer - start_of_buffer);
 
     if (*is_identifiers)
     {
         for (int i = 0; i <= *last_identifier_num; i++)
         {
-            if (identifiers[i].length == name_length && !strncmp(identifiers[i].name, start_of_buffer, name_length))
+            if (identifiers[i].length == position->length && !strncmp(identifiers[i].name, start_of_buffer, position->length))
             {
-                list_push_back(ID, (token_union){.id_number = i}, position, list);
+                *id_number = i;
                 return true;
             }
         }
     }
 
     if (!*is_identifiers)
-    {
-        list_push_back(ID, (token_union){.id_number = 0}, position, list);
         *is_identifiers = true;
-    }
 
     else
-    {
-        (*last_identifier_num)++;
-        list_push_back(ID, (token_union){.id_number = *last_identifier_num}, position, list);
-    }
+        *id_number = ++(*last_identifier_num);
 
-    identifiers[*last_identifier_num].name = strndup(start_of_buffer, name_length);
+    identifiers[*last_identifier_num].name   = strndup(start_of_buffer, position->length);
     identifiers[*last_identifier_num].number = *last_identifier_num;
-    identifiers[*last_identifier_num].length = name_length;
+    identifiers[*last_identifier_num].length = position->length;
+
+    return true;
+}
+
+bool try_identifier(const char** buffer, list_t* const list, position_t* const position,
+                    identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers)
+{
+    int id_number = 0;
+
+    if (!read_identifier(buffer, position, identifiers, last_identifier_num, is_identifiers, &id_number))
+        return false;
+
+    list_push_back(ID, (token_union){.id_number = id_number}, position, list);
 
     return true;
 }
