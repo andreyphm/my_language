@@ -15,6 +15,7 @@
 #define TOKEN_IS_NUM                (*token)->type == NUM
 #define TOKEN_IS_ID                 (*token)->type == ID
 #define TOKEN_IS_KEYWORD            (*token)->type == KEYWORD
+#define TOKEN_IS_INCLUDE            (*token)->type == INCLUDE
 #define TOKEN_SPEC_CODE             (*token)->data_t.spec
 #define TOKEN_OP_CODE               (*token)->data_t.op
 #define TOKEN_KEYWORD_CODE          (*token)->data_t.keyword
@@ -40,18 +41,34 @@ error_code tokens_to_tree(list_t* list, node_t** node_ptr)
 node_t* get_prog(token_t** token)
 {
     node_t* prog = create_prog_node();
-    if (!prog) return nullptr;
+    node_t* includes = create_includes_node();
+    node_t* functions = create_functions_node();
 
-    while (TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == FUNC)
+    node_add_child(prog, includes);
+    node_add_child(prog, functions);
+
+    while (TOKEN_IS_INCLUDE)
     {
-        node_t* func = get_func(token);
-        if (!func)
+        node_t* include = get_include(token);
+        if (!include)
         {
             destroy_node(prog);
             return nullptr;
         }
 
-        node_add_child(prog, func);
+        node_add_child(includes, include);
+    }
+
+    while (TOKEN_IS_KEYWORD && TOKEN_KEYWORD_CODE == FUNC)
+    {
+        node_t* function = get_func(token);
+        if (!function)
+        {
+            destroy_node(prog);
+            return nullptr;
+        }
+
+        node_add_child(functions, function);
     }
 
     if (!(TOKEN_IS_SPEC && TOKEN_SPEC_CODE == PROGRAM_END))
@@ -61,6 +78,15 @@ node_t* get_prog(token_t** token)
     }
 
     return prog;
+}
+
+node_t* get_include(token_t** token)
+{
+    if (!(TOKEN_IS_INCLUDE)) return nullptr;
+
+    node_t* include_node = create_include_node((*token)->data_t.id_number);
+    *token = (*token)->next;
+    return include_node;
 }
 
 node_t* get_func(token_t** token)
@@ -105,7 +131,7 @@ node_t* get_func(token_t** token)
         return nullptr;
     }
 
-    return create_func_node(func_id_num, params, func_body);
+    return create_function_node(func_id_num, params, func_body);
 }
 
 node_t* get_params(token_t** token)

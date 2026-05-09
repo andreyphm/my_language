@@ -14,6 +14,9 @@ node_t* simplify_node(node_t* node, bool* simplifications)
     switch(node->kind)
     {
         case NODE_OP:
+            if (!FIRST_CHILD(node) || !SECOND_CHILD(node))
+                break;
+
             if (IS_NUM_NODE_(FIRST_CHILD(node)) && IS_NUM_NODE_(SECOND_CHILD(node)))
             {
                 *simplifications = true;
@@ -39,6 +42,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                     default:  break;
                 }
             }
+
             switch(OP_VAL_(node))
             {
                 case MUL:
@@ -105,12 +109,13 @@ node_t* simplify_node(node_t* node, bool* simplifications)
                     else if (IS_NUM_NODE_(FIRST_CHILD(node)) && is_close_to_zero(NUM_VAL_(FIRST_CHILD(node))))
                     {
                         *simplifications = true;
-                        node_t* right_node = copy_node(FIRST_CHILD(node));
+                        node_t* right_node = copy_node(SECOND_CHILD(node));
                         destroy_node(node);
 
                         node_t* new_node = MUL_NODE_();
                         FIRST_CHILD(new_node) = NUM_NODE_(-1);
                         SECOND_CHILD(new_node) = right_node;
+                        return new_node;
                     }
                 default:
                     break;
@@ -118,6 +123,7 @@ node_t* simplify_node(node_t* node, bool* simplifications)
         default:
             break;
     }
+
     FIRST_CHILD(node)  = simplify_node(FIRST_CHILD(node), simplifications);
     SECOND_CHILD(node) = simplify_node(SECOND_CHILD(node), simplifications);
 

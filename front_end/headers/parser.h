@@ -7,6 +7,7 @@
 
 error_code tokens_to_tree(list_t* list, node_t** node_ptr);
 node_t* get_prog(token_t** token);
+node_t* get_include(token_t** token);
 node_t* get_func(token_t** token);
 node_t* get_params(token_t** token);
 node_t* get_block(token_t** token);

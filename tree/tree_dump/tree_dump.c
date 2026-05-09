@@ -89,10 +89,21 @@ void tree_dump(node_t* const node, const char* const png_file_name, const identi
                 fprintf(txt_file, "}\", style=filled, fillcolor=\"#f07f7fff\"];\n");
                 break;
 
+            case NODE_INCLUDE:
+                fprintf(txt_file, " | <val> id = %d (%s)}\", style=filled, fillcolor=\"#7cff44ff\"];\n",
+                        current->data_t.include.id_number,
+                        identifiers ? identifiers[current->data_t.include.id_number].name : "UNKNOWN");
+                break;
+
             case NODE_BODY:
             case NODE_ARGS:
             case NODE_COND:
                 fprintf(txt_file, "}\", style=filled, fillcolor=\"#09be76ff\"];\n");
+                break;
+
+            case NODE_FUNCTIONS:
+            case NODE_INCLUDES:
+                fprintf(txt_file, "}\", style=filled, fillcolor=\"#82ffcdff\"];\n");
                 break;
 
             default:
@@ -149,6 +160,9 @@ const char* node_kind_to_str(node_kind kind)
         case NODE_BREAK:     return "BREAK";
         case NODE_PROG:      return "PROGRAM";
         case NODE_COND:      return "COND";
+        case NODE_FUNCTIONS: return "FUNCTIONS";
+        case NODE_INCLUDES:  return "INCLUDES";
+        case NODE_INCLUDE:   return "INCLUDE";
         default:             return "UNKNOWN";
     }
 }

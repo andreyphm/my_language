@@ -74,6 +74,24 @@ node_t* create_prog_node()
     return create_node(NODE_PROG, (data_union){});
 }
 
+node_t* create_includes_node()
+{
+    return create_node(NODE_INCLUDES, (data_union){});
+}
+
+node_t* create_functions_node()
+{
+    return create_node(NODE_FUNCTIONS, (data_union){});
+}
+
+node_t* create_include_node(int id_number)
+{
+    data_union data = {};
+    data.include.id_number = id_number;
+
+    return create_node(NODE_INCLUDE, data);
+}
+
 node_t* create_num_node(double value)
 {
     return create_node(NODE_NUM, (data_union){.number = value});
@@ -85,6 +103,7 @@ node_t* create_var_node(int var_id)
     data.variable.id_number = var_id;
     data.variable.stack_offset = 0;
     data.variable.unique_id = -1;
+
     return create_node(NODE_VAR, data);
 }
 
@@ -107,7 +126,7 @@ node_t* create_args_node()
     return create_node(NODE_ARGS, (data_union){});
 }
 
-node_t* create_func_node(int func_id_num, node_t* args, node_t* body)
+node_t* create_function_node(int func_id_num, node_t* args, node_t* body)
 {
     data_union data = {};
     data.function.id_number = func_id_num;

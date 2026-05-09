@@ -161,15 +161,18 @@ error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
 
     if (!tree) return TREE_NULLPTR;
     if (tree->kind != NODE_PROG) return PROG_NODE_ERROR;
+    if (tree->child_count < 2) return PROG_CHILD_COUNT_ERROR;
 
     var_unique_id = 0;
 
     scope_t* prog_scope = (scope_t*) calloc(1, sizeof(scope_t));
     assert(prog_scope);
 
-    for (size_t i = 0; i < tree->child_count; i++)
+    node_t* functions = tree->children[1];
+
+    for (size_t i = 0; i < functions->child_count; i++)
     {
-        node_t* func_node = tree->children[i];
+        node_t* func_node = functions->children[i];
 
         error_code error = declare_func(prog_scope,
                                         identifiers[func_node->data_t.function.id_number].name,
@@ -182,10 +185,10 @@ error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
         }
     }
 
-    for (size_t i = 0; i < tree->child_count; i++)
+    for (size_t i = 0; i < functions->child_count; i++)
     {
        current_stack_offset = 0;
-       error_code error = analyze_func(tree->children[i], prog_scope, identifiers);
+       error_code error = analyze_func(functions->children[i], prog_scope, identifiers);
        if (error) 
        {
             destroy_scope(prog_scope);

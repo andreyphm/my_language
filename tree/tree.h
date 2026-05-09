@@ -66,10 +66,14 @@ enum node_kind
 {
     NODE_PROG,
 
+    NODE_INCLUDES,
+    NODE_FUNCTIONS,
+
     NODE_OP,       
     NODE_NUM,      
-    NODE_VAR,       
+    NODE_VAR,
 
+    NODE_INCLUDE,
     NODE_FUNC,     
     NODE_CALL,    
     NODE_BODY,     
@@ -97,6 +101,11 @@ struct func_t
     size_t frame_size;
 };
 
+struct include_t
+{
+    int id_number;
+};
+
 union data_union
 {
     double number;
@@ -104,6 +113,7 @@ union data_union
     keyword_code keyword;
     func_t function;
     var_t variable;
+    include_t include;
 };
 
 struct node_t
@@ -128,12 +138,15 @@ void node_reserve(node_t* node, size_t new_capacity);
 void node_add_child(node_t* parent, node_t* child);
 
 node_t* create_prog_node();
+node_t* create_includes_node();
+node_t* create_functions_node();
+node_t* create_include_node(int id_number);
 node_t* create_num_node(double value);
 node_t* create_var_node(int var_id);
 node_t* create_op_node(operator_code op, node_t* left, node_t* right);
 node_t* create_body_node();
 node_t* create_args_node();
-node_t* create_func_node(int func_id_num, node_t* args, node_t* body);
+node_t* create_function_node(int func_id_num, node_t* args, node_t* body);
 node_t* create_call_node(int func_id_num, node_t* args);
 node_t* create_if_node(node_t* condition, node_t* then_body, node_t* else_body);
 node_t* create_else_node();
