@@ -8,8 +8,8 @@
 #include "output.h"
 
 static const char* INCLUDE_STR = "#include";
-static const char* DIR_LEFT_BORDER_STR = "\"";
-static const char* DIR_RIGHT_BORDER_STR = "\"";
+static const char* DIR_LEFT_BORDER_STR = "<";
+static const char* DIR_RIGHT_BORDER_STR = ">";
 
 error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list)
 {

@@ -166,7 +166,6 @@ error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
     var_unique_id = 0;
 
     scope_t* prog_scope = (scope_t*) calloc(1, sizeof(scope_t));
-    assert(prog_scope);
 
     node_t* functions = tree->children[1];
 
@@ -420,14 +419,30 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
             return NO_ERROR;
 
         case NODE_CALL:
-            if (!seek_func(current, expr_node->data_t.function.id_number))
-                    return UNDECLARED_FUNCTION;
+        {
+            int func_id = expr_node->data_t.function.id_number;
+        
+            if (!strcmp(identifiers[func_id].name, "out"))
+            {
+                node_t* args_node = expr_node->children[0];
+            
+                if (args_node->child_count != 1)
+                    return OUT_WRONG_NUMBER_OF_ARGS;
+
+                return analyze_expr(args_node->children[0], current, identifiers);
+            }
+        
+            if (!seek_func(current, func_id))
+                return UNDECLARED_FUNCTION;
+        
             for (size_t i = 0; i < expr_node->children[0]->child_count; i++)
             {
                 error_code error = analyze_expr(expr_node->children[0]->children[i], current, identifiers);
                 if (error) return error;
             }
+        
             return NO_ERROR;
+        }
 
         default: 
             return NO_ERROR;

@@ -1,4 +1,4 @@
-#include "my_stdlib"
+#include <my_stdlib>
 
 func fact(n)
 {
@@ -14,5 +14,6 @@ func fact(n)
 
 func main()
 {
-    return fact(5) + fact(3);
+    out(fact(5) + fact(3));
+    return;
 }
