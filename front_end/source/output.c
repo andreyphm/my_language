@@ -30,6 +30,7 @@ const char* error_to_string(error_code error)
         case MULTIPLE_FUNC_DECLARATION: return "MULTIPLE_FUNC_DECLARATION";
         case UNDECLARED_FUNCTION:       return "UNDECLARED_FUNCTION";
         case OUT_WRONG_NUMBER_OF_ARGS:  return "OUT_WRONG_NUMBER_OF_ARGS";
+        case IN_WRONG_NUMBER_OF_ARGS:   return "IN_WRONG_NUMBER_OF_ARGS";
         
         default:                        return "NO_ERROR";
     }

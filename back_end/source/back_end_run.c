@@ -32,8 +32,10 @@ void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* con
     assert(output_file);
     assert(identifiers);
 
-    printf_to_text_buffer(";========== PROGRAM START ==========;\n"
-                          ";======== GitHub: andreyphm ========;\n\n"
+    printf_to_text_buffer(";*******************************************************;\n"
+                          ";==================== PROGRAM START ====================;\n"
+                          ";================== GitHub: andreyphm ==================;\n"
+                          ";*******************************************************;\n\n"
                           "section .text\n\n");
 
     printf_to_rodata_buffer("section .rodata\n\n"
@@ -46,7 +48,7 @@ void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* con
 
     gen_prog(tree, identifiers, &counters);
 
-    printf_to_text_buffer(";========== PROGRAM END ==========;\n");
+    printf_to_text_buffer(";================= PROGRAM END =================;\n\n");
 
     fwrite(include_buffer, sizeof(char), include_pos, output_file);
     fwrite(text_buffer, sizeof(char), text_pos, output_file);
@@ -101,11 +103,11 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, counters
         printf_to_text_buffer("main:\n");
     }
 
-    printf_to_text_buffer(";========== FUNCTION \"%s\" ==========\n"
+    printf_to_text_buffer(";==================== FUNCTION \"%s\" ====================;\n"
                           "func_%zu:\n"
                           "\tpush rbp\n"
                           "\tmov rbp, rsp\n"
-                          "\tsub rsp, %zu\t\t; Stack preparation\n\n",
+                          "\tsub rsp, %zu\t\t\t\t\t; Stack preparation\n\n",
                           func_name,
                           func_id,
                           frame_size);
@@ -118,13 +120,12 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, counters
                               (i + 2) * sizeof(double), (i + 1) * sizeof(double), i + 1);
     }
 
-    printf("gen_block\n");
     gen_block(func_node->children[1], identifiers, counters);
 
     printf_to_text_buffer("func_end_%zu:\n"
                           "\tadd rsp, %zu\n"
                           "\tpop rbp\n"
-                          "\tret\t\t; Stack free\n\n",
+                          "\tret\t\t\t\t\t\t\t; Stack free\n\n",
                           func_id,
                           frame_size);
 }
@@ -191,10 +192,10 @@ void gen_if(node_t* if_node, const identifier_t* const identifiers, counters_t* 
 
     size_t if_id = ++counters->if_counter;
 
-    printf_to_text_buffer(";========== IF_%zu ==========\n", if_id);
+    printf_to_text_buffer(";==================== IF_%zu ====================;\n", if_id);
 
     gen_expr(if_node->children[0], identifiers, counters);
-    printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
+    printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\t; Compare xmm0 with 0.0 (false)\n"
                           "\tje .if_end_%zu\n\n", if_id);
 
     gen_block(if_node->children[1], identifiers, counters);
@@ -206,7 +207,7 @@ void gen_if(node_t* if_node, const identifier_t* const identifiers, counters_t* 
 
     if (if_node->child_count >= 3)
     {
-        printf_to_text_buffer(";========== ELSE_%zu ==========\n", if_id);
+        printf_to_text_buffer(";==================== ELSE_%zu ====================;\n", if_id);
 
         gen_block(if_node->children[2], identifiers, counters);
 
@@ -222,19 +223,19 @@ void gen_while(node_t* while_node, const identifier_t* const identifiers, counte
 
     size_t while_id = ++counters->while_counter;
     counters->while_stack_counter++;
-    printf_to_text_buffer(";========== WHILE_%zu ==========\n", while_id); 
+    printf_to_text_buffer(";==================== WHILE_%zu ====================;\n", while_id); 
 
     gen_expr(while_node->children[0], identifiers, counters);
-    printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
-                          "\tje .while_end_%zu\n\n"
+    printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\t; Compare xmm0 with 0.0 (false)\n"
+                          "\tje .while_end_%zu\n"
                           ".while_loop_%zu:\n",
                           while_id, while_id);
 
     gen_block(while_node->children[1], identifiers, counters);
 
     gen_expr(while_node->children[0], identifiers, counters);
-    printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\n"
-                          "\tjne .while_loop_%zu\n\n"
+    printf_to_text_buffer("\tucomisd xmm0, [rel const_false]\t; Compare xmm0 with 0.0 (false)\n"
+                          "\tjne .while_loop_%zu\n"
                           ".while_end_%zu:\n\n",
                           while_id, while_id);
 }
@@ -243,7 +244,7 @@ void gen_break(counters_t* const counters)
 {
     assert(counters);
 
-    printf_to_text_buffer(";========== BREAK ==========\n"
+    printf_to_text_buffer(";==================== BREAK ====================;\n"
                           "\tjmp .while_end_%zu\n\n",
                           counters->while_stack_counter);
 
@@ -257,13 +258,13 @@ void gen_var_decl(node_t* var_decl_node, const identifier_t* const identifiers, 
     assert(counters);
 
     node_t* var_node = var_decl_node->children[0];
-    printf_to_text_buffer(";========== VAR_DECL_ID %d \"%s\" ==========\n",
+    printf_to_text_buffer(";==================== VAR_DECL_ID %d \"%s\" ====================;\n",
                             var_node->data_t.variable.unique_id,
                             identifiers[var_node->data_t.variable.id_number].name);
 
     gen_expr(var_decl_node->children[1], identifiers, counters);
 
-    printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; variable_%d init\n\n",
+    printf_to_text_buffer("\tmovsd [rbp - %zu], xmm0\t\t; variable_%d initialize\n\n",
                             var_decl_node->data_t.variable.stack_offset,
                             var_node->data_t.variable.unique_id);
 }
@@ -274,7 +275,7 @@ void gen_ret(node_t* ret_node, const identifier_t* const identifiers, counters_t
     assert(identifiers);
     assert(counters);
 
-    printf_to_text_buffer(";========== RET ==========\n");
+    printf_to_text_buffer(";==================== RET ====================;\n");
 
     if (ret_node->child_count >= 1)
         gen_expr(ret_node->children[0], identifiers, counters);
@@ -305,7 +306,6 @@ void gen_expr(node_t* expr_node, const identifier_t* const identifiers, counters
             break;
 
         case NODE_CALL:
-            printf("call\n");
             gen_call(expr_node, identifiers, counters);
             break;
 
@@ -337,18 +337,22 @@ void gen_call(node_t* call_node, const identifier_t* const identifiers, counters
 
     node_t* args_node = call_node->children[0];
     int function_id = call_node->data_t.function.id_number;
-    printf("2\n");
 
     if (!strcmp(identifiers[function_id].name, "out"))
     {
-        printf("1\n");
         gen_out(call_node, identifiers, counters);
+        return;
+    }
+
+    if (!strcmp(identifiers[function_id].name, "in"))
+    {
+        gen_in(call_node, identifiers, counters);
         return;
     }
 
     if (args_node->child_count >= 1)
     {
-        printf_to_text_buffer(";===== CALL \"%s\" =====\n"
+        printf_to_text_buffer(";================= CALL \"%s\" =================;\n"
                               "\tsub rsp, %zu\n\n",
                               identifiers[function_id].name,
                               args_node->child_count * sizeof(double));
@@ -381,13 +385,40 @@ void gen_out(node_t* out_node, const identifier_t* const identifiers, counters_t
         return;
     }
 
-    printf_to_text_buffer(";========== OUT ==========\n");
+    printf_to_text_buffer(";==================== OUT ====================;\n");
 
     gen_expr(args_node->children[0], identifiers, counters);
 
-    printf_to_text_buffer("\tlea rdi, [rel __out_fmt]\t\t; Printf first argument in rdi\n"
-                          "\tmov al, 1\t\t\t; One double argument in xmm0\n"
+    printf_to_text_buffer("\tlea rdi, [rel __out_fmt]\t; Format string address is first argument of printf\n"
+                          "\tmov al, 1\t\t\t\t\t; One double argument in xmm0\n"
                           "\tcall printf\n\n");
+}
+
+void gen_in(node_t* in_node, const identifier_t* const identifiers, counters_t* const counters)
+{
+    assert(in_node);
+    assert(identifiers);
+    assert(counters);
+
+    node_t* args_node = in_node->children[0];
+
+    if (args_node->child_count != 0)
+    {
+        fprintf(stderr, MAKE_BOLD_RED("Error: in() expects no arguments\n"));
+        return;
+    }
+
+    printf_to_text_buffer(";==================== IN ====================;\n"
+                          "\tpush rbp\n"
+                          "\tmov rbp, rsp\n"
+                          "\tsub rsp, 16\t\t\t\t\t; Space for a double with alignment\n\n"
+                          "\tlea rdi, [rel __in_fmt]\t\t; Format string address is first argument of scanf\n"
+                          "\tlea rsi, [rbp - 8]\t\t\t; Write the address of the variable where scanf will store the value\n"
+                          "\txor eax, eax\t\t\t\t; There is no xmm arguments\n"
+                          "\tcall scanf\n"
+                          "\tmovsd xmm0, [rbp - 8]\t\t; Save value in xmm0\n\n"
+                          "\tadd rsp, 16\n"
+                          "\tpop rsp\n");
 }
 
 void op_node_to_asm(node_t* op_node, const identifier_t* const identifiers, counters_t* const counters)
@@ -434,7 +465,7 @@ void op_node_to_asm(node_t* op_node, const identifier_t* const identifiers, coun
             break;
     }
 
-    printf_to_text_buffer("\t\t; Operation complete\n\n");
+    printf_to_text_buffer("       ; Operation complete\n\n");
 }
 
 void gen_add(node_t* add_node, const identifier_t* const identifiers, counters_t* const counters)
@@ -444,7 +475,7 @@ void gen_add(node_t* add_node, const identifier_t* const identifiers, counters_t
     assert(counters);
 
     printf_to_text_buffer("\tsub rsp, %zu\n"
-                          "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
+                          "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
                           sizeof(double));
 
     gen_expr(add_node->children[0], identifiers, counters);
@@ -461,7 +492,7 @@ void gen_sub(node_t* sub_node, const identifier_t* const identifiers, counters_t
     assert(counters);
 
     printf_to_text_buffer("\tsub rsp, %zu\n"
-                          "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
+                          "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
                           sizeof(double));
 
     gen_expr(sub_node->children[0], identifiers, counters);
@@ -478,7 +509,7 @@ void gen_mul(node_t* mul_node, const identifier_t* const identifiers, counters_t
     assert(counters);
 
     printf_to_text_buffer("\tsub rsp, %zu\n"
-                          "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
+                          "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
                           sizeof(double));
 
     gen_expr(mul_node->children[0], identifiers, counters);
@@ -495,7 +526,7 @@ void gen_div(node_t* div_node, const identifier_t* const identifiers, counters_t
     assert(counters);
 
     printf_to_text_buffer("\tsub rsp, %zu\n"
-                          "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
+                          "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
                           sizeof(double));
 
     gen_expr(div_node->children[0], identifiers, counters);
@@ -513,7 +544,7 @@ void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, counters_t
 
     size_t cmp_id = ++counters->cmp_counter;
     printf_to_text_buffer("\tsub rsp, %zu\n"
-                          "\tmovsd [rsp], xmm0\t\t; Save temporary value\n\n",
+                          "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
                           sizeof(double));
 
     gen_expr(cmp_node->children[0], identifiers, counters);

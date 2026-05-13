@@ -14,6 +14,8 @@ func fact(n)
 
 func main()
 {
-    out(fact(5) + fact(3));
+    var x = 0;
+    x = in();
+    out(fact(x));
     return;
 }

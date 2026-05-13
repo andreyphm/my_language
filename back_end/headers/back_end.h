@@ -41,6 +41,7 @@ void gen_mul(node_t* mul_node, const identifier_t* const identifiers, counters_t
 void gen_div(node_t* div_node, const identifier_t* const identifiers, counters_t* const counters);
 void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, counters_t* const counters);
 void gen_out(node_t* out_node, const identifier_t* const identifiers, counters_t* const counters);
+void gen_in(node_t* in_node, const identifier_t* const identifiers, counters_t* const counters);
 
 const char* gen_jump_command(operator_code op);
 
