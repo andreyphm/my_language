@@ -34,7 +34,7 @@ func_1:
 	movsd xmm0, [rel const_true]
 
 .cmp_end_1:
-	add rsp, 8       ; Operation complete
+	add rsp, 8			; Operation complete
 
 	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
 	je .if_end_1
@@ -57,7 +57,7 @@ func_1:
 
 	movsd xmm0, [rbp - 8]
 	subsd xmm0, [rsp]
-	add rsp, 8       ; Operation complete
+	add rsp, 8			; Operation complete
 
 	movsd [rsp + 0], xmm0		; Save func argument 1
 
@@ -69,7 +69,7 @@ func_1:
 
 	movsd xmm0, [rbp - 8]
 	mulsd xmm0, [rsp]
-	add rsp, 8       ; Operation complete
+	add rsp, 8			; Operation complete
 
 	jmp func_end_1
 
@@ -104,7 +104,7 @@ func_3:
 
 	add rsp, 16
 	pop rsp
-	movsd [rbp - 8], xmm0       ; Operation complete
+	movsd [rbp - 8], xmm0			; Operation complete
 
 ;==================== OUT ====================;
 ;================= CALL "fact" =================;
