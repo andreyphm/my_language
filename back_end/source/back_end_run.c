@@ -10,18 +10,6 @@ static const size_t TEXT_BUFFER_FIRST_SIZE = 10000;
 static const size_t RODATA_BUFFER_FIRST_SIZE = 10000;
 static const size_t INCLUDE_BUFFER_FIRST_SIZE = 1000;
 
-static const cond_op cond_op_array[] =
-{
-    {IS_EQUAL,       "je"},
-    {IS_NOT_EQUAL,  "jne"},
-    {GREATER_EQUAL, "jae"},
-    {GREATER,        "ja"},
-    {LESS_EQUAL,    "jbe"},
-    {LESS,           "jb"}
-};
-
-static const size_t COND_OP_ARRAY_SIZE = sizeof(cond_op_array) / sizeof(cond_op_array[0]);
-
 void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* const identifiers)
 {
     assert(tree);
@@ -459,7 +447,7 @@ void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* c
                      ";==================== IN ====================;\n"
                      "\tsub rsp, 16\t\t\t\t\t; Space for a double with alignment\n\n"
                      "\tlea rdi, [rel __in_fmt]\t\t; Format string address is first argument of scanf\n"
-                     "\tlea rsi, [rbp - 8]\t\t\t; Write the address of the variable where scanf will store the value\n"
+                     "\tlea rsi, [rsp]\t\t\t; Write the address of the variable where scanf will store the value\n"
                      "\txor eax, eax\t\t\t\t; There is no xmm arguments\n"
                      "\tcall scanf\n"
                      "\tmovsd xmm0, [rsp]\t\t; Save value in xmm0\n\n"
@@ -499,12 +487,27 @@ void op_node_to_asm(node_t* op_node, const identifier_t* const identifiers, cont
             break;
 
         case IS_EQUAL:
+            gen_cmp(op_node, identifiers, context, "je");
+            break;
+
         case IS_NOT_EQUAL:
+            gen_cmp(op_node, identifiers, context, "jne");
+            break;
+
         case GREATER_EQUAL:
+            gen_cmp(op_node, identifiers, context, "jae");
+            break;
+
         case GREATER:
+            gen_cmp(op_node, identifiers, context, "ja");
+            break;
+
         case LESS_EQUAL:
+            gen_cmp(op_node, identifiers, context, "jbe");
+            break;
+
         case LESS:
-            gen_cmp(op_node, identifiers, context);
+            gen_cmp(op_node, identifiers, context, "jb");
             break;
 
         default:
@@ -591,7 +594,7 @@ void gen_div(node_t* div_node, const identifier_t* const identifiers, context_t*
                      sizeof(double));
 }
 
-void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t* context)
+void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t* context, const char* jump_word)
 {
     assert(cmp_node);
     assert(identifiers);
@@ -605,8 +608,6 @@ void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t*
 
     gen_expr(cmp_node->children[0], identifiers, context);
 
-    const char* jump_word = gen_jump_command(cmp_node->data_t.op);
-
     printf_to_buffer(&context->buffers.text,
                      "\tucomisd xmm0, [rsp]\n"
                      "\t%s .cmp_true_%zu\n\n"
@@ -617,17 +618,6 @@ void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t*
                      ".cmp_end_%zu:\n"
                      "\tadd rsp, %zu",
                      jump_word, cmp_id, cmp_id, cmp_id, cmp_id, sizeof(double));
-}
-
-const char* gen_jump_command(operator_code op)
-{
-    for (size_t i = 0; i < COND_OP_ARRAY_SIZE; i++)
-    {
-        if (cond_op_array[i].op == op)
-            return cond_op_array[i].jump_command;
-    }
-
-    return "UNKNOWN_JUMP_COMMAND";
 }
 
 size_t align_up_16(size_t number)

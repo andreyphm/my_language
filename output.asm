@@ -92,18 +92,15 @@ func_3:
 	movsd [rbp - 8], xmm0		; variable_1 initialize
 
 ;==================== IN ====================;
-	push rbp
-	mov rbp, rsp
 	sub rsp, 16					; Space for a double with alignment
 
 	lea rdi, [rel __in_fmt]		; Format string address is first argument of scanf
-	lea rsi, [rbp - 8]			; Write the address of the variable where scanf will store the value
+	lea rsi, [rsp]			; Write the address of the variable where scanf will store the value
 	xor eax, eax				; There is no xmm arguments
 	call scanf
-	movsd xmm0, [rbp - 8]		; Save value in xmm0
+	movsd xmm0, [rsp]		; Save value in xmm0
 
 	add rsp, 16
-	pop rsp
 	movsd [rbp - 8], xmm0			; Operation complete
 
 ;==================== OUT ====================;

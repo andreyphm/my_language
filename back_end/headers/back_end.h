@@ -59,11 +59,9 @@ void gen_add(node_t* add_node, const identifier_t* const identifiers, context_t*
 void gen_sub(node_t* sub_node, const identifier_t* const identifiers, context_t* context);
 void gen_mul(node_t* mul_node, const identifier_t* const identifiers, context_t* context);
 void gen_div(node_t* div_node, const identifier_t* const identifiers, context_t* context);
-void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t* context);
+void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t* context, const char* jump_word);
 void gen_out(node_t* out_node, const identifier_t* const identifiers, context_t* context);
 void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* context);
-
-const char* gen_jump_command(operator_code op);
 
 size_t align_up_16(size_t number);
 
