@@ -34,8 +34,7 @@ func_1:
 	movsd xmm0, [rel const_true]
 
 .cmp_end_1:
-	add rsp, 8			; Operation complete
-
+	add rsp, 8
 	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
 	je .if_end_1
 
@@ -50,15 +49,13 @@ func_1:
 ;==================== RET ====================;
 ;================= CALL "fact" =================;
 	sub rsp, 8
-
 	movsd xmm0, [rel const_2]
 	sub rsp, 8
 	movsd [rsp], xmm0			; Save temporary value
 
 	movsd xmm0, [rbp - 8]
 	subsd xmm0, [rsp]
-	add rsp, 8			; Operation complete
-
+	add rsp, 8
 	movsd [rsp + 0], xmm0		; Save func argument 1
 
 	call func_1
@@ -69,8 +66,7 @@ func_1:
 
 	movsd xmm0, [rbp - 8]
 	mulsd xmm0, [rsp]
-	add rsp, 8			; Operation complete
-
+	add rsp, 8
 	jmp func_end_1
 
 .if_else_end_1:
@@ -92,21 +88,17 @@ func_3:
 	movsd [rbp - 8], xmm0		; variable_1 initialize
 
 ;==================== IN ====================;
-	sub rsp, 16					; Space for a double with alignment
-
+	sub rsp, 16
 	lea rdi, [rel __in_fmt]		; Format string address is first argument of scanf
-	lea rsi, [rsp]			; Write the address of the variable where scanf will store the value
+	lea rsi, [rsp]				; Write the address of the variable where scanf will store the value
 	xor eax, eax				; There is no xmm arguments
 	call scanf
 	movsd xmm0, [rsp]		; Save value in xmm0
 
 	add rsp, 16
-	movsd [rbp - 8], xmm0			; Operation complete
-
-;==================== OUT ====================;
+	movsd [rbp - 8], xmm0;==================== OUT ====================;
 ;================= CALL "fact" =================;
 	sub rsp, 8
-
 	movsd xmm0, [rbp - 8]
 	movsd [rsp + 0], xmm0		; Save func argument 1
 

@@ -17,6 +17,7 @@ struct counters_t
     size_t while_counter;
     size_t while_stack_counter;
     size_t current_func_id;
+    size_t stack_offset;
 };
 
 struct buffer_data_t
@@ -63,6 +64,10 @@ void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t*
 void gen_out(node_t* out_node, const identifier_t* const identifiers, context_t* context);
 void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* context);
 
+void gen_sub_rsp(context_t* context, size_t bytes);
+void gen_add_rsp(context_t* context, size_t bytes);
+bool align_stack_before_call(context_t* context);
+void unalign_stack_after_call(context_t* context, bool was_aligned);
 size_t align_up_16(size_t number);
 
 void printf_to_buffer(buffer_data_t* buffer_data, const char* format, ...);

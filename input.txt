@@ -16,6 +16,8 @@ func main()
 {
     var x = 0;
     x = in();
+
     out(fact(x));
+
     return;
 }

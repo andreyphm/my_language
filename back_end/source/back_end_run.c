@@ -90,6 +90,7 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, context_
 
     size_t func_id = (size_t)func_node->data_t.function.id_number;
     context->counters.current_func_id = func_id;
+    context->counters.stack_offset = 0;
     size_t frame_size = align_up_16(func_node->data_t.function.frame_size);
     const char* func_name = identifiers[func_node->data_t.function.id_number].name;
 
@@ -380,13 +381,14 @@ void gen_call(node_t* call_node, const identifier_t* const identifiers, context_
         return;
     }
 
+    bool aligned = align_stack_before_call(context);
+
     if (args_node->child_count >= 1)
     {
         printf_to_buffer(&context->buffers.text,
-                         ";================= CALL \"%s\" =================;\n"
-                         "\tsub rsp, %zu\n\n",
-                         identifiers[function_id].name,
-                         args_node->child_count * sizeof(double));
+                         ";================= CALL \"%s\" =================;\n",
+                         identifiers[function_id].name);
+        gen_sub_rsp(context, args_node->child_count * sizeof(double));
 
         for (size_t i = 0; i < args_node->child_count; i++)
         {
@@ -398,10 +400,13 @@ void gen_call(node_t* call_node, const identifier_t* const identifiers, context_
     }
 
     printf_to_buffer(&context->buffers.text,
-                     "\tcall func_%zu\n\n"
-                     "\tadd rsp, %zu\n",
-                     function_id,
-                     args_node->child_count * sizeof(double));
+                     "\tcall func_%zu\n\n",
+                     function_id);
+
+    if (args_node->child_count >= 1)
+        gen_add_rsp(context, args_node->child_count * sizeof(double));
+
+    unalign_stack_after_call(context, aligned);
 }
 
 void gen_out(node_t* out_node, const identifier_t* const identifiers, context_t* context)
@@ -423,10 +428,12 @@ void gen_out(node_t* out_node, const identifier_t* const identifiers, context_t*
 
     gen_expr(args_node->children[0], identifiers, context);
 
+    bool aligned = align_stack_before_call(context);
     printf_to_buffer(&context->buffers.text,
                      "\tlea rdi, [rel __out_fmt]\t; Format string address is first argument of printf\n"
                      "\tmov al, 1\t\t\t\t\t; One double argument in xmm0\n"
                      "\tcall printf\n\n");
+    unalign_stack_after_call(context, aligned);
 }
 
 void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* context)
@@ -444,14 +451,17 @@ void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* c
     }
 
     printf_to_buffer(&context->buffers.text,
-                     ";==================== IN ====================;\n"
-                     "\tsub rsp, 16\t\t\t\t\t; Space for a double with alignment\n\n"
+                     ";==================== IN ====================;\n");
+    gen_sub_rsp(context, 16);
+    bool aligned = align_stack_before_call(context);
+    printf_to_buffer(&context->buffers.text,
                      "\tlea rdi, [rel __in_fmt]\t\t; Format string address is first argument of scanf\n"
-                     "\tlea rsi, [rsp]\t\t\t; Write the address of the variable where scanf will store the value\n"
+                     "\tlea rsi, [rsp]\t\t\t\t; Write the address of the variable where scanf will store the value\n"
                      "\txor eax, eax\t\t\t\t; There is no xmm arguments\n"
                      "\tcall scanf\n"
-                     "\tmovsd xmm0, [rsp]\t\t; Save value in xmm0\n\n"
-                     "\tadd rsp, 16\n");
+                     "\tmovsd xmm0, [rsp]\t\t; Save value in xmm0\n\n");
+    unalign_stack_after_call(context, aligned);
+    gen_add_rsp(context, 16);
 }
 
 void op_node_to_asm(node_t* op_node, const identifier_t* const identifiers, context_t* context)
@@ -514,8 +524,8 @@ void op_node_to_asm(node_t* op_node, const identifier_t* const identifiers, cont
             break;
     }
 
-    printf_to_buffer(&context->buffers.text,
-                     "\t\t\t; Operation complete\n\n");
+    // printf_to_buffer(&context->buffers.text,
+    //                  "\t\t\t; Operation complete\n\n");
 }
 
 void gen_add(node_t* add_node, const identifier_t* const identifiers, context_t* context)
@@ -524,17 +534,15 @@ void gen_add(node_t* add_node, const identifier_t* const identifiers, context_t*
     assert(identifiers);
     assert(context);
 
+    gen_sub_rsp(context, sizeof(double));
     printf_to_buffer(&context->buffers.text,
-                     "\tsub rsp, %zu\n"
-                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
-                     sizeof(double));
+                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n");
 
     gen_expr(add_node->children[0], identifiers, context);
 
     printf_to_buffer(&context->buffers.text,
-                     "\taddsd xmm0, [rsp]\n"
-                     "\tadd rsp, %zu",
-                     sizeof(double));
+                     "\taddsd xmm0, [rsp]\n");
+    gen_add_rsp(context, sizeof(double));
 }
 
 void gen_sub(node_t* sub_node, const identifier_t* const identifiers, context_t* context)
@@ -543,17 +551,15 @@ void gen_sub(node_t* sub_node, const identifier_t* const identifiers, context_t*
     assert(identifiers);
     assert(context);
 
+    gen_sub_rsp(context, sizeof(double));
     printf_to_buffer(&context->buffers.text,
-                     "\tsub rsp, %zu\n"
-                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
-                     sizeof(double));
+                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n");
 
     gen_expr(sub_node->children[0], identifiers, context);
 
     printf_to_buffer(&context->buffers.text,
-                     "\tsubsd xmm0, [rsp]\n"
-                     "\tadd rsp, %zu",
-                     sizeof(double));
+                     "\tsubsd xmm0, [rsp]\n");
+    gen_add_rsp(context, sizeof(double));
 }
 
 void gen_mul(node_t* mul_node, const identifier_t* const identifiers, context_t* context)
@@ -562,17 +568,15 @@ void gen_mul(node_t* mul_node, const identifier_t* const identifiers, context_t*
     assert(identifiers);
     assert(context);
 
+    gen_sub_rsp(context, sizeof(double));
     printf_to_buffer(&context->buffers.text,
-                     "\tsub rsp, %zu\n"
-                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
-                     sizeof(double));
+                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n");
 
     gen_expr(mul_node->children[0], identifiers, context);
 
     printf_to_buffer(&context->buffers.text,
-                     "\tmulsd xmm0, [rsp]\n"
-                     "\tadd rsp, %zu",
-                     sizeof(double));
+                     "\tmulsd xmm0, [rsp]\n");
+    gen_add_rsp(context, sizeof(double));
 }
 
 void gen_div(node_t* div_node, const identifier_t* const identifiers, context_t* context)
@@ -581,17 +585,15 @@ void gen_div(node_t* div_node, const identifier_t* const identifiers, context_t*
     assert(identifiers);
     assert(context);
 
+    gen_sub_rsp(context, sizeof(double));
     printf_to_buffer(&context->buffers.text,
-                     "\tsub rsp, %zu\n"
-                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
-                     sizeof(double));
+                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n");
 
     gen_expr(div_node->children[0], identifiers, context);
 
     printf_to_buffer(&context->buffers.text,
-                     "\tdivsd xmm0, [rsp]\n"
-                     "\tadd rsp, %zu",
-                     sizeof(double));
+                     "\tdivsd xmm0, [rsp]\n");
+    gen_add_rsp(context, sizeof(double));
 }
 
 void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t* context, const char* jump_word)
@@ -599,12 +601,12 @@ void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t*
     assert(cmp_node);
     assert(identifiers);
     assert(context);
+    assert(jump_word);
 
     size_t cmp_id = ++context->counters.cmp_counter;
+    gen_sub_rsp(context, sizeof(double));
     printf_to_buffer(&context->buffers.text,
-                     "\tsub rsp, %zu\n"
-                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n",
-                     sizeof(double));
+                     "\tmovsd [rsp], xmm0\t\t\t; Save temporary value\n\n");
 
     gen_expr(cmp_node->children[0], identifiers, context);
 
@@ -615,9 +617,52 @@ void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t*
                      "\tjmp .cmp_end_%zu\n\n"
                      ".cmp_true_%zu:\n"
                      "\tmovsd xmm0, [rel const_true]\n\n"
-                     ".cmp_end_%zu:\n"
-                     "\tadd rsp, %zu",
-                     jump_word, cmp_id, cmp_id, cmp_id, cmp_id, sizeof(double));
+                     ".cmp_end_%zu:\n",
+                     jump_word, cmp_id, cmp_id, cmp_id, cmp_id);
+    gen_add_rsp(context, sizeof(double));
+}
+
+void gen_add_rsp(context_t* context, size_t bytes)
+{
+    assert(context);
+
+    printf_to_buffer(&context->buffers.text, "\tadd rsp, %zu\n", bytes);
+    context->counters.stack_offset -= bytes;
+}
+
+void gen_sub_rsp(context_t* context, size_t bytes)
+{
+    assert(context);
+
+    printf_to_buffer(&context->buffers.text, "\tsub rsp, %zu\n", bytes);
+    context->counters.stack_offset += bytes;
+}
+
+bool align_stack_before_call(context_t* context)
+{
+    assert(context);
+
+    if (context->counters.stack_offset % 16 != 0)
+    {
+        printf_to_buffer(&context->buffers.text,
+                         "\tsub rsp, 8\t\t\t\t\t; Stack alignment before call\n");
+        context->counters.stack_offset += 8;
+        return true;
+    }
+
+    return false;
+}
+
+void unalign_stack_after_call(context_t* context, bool was_aligned)
+{
+    assert(context);
+
+    if (was_aligned)
+    {
+        printf_to_buffer(&context->buffers.text,
+                         "\tadd rsp, 8\t\t\t\t\t; Remove alignment\n");
+        context->counters.stack_offset -= 8;
+    }
 }
 
 size_t align_up_16(size_t number)
@@ -627,6 +672,8 @@ size_t align_up_16(size_t number)
 
 void printf_to_buffer(buffer_data_t* buffer_data, const char* format, ...)
 {
+    assert(buffer_data);
+
     char* buffer = buffer_data->buffer;
     size_t pos = buffer_data->pos;
 
@@ -638,6 +685,8 @@ void printf_to_buffer(buffer_data_t* buffer_data, const char* format, ...)
 
 void initialize_buffers(buffers_t* buffers)
 {
+    assert(buffers);
+
     buffers->text.capacity    = TEXT_BUFFER_FIRST_SIZE;
     buffers->rodata.capacity  = RODATA_BUFFER_FIRST_SIZE;
     buffers->include.capacity = INCLUDE_BUFFER_FIRST_SIZE;
@@ -649,6 +698,9 @@ void initialize_buffers(buffers_t* buffers)
 
 void buffers_to_file(buffers_t* buffers, FILE* const output_file)
 {
+    assert(buffers);
+    assert(output_file);
+
     fwrite(buffers->include.buffer, sizeof(char), buffers->include.pos, output_file);
     fwrite(buffers->text.buffer, sizeof(char), buffers->text.pos, output_file);
     fwrite(buffers->rodata.buffer, sizeof(char), buffers->rodata.pos, output_file);
@@ -656,6 +708,8 @@ void buffers_to_file(buffers_t* buffers, FILE* const output_file)
 
 void free_buffers(buffers_t* buffers)
 {
+    assert(buffers);
+
     free(buffers->text.buffer);
     free(buffers->rodata.buffer);
     free(buffers->include.buffer);
