@@ -6,9 +6,9 @@
 #include "back_end.h"
 #include "font.h"
 
-static const size_t TEXT_BUFFER_FIRST_SIZE = 10000;
-static const size_t RODATA_BUFFER_FIRST_SIZE = 10000;
-static const size_t INCLUDE_BUFFER_FIRST_SIZE = 1000;
+static const size_t TEXT_BUFFER_FIRST_SIZE = 1000;
+static const size_t RODATA_BUFFER_FIRST_SIZE = 1000;
+static const size_t INCLUDE_BUFFER_FIRST_SIZE = 100;
 
 void back_end_run(node_t* tree, FILE* const output_file, const identifier_t* const identifiers)
 {
@@ -674,13 +674,34 @@ void printf_to_buffer(buffer_data_t* buffer_data, const char* format, ...)
 {
     assert(buffer_data);
 
-    char* buffer = buffer_data->buffer;
-    size_t pos = buffer_data->pos;
-
     va_list v_list = {};
     va_start(v_list, format);
-    buffer_data->pos += (size_t) vsnprintf(buffer + pos, buffer_data->capacity - pos, format, v_list);
+    va_list v_list_copy = {};
+    va_copy(v_list_copy, v_list);
+
+    size_t available = buffer_data->capacity - buffer_data->pos;
+    size_t needed = (size_t) vsnprintf(buffer_data->buffer + buffer_data->pos,
+                                       buffer_data->capacity - buffer_data->pos, format, v_list);
     va_end(v_list);
+
+    if (needed >= available)
+    {
+        size_t new_capacity = buffer_data->capacity;
+        while (buffer_data->pos + needed >= new_capacity)
+            new_capacity *= 2;
+
+        char* new_buffer = (char*) realloc(buffer_data->buffer, new_capacity);
+        assert(new_buffer);
+
+        buffer_data->buffer = new_buffer;
+        buffer_data->capacity = new_capacity;
+
+        vsnprintf(buffer_data->buffer + buffer_data->pos,
+                  buffer_data->capacity - buffer_data->pos, format, v_list_copy);
+    }
+
+    va_end(v_list_copy);
+    buffer_data->pos += needed;
 }
 
 void initialize_buffers(buffers_t* buffers)
