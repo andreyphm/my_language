@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>  
 
+#define SEGMENT_COUNT 2
+
 enum operand_kind_t
 {
     NOT_OPERAND,
@@ -36,8 +38,9 @@ struct instruction_list_t
     instruction_t* instructions;
     size_t count;
     size_t capacity;
-}
+};
 
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file);
+void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point);
 
 #endif // ASM_TO_BINARY_H
