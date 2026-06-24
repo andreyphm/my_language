@@ -8,6 +8,7 @@
 #include "asm_to_binary.h"
 
 static char* read_file_to_buffer(FILE* const tree_txt_file);
+static void skip_line(const char** string);
 static void skip_spaces(const char** string);
 
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file)
@@ -16,8 +17,6 @@ void asm_to_binary(FILE* const asm_file, FILE* const binary_file)
     assert(binary_file);
 
     char* asm_buffer = read_file_to_buffer(asm_file);
-    size_t asm_buffer_len = strlen(asm_buffer);
-    asm_buffer[asm_buffer_len] = '$';
 
     instruction_list_t instruction_list = {};
     label_list_t label_list = {};
@@ -45,7 +44,7 @@ static char* read_file_to_buffer(FILE* const tree_txt_file)
     return buffer;
 }
 
-error_code asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
+void asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
 {
     assert(asm_buffer);
     assert(instruction_list);
@@ -53,23 +52,70 @@ error_code asm_code_to_instructions(char* asm_buffer, instruction_list_t* const 
 
     instruction_list_init(instruction_list);
     label_list_init(label_list);
+    section_kind current_section = NO_SECTION;
 
-    while (*asm_buffer != '$')
+    while (*asm_buffer != '\0')
     {
         skip_spaces(&asm_buffer);
-        if (*asm_buffer == '$') break;
+        if (*asm_buffer == '\0') break;
 
-        if (parse_instruction(&asm_buffer, instruction_list) == NO_ERROR)
-            continue;
-        else return PARSE_ERROR;
+        parse_instruction(&asm_buffer, instruction_list, label_list, &current_section);
     }
-
-    return NO_ERROR;
 }
 
-error_code parse_instruction(char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
+void parse_instruction(const char** asm_buffer, instruction_list_t* const instruction_list,
+                                                label_list_t* label_list, section_kind* section)
 {
-    
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(instruction_list);
+    assert(label_list);
+    assert(section);
+
+    if (**asm_buffer == ';' || !strncmp(*asm_buffer, "global", sizeof("global") - 1))
+    {
+        skip_line(asm_buffer);
+        return;
+    }
+
+    if (!strncmp(*asm_buffer, "section", sizeof("section") - 1))
+    {
+        *asm_buffer += sizeof("section") - 1;
+        skip_spaces(asm_buffer);
+
+        if (!strncmp(*asm_buffer, ".text", sizeof(".text") - 1))
+            *section = SECTION_TEXT;
+        else if (!strncmp(*asm_buffer, ".rodata", sizeof(".rodata") - 1))
+            *section = SECTION_RODATA;
+
+        skip_line(asm_buffer);
+        return;
+    }
+
+    const char* line_start = *asm_buffer;
+    while (**asm_buffer != ':' && **asm_buffer != '\n' && **asm_buffer != '\0')
+        (*asm_buffer)++;
+
+    if (**asm_buffer == ':')
+    {
+        label_t label = {};
+        size_t name_len = (size_t) (*asm_buffer - line_start);
+        strncpy(label.name, line_start, name_len);
+        label.instruction_index = instruction_list->count;
+
+        label_list_push_back(label_list, label);
+
+        (*asm_buffer)++;
+        return;
+    }
+
+    skip_line(asm_buffer);
+}
+
+static void skip_line(const char** string)
+{
+    while (**string != '\n' && **string != '\0')
+        (*string)++;
 }
 
 static void skip_spaces(const char** string)
@@ -87,7 +133,7 @@ void instruction_list_init(instruction_list_t* const list)
     list->capacity      = INITIAL_INSTRUCTIONS_CAPACITY;
 }
 
-error_code instruction_list_push_back(instruction_list_t* const list, instruction_t instruction)
+void instruction_list_push_back(instruction_list_t* const list, instruction_t instruction)
 {
     assert(list);
 
@@ -96,11 +142,10 @@ error_code instruction_list_push_back(instruction_list_t* const list, instructio
         list->capacity *= 2;
         list->instructions = (instruction_t*) realloc(list->instructions,
                                                       list->capacity * sizeof(instruction_t));
-        if (!list->instructions) return REALLOC_ERROR;
+        assert(list->instructions);
     }
 
     list->instructions[list->count++] = instruction;
-    return NO_ERROR;
 }
 
 void instruction_list_destroy(instruction_list_t* const list)
@@ -122,7 +167,7 @@ void label_list_init(label_list_t* list)
     list->capacity = INITIAL_LABELS_CAPACITY;
 }
 
-error_code label_list_push_back(label_list_t* list, label_t label)
+void label_list_push_back(label_list_t* list, label_t label)
 {
     assert(list);
 
@@ -130,11 +175,10 @@ error_code label_list_push_back(label_list_t* list, label_t label)
     {
         list->capacity *= 2;
         list->labels = (label_t*) realloc(list->labels, list->capacity * sizeof(label_t));
-        if (!list->labels) return REALLOC_ERROR;
+        assert(list->labels);
     }
 
     list->labels[list->count++] = label;
-    return NO_ERROR;
 }
 
 void label_list_destroy(label_list_t* list)

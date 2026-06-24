@@ -14,13 +14,6 @@
 #define MAX_LABEL_NAME 64
 #define INITIAL_LABELS_CAPACITY 16
 
-enum error_code
-{
-    NO_ERROR = 0,
-    PARSE_ERROR,
-    REALLOC_ERROR
-};
-
 enum operand_kind
 {
     NO_OPERAND,
@@ -29,6 +22,13 @@ enum operand_kind
     OPERAND_MEM,
     OPERAND_IMM,
     OPERAND_LABEL
+};
+
+enum section_kind
+{
+    NO_SECTION = 0,
+    SECTION_TEXT,
+    SECTION_RODATA
 };
 
 struct operand_t
@@ -69,15 +69,16 @@ struct label_list_t
 };
 
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file);
-error_code asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
-error_code parse_instruction(char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
+void asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
+void parse_instruction(const char** asm_buffer, instruction_list_t* const instruction_list,
+                             label_list_t* label_list, section_kind* section);
 
 void instruction_list_init(instruction_list_t* list);
-error_code instruction_list_push_back(instruction_list_t* list, instruction_t instr);
+void instruction_list_push_back(instruction_list_t* list, instruction_t instr);
 void instruction_list_destroy(instruction_list_t* list);
 
-void label_list_init(label_list_t* list;
-error_code label_list_push_back(label_list_t* list, label_t label);
+void label_list_init(label_list_t* list);
+void label_list_push_back(label_list_t* list, label_t label);
 void label_list_destroy(label_list_t* list);
 
 void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point);
