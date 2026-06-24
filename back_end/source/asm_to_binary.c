@@ -1,23 +1,156 @@
 #include <assert.h>
 #include <elf.h>
 #include <string.h>
+#include <ctype.h>
+#include <sys/stat.h>
+#include <stdlib.h>
 
 #include "asm_to_binary.h"
+
+static char* read_file_to_buffer(FILE* const tree_txt_file);
+static void skip_spaces(const char** string);
 
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file)
 {
     assert(asm_file);
     assert(binary_file);
 
+    char* asm_buffer = read_file_to_buffer(asm_file);
+    size_t asm_buffer_len = strlen(asm_buffer);
+    asm_buffer[asm_buffer_len] = '$';
+
+    instruction_list_t instruction_list = {};
+    label_list_t label_list = {};
+    asm_code_to_instructions(asm_buffer, &instruction_list, &label_list);
+
     Elf64_Ehdr elf_header = {};
-    fill_elf_header(&elf_header, 0x400000);
+    fill_elf_header(&elf_header, ENTRY_POINT);
 
     Elf64_Phdr program_header[SEGMENT_COUNT] = {};
-    fill_program_headers(program_header);
+    fill_program_header(program_header, BASE_VADDR, CODE_OFFSET, , , );
+}
+
+static char* read_file_to_buffer(FILE* const tree_txt_file)
+{
+    assert(tree_txt_file);
+
+    struct stat file_struct = {};
+    fstat(fileno(tree_txt_file), &file_struct);
+    size_t file_size = (size_t)file_struct.st_size;
+
+    char* buffer = (char*) calloc(file_size + 1, sizeof(*buffer));
+    file_size = fread(buffer, sizeof(*buffer), file_size, tree_txt_file);
+    buffer[file_size] = '\0';
+
+    return buffer;
+}
+
+error_code asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
+{
+    assert(asm_buffer);
+    assert(instruction_list);
+    assert(label_list);
+
+    instruction_list_init(instruction_list);
+    label_list_init(label_list);
+
+    while (*asm_buffer != '$')
+    {
+        skip_spaces(&asm_buffer);
+        if (*asm_buffer == '$') break;
+
+        if (parse_instruction(&asm_buffer, instruction_list) == NO_ERROR)
+            continue;
+        else return PARSE_ERROR;
+    }
+
+    return NO_ERROR;
+}
+
+error_code parse_instruction(char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
+{
+    
+}
+
+static void skip_spaces(const char** string)
+{
+    while (isspace(**string))
+        (*string)++;
+}
+
+void instruction_list_init(instruction_list_t* const list)
+{
+    assert(list);
+
+    list->instructions  = (instruction_t*) calloc(INITIAL_INSTRUCTIONS_CAPACITY, sizeof(instruction_t));
+    list->count         = 0;
+    list->capacity      = INITIAL_INSTRUCTIONS_CAPACITY;
+}
+
+error_code instruction_list_push_back(instruction_list_t* const list, instruction_t instruction)
+{
+    assert(list);
+
+    if (list->count == list->capacity)
+    {
+        list->capacity *= 2;
+        list->instructions = (instruction_t*) realloc(list->instructions,
+                                                      list->capacity * sizeof(instruction_t));
+        if (!list->instructions) return REALLOC_ERROR;
+    }
+
+    list->instructions[list->count++] = instruction;
+    return NO_ERROR;
+}
+
+void instruction_list_destroy(instruction_list_t* const list)
+{
+    assert(list);
+
+    free(list->instructions);
+    list->instructions = nullptr;
+    list->count    = 0;
+    list->capacity = 0;
+}
+
+void label_list_init(label_list_t* list)
+{
+    assert(list);
+
+    list->labels   = (label_t*) calloc(INITIAL_LABELS_CAPACITY, sizeof(label_t));
+    list->count    = 0;
+    list->capacity = INITIAL_LABELS_CAPACITY;
+}
+
+error_code label_list_push_back(label_list_t* list, label_t label)
+{
+    assert(list);
+
+    if (list->count == list->capacity)
+    {
+        list->capacity *= 2;
+        list->labels = (label_t*) realloc(list->labels, list->capacity * sizeof(label_t));
+        if (!list->labels) return REALLOC_ERROR;
+    }
+
+    list->labels[list->count++] = label;
+    return NO_ERROR;
+}
+
+void label_list_destroy(label_list_t* list)
+{
+    assert(list);
+
+    free(list->labels);
+    list->labels = nullptr;
+    list->count    = 0;
+    list->capacity = 0;
 }
 
 void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point)
 {
+    assert(header);
+
     memset(header, 0, sizeof(Elf64_Ehdr));
 
     header->e_ident[EI_MAG0]        = ELFMAG0;          // 0x7F - magic number
@@ -31,43 +164,45 @@ void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point)
     header->e_ident[EI_ABIVERSION]  = 0;
     // remaining bytes of e_ident are zeroed out by memset
 
-    header->e_type      = ET_EXEC;              // executable file
+    header->e_type      = ET_EXEC;              // execulist file
     header->e_machine   = EM_X86_64;            // architecture (x86-64)
     header->e_version   = EV_CURRENT;           // object file version
     header->e_entry     = entry_point;
     header->e_phoff     = sizeof(Elf64_Ehdr);   // Program Header offset (after ELF header)
-    header->e_shoff     = 0;                    // !Section Header Table offset
+    header->e_shoff     = 0;                    // !Section Header offset
     header->e_flags     = 0;
     header->e_ehsize    = sizeof(Elf64_Ehdr);   // size of ELF header
-    header->e_phentsize = sizeof(Elf64_Phdr);   // size of Program Header Table element
+    header->e_phentsize = sizeof(Elf64_Phdr);   // size of Program Header element
     header->e_phnum     = SEGMENT_COUNT;        // number of segments
-    header->e_shentsize = sizeof(Elf64_Shdr);   // size of Section Header Table element
+    header->e_shentsize = sizeof(Elf64_Shdr);   // size of Section Header element
     header->e_shnum     = 0;                    // !number of sections
-    header->e_shstrndx  = 0;                    // !section with string table index
+    header->e_shstrndx  = 0;                    // !section with string list index
 }
 
-void fill_program_headers(Elf64_Phdr* headers, uint64_t base_vaddr, uint64_t code_offset, uint64_t code_size,
-                                                                    uint64_t data_offset, uint64_t data_size)
+void fill_program_header(Elf64_Phdr* header, uint64_t base_vaddr, uint64_t code_offset, uint64_t code_size,
+                                                                  uint64_t data_offset, uint64_t data_size)
 {
-    memset(headers, 0, 2 * sizeof(Elf64_Phdr));
+    assert(header);
+
+    memset(header, 0, 2 * sizeof(Elf64_Phdr));
 
     // first segment (.text):
-    headers[0].p_type   = PT_LOAD;                  // load segment to memory
-    headers[0].p_flags  = PF_R | PF_X;              // read + execute
-    headers[0].p_offset = 0;                        // segment offset
-    headers[0].p_vaddr  = base_vaddr;               // virtual address
-    headers[0].p_paddr  = base_vaddr;               // physical address (basically ignored)
-    headers[0].p_filesz = code_offset + code_size;  // size of segment in file
-    headers[0].p_memsz  = code_offset + code_size;  // size of segment in memory (no .bss)
-    headers[0].p_align  = 0x1000;                   // page size
+    header[0].p_type   = PT_LOAD;                  // load segment to memory
+    header[0].p_flags  = PF_R | PF_X;              // read + execute
+    header[0].p_offset = 0;                        // segment offset
+    header[0].p_vaddr  = base_vaddr;               // virtual address
+    header[0].p_paddr  = base_vaddr;               // physical address (basically ignored)
+    header[0].p_filesz = code_offset + code_size;  // size of segment in file
+    header[0].p_memsz  = code_offset + code_size;  // size of segment in memory (no .bss)
+    header[0].p_align  = 0x1000;                   // page size
 
     // second segment (.data):
-    headers[1].p_type   = PT_LOAD;                  // load segment to memory
-    headers[1].p_flags  = PF_R | PF_W;              // read + write
-    headers[1].p_offset = data_offset;              // segment offset
-    headers[1].p_vaddr  = base_vaddr + data_offset; // virtual address
-    headers[1].p_paddr  = base_vaddr + data_offset; // physical address (basically ignored)
-    headers[1].p_filesz = data_size;                // size of segment in file
-    headers[1].p_memsz  = data_size;                // size of segment in memory (no .bss)
-    headers[1].p_align  = 0x1000;                   // page size
+    header[1].p_type   = PT_LOAD;                  // load segment to memory
+    header[1].p_flags  = PF_R | PF_W;              // read + write
+    header[1].p_offset = data_offset;              // segment offset
+    header[1].p_vaddr  = base_vaddr + data_offset; // virtual address
+    header[1].p_paddr  = base_vaddr + data_offset; // physical address (basically ignored)
+    header[1].p_filesz = data_size;                // size of segment in file
+    header[1].p_memsz  = data_size;                // size of segment in memory (no .bss)
+    header[1].p_align  = 0x1000;                   // page size
 }

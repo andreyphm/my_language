@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "input.h"
 #include "tokenization.h"
@@ -10,6 +11,9 @@
 static const char* INCLUDE_STR = "#include";
 static const char* DIR_LEFT_BORDER_STR = "<";
 static const char* DIR_RIGHT_BORDER_STR = ">";
+
+static char* read_file_to_buffer(FILE* const file);
+static void skip_spaces(const char** string, position_t* const position);
 
 error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list)
 {
@@ -74,7 +78,22 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
     return NO_ERROR;
 }
 
-void skip_spaces(const char** string, position_t* const position)
+static char* read_file_to_buffer(FILE* const file)
+{
+    assert(file);
+
+    struct stat file_struct = {};
+    fstat(fileno(file), &file_struct);
+    size_t file_size = (size_t)file_struct.st_size;
+
+    char* buffer = (char*) calloc(file_size + 1, sizeof(*buffer));
+    file_size = fread(buffer, sizeof(*buffer), file_size, file);
+    buffer[file_size] = '\0';
+
+    return buffer;
+}
+
+static void skip_spaces(const char** string, position_t* const position)
 {
     assert(position);
 

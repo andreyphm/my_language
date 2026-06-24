@@ -9,6 +9,5 @@ void check_files(FILE** const input_file, FILE** const output_file, int argc, co
 void bad_argc_message(const char* const* argv);
 
 void clear_input_buffer();
-char* read_file_to_buffer(FILE* const tree_txt_file);
 
 #endif // INPUT_H

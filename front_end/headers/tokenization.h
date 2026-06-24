@@ -39,7 +39,6 @@ struct list_t
 
 error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list);
 error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* const list);
-void skip_spaces(const char** string, position_t* const position);
 
 bool try_include(const char** buffer, list_t* const list, position_t* const position,
                  identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers);

@@ -19,21 +19,6 @@ void clear_input_buffer()
     } while (entered_character != '\n' && entered_character != EOF);
 }
 
-char* read_file_to_buffer(FILE* const tree_txt_file)
-{
-    assert(tree_txt_file);
-
-    struct stat file_struct = {};
-    fstat(fileno(tree_txt_file), &file_struct);
-    size_t file_size = (size_t)file_struct.st_size;
-
-    char* buffer = (char*) calloc(file_size + 1, sizeof(*buffer));
-    file_size = fread(buffer, sizeof(*buffer), file_size, tree_txt_file);
-    buffer[file_size] = '\0';
-
-    return buffer;
-}
-
 void bad_argc_message(const char* const* argv)
 {
     printf(MAKE_BOLD("You haven't entered the input and output files or you entered them incorrectly."
