@@ -89,6 +89,13 @@ void asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instru
 void parse_instruction(const char** asm_buffer, instruction_list_t* const instruction_list,
                              label_list_t* label_list, section_kind* section);
 void parse_operand(const char** asm_buffer, operand_t* operand);
+bool try_section(const char** asm_buffer, section_kind* section);
+bool try_label(const char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
+void read_mnemonic(const char** asm_buffer, instruction_t* instruction);
+bool try_imm(const char** asm_buffer, operand_t* operand);
+bool try_xmm(const char** asm_buffer, operand_t* operand);
+bool try_reg(const char** asm_buffer, operand_t* operand);
+bool try_label_jump(const char** asm_buffer, operand_t* operand);
 
 void instruction_list_init(instruction_list_t* list);
 void instruction_list_push_back(instruction_list_t* list, instruction_t instr);

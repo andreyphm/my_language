@@ -78,46 +78,12 @@ void parse_instruction(const char** asm_buffer, instruction_list_t* const instru
         return;
     }
 
-    if (!strncmp(*asm_buffer, "section", sizeof("section") - 1))
-    {
-        *asm_buffer += sizeof("section") - 1;
-        skip_spaces(asm_buffer);
-
-        if (!strncmp(*asm_buffer, ".text", sizeof(".text") - 1))
-            *section = SECTION_TEXT;
-        else if (!strncmp(*asm_buffer, ".rodata", sizeof(".rodata") - 1))
-            *section = SECTION_RODATA;
-
-        skip_line(asm_buffer);
+    if (try_section(asm_buffer, section) ||
+        try_label(asm_buffer, instruction_list, label_list))
         return;
-    }
-
-    const char* line_start = *asm_buffer;
-    while (**asm_buffer != ':' && **asm_buffer != '\n' && **asm_buffer != '\0')
-        (*asm_buffer)++;
-
-    if (**asm_buffer == ':')
-    {
-        label_t label = {};
-        size_t name_len = (size_t) (*asm_buffer - line_start);
-        strncpy(label.name, line_start, name_len);
-        label.instruction_index = instruction_list->count;
-
-        label_list_push_back(label_list, label);
-
-        (*asm_buffer)++;
-        return;
-    }
 
     instruction_t instruction = {};
-    *asm_buffer = line_start;
-    while (isalpha(**asm_buffer) || **asm_buffer == '_')
-        (*asm_buffer)++;
-
-    size_t mnemonic_len = (size_t) (*asm_buffer - line_start);
-    assert(mnemonic_len < sizeof(instruction.mnemonic));
-    strncpy(instruction.mnemonic, line_start, mnemonic_len);
-
+    read_mnemonic(asm_buffer, &instruction);
     skip_spaces(asm_buffer);
 
     while (**asm_buffer != '\n' && **asm_buffer != '\0' && **asm_buffer != ';')
@@ -142,6 +108,87 @@ void parse_operand(const char** asm_buffer, operand_t* operand)
     assert(*asm_buffer);
     assert(operand);
 
+    if (try_imm(asm_buffer, operand)    ||
+        try_xmm(asm_buffer, operand)    ||
+        try_reg(asm_buffer, operand)    ||
+        try_label_jump(asm_buffer, operand))
+        return;
+
+    assert(0 && "Unknown operand");
+}
+
+bool try_section(const char** asm_buffer, section_kind* section)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(section);
+
+    if (!strncmp(*asm_buffer, "section", sizeof("section") - 1))
+    {
+        *asm_buffer += sizeof("section") - 1;
+        skip_spaces(asm_buffer);
+
+        if (!strncmp(*asm_buffer, ".text", sizeof(".text") - 1))
+            *section = SECTION_TEXT;
+        else if (!strncmp(*asm_buffer, ".rodata", sizeof(".rodata") - 1))
+            *section = SECTION_RODATA;
+
+        skip_line(asm_buffer);
+        return true;
+    }
+
+    return false;
+}
+
+bool try_label(const char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(instruction_list);
+    assert(label_list);
+
+    const char* line_start = *asm_buffer;
+    while (**asm_buffer != ':' && **asm_buffer != '\n' && **asm_buffer != '\0')
+        (*asm_buffer)++;
+
+    if (**asm_buffer == ':')
+    {
+        label_t label = {};
+        size_t name_len = (size_t) (*asm_buffer - line_start);
+        strncpy(label.name, line_start, name_len);
+        label.instruction_index = instruction_list->count;
+
+        label_list_push_back(label_list, label);
+
+        (*asm_buffer)++;
+        return true;
+    }
+
+    *asm_buffer = line_start;
+    return false;
+}
+
+void read_mnemonic(const char** asm_buffer, instruction_t* instruction)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(instruction);
+
+    const char* line_start = *asm_buffer;
+    while (isalpha(**asm_buffer) || **asm_buffer == '_')
+        (*asm_buffer)++;
+
+    size_t mnemonic_len = (size_t) (*asm_buffer - line_start);
+    assert(mnemonic_len < sizeof(instruction->mnemonic));
+    strncpy(instruction->mnemonic, line_start, mnemonic_len);
+}
+
+bool try_imm(const char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
+
     if (isdigit(**asm_buffer))
     {
         operand->kind = OPERAND_IMM;
@@ -152,29 +199,75 @@ void parse_operand(const char** asm_buffer, operand_t* operand)
             operand->imm_value = operand->imm_value * 10 + (**asm_buffer - '0');
             (*asm_buffer)++;
         }
-        return;
+        return true;
     }
 
-    if (!strncmp(*asm_buffer, "xmm", sizeof("xmm") - 1))
+    return false;
+}
+
+bool try_xmm(const char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
+
+    if (!strncmp(*asm_buffer, "xmm", sizeof("xmm") - 1) &&
+        !isalnum((*asm_buffer)[sizeof("xmm")]) &&
+        (*asm_buffer)[sizeof("xmm")] != '_')
     {
         *asm_buffer += sizeof("xmm") - 1;
         operand->kind = OPERAND_XMM;
         operand->reg_num = (size_t) (**asm_buffer - '0');
         (*asm_buffer)++;
-        return;
+        return true;
     }
+
+    return false;
+}
+
+bool try_reg(const char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
 
     for (size_t i = 0; i < REG_ARRAY_SIZE; i++)
     {
-        size_t name_len = sizeof(registers_array[i].name) - 1;
-        if (!strncmp(*asm_buffer, registers_array[i].name, name_len))
+        size_t name_len = strlen(registers_array[i].name);
+        if (!strncmp(*asm_buffer, registers_array[i].name, name_len) &&
+            !isalnum((*asm_buffer)[name_len]) &&
+            (*asm_buffer)[name_len] != '_')
         {
             operand->kind = OPERAND_REG;
             operand->reg_num = registers_array[i].number;
             *asm_buffer += name_len;
-            return;
+            return true;
         }
     }
+
+    return false;
+}
+
+bool try_label_jump(const char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
+
+    if (**asm_buffer == '.' || isalpha(**asm_buffer))
+    {
+        operand->kind = OPERAND_LABEL;
+        const char* label_start = *asm_buffer;
+        while (isalpha(**asm_buffer) || isdigit(**asm_buffer) || **asm_buffer == '_' || **asm_buffer == '.')
+            (*asm_buffer)++;
+        
+        size_t name_len = (size_t) (*asm_buffer - label_start);
+        assert(name_len < sizeof(operand->label_name));
+        strncpy(operand->label_name, label_start, name_len);
+        return true;
+    }
+
+    return false;
 }
 
 static void skip_line(const char** string)
