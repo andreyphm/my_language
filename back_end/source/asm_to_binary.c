@@ -109,7 +109,72 @@ void parse_instruction(const char** asm_buffer, instruction_list_t* const instru
         return;
     }
 
-    skip_line(asm_buffer);
+    instruction_t instruction = {};
+    *asm_buffer = line_start;
+    while (isalpha(**asm_buffer) || **asm_buffer == '_')
+        (*asm_buffer)++;
+
+    size_t mnemonic_len = (size_t) (*asm_buffer - line_start);
+    assert(mnemonic_len < sizeof(instruction.mnemonic));
+    strncpy(instruction.mnemonic, line_start, mnemonic_len);
+
+    skip_spaces(asm_buffer);
+
+    while (**asm_buffer != '\n' && **asm_buffer != '\0' && **asm_buffer != ';')
+    {
+        assert(instruction.operand_count < 2);
+        parse_operand(asm_buffer, &instruction.operands[instruction.operand_count++]);
+        skip_spaces(asm_buffer);
+
+        if (**asm_buffer == ',')
+        {
+            (*asm_buffer)++;
+            skip_spaces(asm_buffer);
+        }
+    }
+
+    instruction_list_push_back(instruction_list, instruction);
+}
+
+void parse_operand(const char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
+
+    if (isdigit(**asm_buffer))
+    {
+        operand->kind = OPERAND_IMM;
+        operand->imm_value = 0;
+
+        while (isdigit(**asm_buffer))
+        {
+            operand->imm_value = operand->imm_value * 10 + (**asm_buffer - '0');
+            (*asm_buffer)++;
+        }
+        return;
+    }
+
+    if (!strncmp(*asm_buffer, "xmm", sizeof("xmm") - 1))
+    {
+        *asm_buffer += sizeof("xmm") - 1;
+        operand->kind = OPERAND_XMM;
+        operand->reg_num = (size_t) (**asm_buffer - '0');
+        (*asm_buffer)++;
+        return;
+    }
+
+    for (size_t i = 0; i < REG_ARRAY_SIZE; i++)
+    {
+        size_t name_len = sizeof(registers_array[i].name) - 1;
+        if (!strncmp(*asm_buffer, registers_array[i].name, name_len))
+        {
+            operand->kind = OPERAND_REG;
+            operand->reg_num = registers_array[i].number;
+            *asm_buffer += name_len;
+            return;
+        }
+    }
 }
 
 static void skip_line(const char** string)

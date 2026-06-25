@@ -68,10 +68,27 @@ struct label_list_t
     size_t capacity;
 };
 
+struct register_t
+{
+    const char* name;
+    size_t number;
+};
+
+const register_t registers_array[] =
+{
+    {"rax", 0}, {"rcx", 1}, {"rdx", 2}, {"rbx", 3},
+    {"rsp", 4}, {"rbp", 5}, {"rsi", 6}, {"rdi", 7},
+    {"eax", 0}, {"ecx", 1}, {"edx", 2}, {"ebx", 3},
+    {"al",  0}, {"cl",  1}, {"dl",  2}, {"bl",  3}
+};
+
+const size_t REG_ARRAY_SIZE = sizeof(registers_array) / sizeof(registers_array[0]);
+
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file);
 void asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
 void parse_instruction(const char** asm_buffer, instruction_list_t* const instruction_list,
                              label_list_t* label_list, section_kind* section);
+void parse_operand(const char** asm_buffer, operand_t* operand);
 
 void instruction_list_init(instruction_list_t* list);
 void instruction_list_push_back(instruction_list_t* list, instruction_t instr);
