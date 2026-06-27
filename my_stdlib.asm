@@ -1,9 +1,23 @@
 ;==================== MY_STDLIB ====================;
+;---------------------------------------------------------------------------------------------------------------------
+; Terminates the process with exit code 0
+;
+; Arguments:    -
+; Return value: -
+; Destroy:      rax, rdi
+;---------------------------------------------------------------------------------------------------------------------
 __exit:
 	mov rax, 60				; __x64_sys_exit
 	xor rdi, rdi			; rdi = error_code
 	syscall
 
+;---------------------------------------------------------------------------------------------------------------------
+; Prints double (6 digits in the fractional part) to stdout followed by a newline
+;
+; Arguments:    xmm0 = print value
+; Return value: -
+; Destroy:      rax, rbx, rcx, rdx, rdi, rsi, xmm0, xmm1
+;---------------------------------------------------------------------------------------------------------------------
 __out:
 	push rbp
 	mov rbp, rsp
@@ -96,4 +110,68 @@ __out:
 	pop rbx
 	pop rbp
 	ret
-    
+
+;---------------------------------------------------------------------------------------------------------------------
+; Reads double from stdin
+;
+; Arguments:    -
+; Return value: xmm0 = value read from stdin
+; Destroy:      rax, rcx, rdx, rdi, rsi, xmm1, xmm2
+;---------------------------------------------------------------------------------------------------------------------
+__in:
+    push rbp
+    mov rbp, rsp
+    push rbx                ; Used as sign flag
+    sub rsp, 16
+
+    xorpd xmm0, xmm0                ; xmm0 = result accumulator
+    movsd xmm1, [rel __stdlib_01]   ; xmm1 = 0.1 (fractional digit weight)
+    xor rbx, rbx                    ; rbx = sign (positive 0 negative 1)
+    xor rcx, rcx                    ; rcx = mode (int 0 or frac 1)
+
+.in_read:
+    mov rax, 0                  ; sys_read
+    mov rdi, 0                  ; stdin
+    lea rsi, [rbp - 9]          ; Buffer start
+    mov rdx, 1                  ; Number of bytes to read
+    syscall
+    movzx rax, [rbp - 9]        ; al = read character
+    cmp al, 10                  ; '\n' check
+    je .in_done
+    cmp al, '-'
+    jne .in_not_minus
+    mov rbx, 1                  ; Set negative sign flag
+    jmp .in_read
+.in_not_minus:
+    cmp al, '.'
+    jne .in_digit
+    mov rcx, 1                  ; Switch to fractional mode
+    jmp .in_read
+
+.in_digit:
+    sub al, '0'                 ; Convert ASCII digit to value
+    movzx rax, al
+    cvtsi2sd xmm2, rax          ; xmm2 = digit as double
+    test rcx, rcx
+    jnz .in_frac
+    mulsd xmm0, [rel __stdlib_10]       ; xmm0 *= 10
+    addsd xmm0, xmm2                    ; xmm0 += digit
+    jmp .in_read
+
+.in_frac:
+    mulsd xmm2, xmm1                    ; digit *= current weight (0.1, 0.01, ...)
+    addsd xmm0, xmm2                    ; xmm0 += weighted digit
+    mulsd xmm1, [rel __stdlib_01]       ; weight /= 10 (next digit is 10x smaller)
+    jmp .in_read
+
+.in_done:
+    test rbx, rbx
+    jz .in_positive
+    xorpd xmm0, [rel __stdlib_neg0]     ; xmm0 to negative
+
+.in_positive:
+    add rsp, 16
+    pop rbx
+    pop rbp
+    ret
+

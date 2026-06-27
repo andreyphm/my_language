@@ -92,7 +92,11 @@ void gen_include(node_t* include_node, const identifier_t* const identifiers, co
                          "__stdlib_neg0:\n"
                          "\tdq -0.0\n"
                          "__stdlib_1m:\n"
-                         "\tdq 1000000.0\n");
+                         "\tdq 1000000.0\n"
+                         "__stdlib_10:\n"
+                         "\tdq 10.0\n"
+                         "__stdlib_01:\n"
+                         "\tdq 0.1\n");
     }
     else
         fprintf(stderr, MAKE_BOLD_RED("Unknown library: %s\n"), library_name);
