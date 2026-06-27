@@ -2,7 +2,10 @@
 #define ASM_TO_BINARY_H
 
 #include <stdio.h>
-#include <stdint.h>  
+#include <stdint.h>
+#include <elf.h>
+
+#include "back_end.h"
 
 #define SEGMENT_COUNT   2
 #define ENTRY_POINT     0x400000
@@ -20,7 +23,9 @@ enum operand_kind
     OPERAND_REG,
     OPERAND_XMM,
     OPERAND_MEM,
+    OPERAND_MEM_REL,
     OPERAND_IMM,
+    OPERAND_DOUBLE,
     OPERAND_LABEL
 };
 
@@ -37,6 +42,7 @@ struct operand_t
     size_t reg_num;
     int64_t displacement;
     int64_t imm_value;
+    double double_value;
     char label_name[64];
 };
 
@@ -68,13 +74,13 @@ struct label_list_t
     size_t capacity;
 };
 
-struct register_t
+struct reg_info_t
 {
     const char* name;
     size_t number;
 };
 
-const register_t registers_array[] =
+const reg_info_t registers_array[] =
 {
     {"rax", 0}, {"rcx", 1}, {"rdx", 2}, {"rbx", 3},
     {"rsp", 4}, {"rbp", 5}, {"rsi", 6}, {"rdi", 7},
@@ -86,16 +92,19 @@ const size_t REG_ARRAY_SIZE = sizeof(registers_array) / sizeof(registers_array[0
 
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file);
 void asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
-void parse_instruction(const char** asm_buffer, instruction_list_t* const instruction_list,
+void parse_instruction(char** asm_buffer, instruction_list_t* const instruction_list,
                              label_list_t* label_list, section_kind* section);
-void parse_operand(const char** asm_buffer, operand_t* operand);
-bool try_section(const char** asm_buffer, section_kind* section);
-bool try_label(const char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
-void read_mnemonic(const char** asm_buffer, instruction_t* instruction);
-bool try_imm(const char** asm_buffer, operand_t* operand);
-bool try_xmm(const char** asm_buffer, operand_t* operand);
-bool try_reg(const char** asm_buffer, operand_t* operand);
-bool try_label_jump(const char** asm_buffer, operand_t* operand);
+void parse_operand(char** asm_buffer, operand_t* operand);
+bool try_section(char** asm_buffer, section_kind* section);
+bool try_label(char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
+void read_mnemonic(char** asm_buffer, instruction_t* instruction);
+bool try_double(char** asm_buffer, operand_t* operand);
+bool try_imm(char** asm_buffer, operand_t* operand);
+bool try_xmm(char** asm_buffer, operand_t* operand);
+bool try_reg(char** asm_buffer, operand_t* operand);
+bool try_mem(char** asm_buffer, operand_t* operand);
+bool try_mem_rel(char** asm_buffer, operand_t* operand);
+bool try_label_jump(char** asm_buffer, operand_t* operand);
 
 void instruction_list_init(instruction_list_t* list);
 void instruction_list_push_back(instruction_list_t* list, instruction_t instr);

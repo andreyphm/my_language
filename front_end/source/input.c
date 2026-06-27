@@ -33,7 +33,7 @@ void check_files(FILE** const input_file, FILE** const output_file, int argc, co
     if (argc == CORRECT_NUMBER_OF_FILES)
     {
         *input_file = fopen(argv[1], "r");
-        *output_file = fopen(argv[2], "w");
+        *output_file = fopen(argv[2], "w+");
 
         if (!*input_file)
         {

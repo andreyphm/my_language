@@ -1,15 +1,15 @@
 #include <assert.h>
-#include <elf.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 
 #include "asm_to_binary.h"
+#include "asm_dump.h"
 
 static char* read_file_to_buffer(FILE* const tree_txt_file);
-static void skip_line(const char** string);
-static void skip_spaces(const char** string);
+static void skip_line(char** string);
+static void skip_spaces(char** string);
 
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file)
 {
@@ -22,11 +22,17 @@ void asm_to_binary(FILE* const asm_file, FILE* const binary_file)
     label_list_t label_list = {};
     asm_code_to_instructions(asm_buffer, &instruction_list, &label_list);
 
-    Elf64_Ehdr elf_header = {};
-    fill_elf_header(&elf_header, ENTRY_POINT);
+    asm_dump(&instruction_list, &label_list, ASM_DUMP_TXT, ASM_DUMP_PNG);
 
-    Elf64_Phdr program_header[SEGMENT_COUNT] = {};
-    fill_program_header(program_header, BASE_VADDR, CODE_OFFSET, , , );
+    // Elf64_Ehdr elf_header = {};
+    // fill_elf_header(&elf_header, ENTRY_POINT);
+
+    // Elf64_Phdr program_header[SEGMENT_COUNT] = {};
+    // fill_program_header(program_header, BASE_VADDR, CODE_OFFSET, , , );
+
+    free(asm_buffer);
+    instruction_list_destroy(&instruction_list);
+    label_list_destroy(&label_list);
 }
 
 static char* read_file_to_buffer(FILE* const tree_txt_file)
@@ -57,14 +63,19 @@ void asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instru
     while (*asm_buffer != '\0')
     {
         skip_spaces(&asm_buffer);
+        if (*asm_buffer == '\n')
+        {
+            asm_buffer++;
+            continue;
+        }
         if (*asm_buffer == '\0') break;
 
         parse_instruction(&asm_buffer, instruction_list, label_list, &current_section);
     }
 }
 
-void parse_instruction(const char** asm_buffer, instruction_list_t* const instruction_list,
-                                                label_list_t* label_list, section_kind* section)
+void parse_instruction(char** asm_buffer, instruction_list_t* const instruction_list,
+                                          label_list_t* label_list, section_kind* section)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
@@ -72,7 +83,7 @@ void parse_instruction(const char** asm_buffer, instruction_list_t* const instru
     assert(label_list);
     assert(section);
 
-    if (**asm_buffer == ';' || !strncmp(*asm_buffer, "global", sizeof("global") - 1))
+    if (**asm_buffer == ';' || **asm_buffer == '%' || !strncmp(*asm_buffer, "global", sizeof("global") - 1))
     {
         skip_line(asm_buffer);
         return;
@@ -88,7 +99,12 @@ void parse_instruction(const char** asm_buffer, instruction_list_t* const instru
 
     while (**asm_buffer != '\n' && **asm_buffer != '\0' && **asm_buffer != ';')
     {
-        assert(instruction.operand_count < 2);
+        if (instruction.operand_count >= 2)
+        {
+            printf("Too many operands! Mnemonic: '%s', at: '%.30s'\n", instruction.mnemonic, *asm_buffer);
+            assert(0);
+        }
+
         parse_operand(asm_buffer, &instruction.operands[instruction.operand_count++]);
         skip_spaces(asm_buffer);
 
@@ -102,22 +118,25 @@ void parse_instruction(const char** asm_buffer, instruction_list_t* const instru
     instruction_list_push_back(instruction_list, instruction);
 }
 
-void parse_operand(const char** asm_buffer, operand_t* operand)
+void parse_operand(char** asm_buffer, operand_t* operand)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
     assert(operand);
 
-    if (try_imm(asm_buffer, operand)    ||
+    if (try_double(asm_buffer, operand) ||
+        try_imm(asm_buffer, operand)    ||
         try_xmm(asm_buffer, operand)    ||
         try_reg(asm_buffer, operand)    ||
+        try_mem(asm_buffer, operand)    ||
         try_label_jump(asm_buffer, operand))
         return;
 
-    assert(0 && "Unknown operand");
+    printf("Unknown operand at: '%.30s'\n", *asm_buffer);
+    assert(0);
 }
 
-bool try_section(const char** asm_buffer, section_kind* section)
+bool try_section(char** asm_buffer, section_kind* section)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
@@ -140,14 +159,14 @@ bool try_section(const char** asm_buffer, section_kind* section)
     return false;
 }
 
-bool try_label(const char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
+bool try_label(char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
     assert(instruction_list);
     assert(label_list);
 
-    const char* line_start = *asm_buffer;
+    char* line_start = *asm_buffer;
     while (**asm_buffer != ':' && **asm_buffer != '\n' && **asm_buffer != '\0')
         (*asm_buffer)++;
 
@@ -168,7 +187,7 @@ bool try_label(const char** asm_buffer, instruction_list_t* const instruction_li
     return false;
 }
 
-void read_mnemonic(const char** asm_buffer, instruction_t* instruction)
+void read_mnemonic(char** asm_buffer, instruction_t* instruction)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
@@ -183,7 +202,38 @@ void read_mnemonic(const char** asm_buffer, instruction_t* instruction)
     strncpy(instruction->mnemonic, line_start, mnemonic_len);
 }
 
-bool try_imm(const char** asm_buffer, operand_t* operand)
+bool try_double(char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
+
+    if (!isdigit(**asm_buffer))
+        return false;
+
+    char* end = nullptr;
+    double value = strtod(*asm_buffer, &end);
+
+    bool has_dot = false;
+    for (char* symbol_ptr = *asm_buffer; symbol_ptr < end; symbol_ptr++)
+    {
+        if (*symbol_ptr == '.')
+        {
+            has_dot = true;
+            break;
+        }
+    }
+
+    if (!has_dot)
+        return false;
+
+    operand->kind = OPERAND_DOUBLE;
+    operand->double_value = value;
+    *asm_buffer = end;
+    return true;
+}
+
+bool try_imm(char** asm_buffer, operand_t* operand)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
@@ -205,7 +255,7 @@ bool try_imm(const char** asm_buffer, operand_t* operand)
     return false;
 }
 
-bool try_xmm(const char** asm_buffer, operand_t* operand)
+bool try_xmm(char** asm_buffer, operand_t* operand)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
@@ -225,7 +275,7 @@ bool try_xmm(const char** asm_buffer, operand_t* operand)
     return false;
 }
 
-bool try_reg(const char** asm_buffer, operand_t* operand)
+bool try_reg(char** asm_buffer, operand_t* operand)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
@@ -248,7 +298,76 @@ bool try_reg(const char** asm_buffer, operand_t* operand)
     return false;
 }
 
-bool try_label_jump(const char** asm_buffer, operand_t* operand)
+bool try_mem(char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
+
+    if (**asm_buffer != '[')
+        return false;
+
+    (*asm_buffer)++;
+    skip_spaces(asm_buffer);
+
+    if (try_mem_rel(asm_buffer, operand))
+        return true;
+
+    operand->kind = OPERAND_MEM;
+    try_reg(asm_buffer, operand);
+    skip_spaces(asm_buffer);
+
+    if (**asm_buffer == '+' || **asm_buffer == '-')
+    {
+        int sign = (**asm_buffer == '+') ? 1 : -1;
+        (*asm_buffer)++;
+        skip_spaces(asm_buffer);
+
+        int64_t displacement = 0;
+        while (isdigit(**asm_buffer))
+        {
+            displacement = displacement * 10 + (**asm_buffer - '0');
+            (*asm_buffer)++;
+        }
+        operand->displacement = sign * displacement;
+    }
+
+    skip_spaces(asm_buffer);
+    assert(**asm_buffer == ']');
+    (*asm_buffer)++;
+    return true;
+}
+
+bool try_mem_rel(char** asm_buffer, operand_t* operand)
+{
+    assert(asm_buffer);
+    assert(*asm_buffer);
+    assert(operand);
+
+    if (!strncmp(*asm_buffer, "rel", sizeof("rel") - 1))
+    {
+        *asm_buffer += sizeof("rel") - 1;
+        skip_spaces(asm_buffer);
+
+        operand->kind = OPERAND_MEM_REL;
+        const char* start = *asm_buffer;
+        while (isalnum(**asm_buffer) || **asm_buffer == '_')
+            (*asm_buffer)++;
+
+        size_t len = (size_t) (*asm_buffer - start);
+        assert(len < sizeof(operand->label_name));
+        strncpy(operand->label_name, start, len);
+
+        skip_spaces(asm_buffer);
+        assert(**asm_buffer == ']');
+        (*asm_buffer)++;
+        return true;
+    }
+
+    return false;
+}
+
+bool try_label_jump(char** asm_buffer, operand_t* operand)
 {
     assert(asm_buffer);
     assert(*asm_buffer);
@@ -270,15 +389,18 @@ bool try_label_jump(const char** asm_buffer, operand_t* operand)
     return false;
 }
 
-static void skip_line(const char** string)
+static void skip_line(char** string)
 {
     while (**string != '\n' && **string != '\0')
         (*string)++;
+
+    if (**string == '\n')
+        (*string)++;
 }
 
-static void skip_spaces(const char** string)
+static void skip_spaces(char** string)
 {
-    while (isspace(**string))
+    while (**string == ' ' || **string == '\t')
         (*string)++;
 }
 

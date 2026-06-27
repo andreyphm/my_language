@@ -13,14 +13,14 @@ void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* i
 int main(int argc, const char* argv[])
 {
     FILE* input_file = nullptr;
-    FILE* output_file = nullptr;
-    check_files(&input_file, &output_file, argc, argv);
+    FILE* asm_file = nullptr;
+    check_files(&input_file, &asm_file, argc, argv);
 
     identifier_t* identifiers = nullptr;
     node_t* tree = front_end_run(input_file, &identifiers); 
     if (!tree)
     {
-        fclose(output_file);
+        fclose(asm_file);
         return 1;
     }
 
@@ -28,7 +28,9 @@ int main(int argc, const char* argv[])
     
     tree_dump(tree, TREE_DUMP_PNG, identifiers);
 
-    back_end_run(tree, output_file, identifiers);
+    FILE* binary_file = fopen("output.bin", "wb");
+    back_end_run(tree, asm_file, binary_file, identifiers);
+    fclose(binary_file);
 
     program_complete(&identifiers, &tree, input_file);
 }

@@ -13,7 +13,7 @@ static const char* DIR_LEFT_BORDER_STR = "<";
 static const char* DIR_RIGHT_BORDER_STR = ">";
 
 static char* read_file_to_buffer(FILE* const file);
-static void skip_spaces(const char** string, position_t* const position);
+static void skip_spaces(const char**  string, position_t* const position);
 
 error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list_t* list)
 {
@@ -93,7 +93,7 @@ static char* read_file_to_buffer(FILE* const file)
     return buffer;
 }
 
-static void skip_spaces(const char** string, position_t* const position)
+static void skip_spaces(const char**  string, position_t* const position)
 {
     assert(position);
 

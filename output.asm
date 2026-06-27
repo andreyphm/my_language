@@ -96,7 +96,8 @@ func_3:
 	movsd xmm0, [rsp]		; Save value in xmm0
 
 	add rsp, 16
-	movsd [rbp - 8], xmm0;==================== OUT ====================;
+	movsd [rbp - 8], xmm0
+;==================== OUT ====================;
 ;================= CALL "fact" =================;
 	sub rsp, 8
 	movsd xmm0, [rbp - 8]
