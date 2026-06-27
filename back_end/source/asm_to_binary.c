@@ -313,8 +313,8 @@ bool try_mem(char** asm_buffer, operand_t* operand)
     if (try_mem_rel(asm_buffer, operand))
         return true;
 
-    operand->kind = OPERAND_MEM;
     try_reg(asm_buffer, operand);
+    operand->kind = OPERAND_MEM;
     skip_spaces(asm_buffer);
 
     if (**asm_buffer == '+' || **asm_buffer == '-')
@@ -373,7 +373,7 @@ bool try_label_jump(char** asm_buffer, operand_t* operand)
     assert(*asm_buffer);
     assert(operand);
 
-    if (**asm_buffer == '.' || isalpha(**asm_buffer))
+    if (**asm_buffer == '.' || **asm_buffer == '_' || isalpha(**asm_buffer))
     {
         operand->kind = OPERAND_LABEL;
         const char* label_start = *asm_buffer;

@@ -8,7 +8,7 @@
 #include "font.h"
 #include "back_end.h"
 
-void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file);
+static void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file);
 
 int main(int argc, const char* argv[])
 {
@@ -35,7 +35,7 @@ int main(int argc, const char* argv[])
     program_complete(&identifiers, &tree, input_file);
 }
 
-void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file)
+static void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file)
 {
     if (*identifiers_ptr) identifiers_destroy(identifiers_ptr);
     destroy_node(*node_ptr);

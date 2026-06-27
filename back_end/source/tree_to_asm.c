@@ -8,10 +8,13 @@
 
 static const size_t TEXT_BUFFER_FIRST_SIZE = 1000;
 static const size_t RODATA_BUFFER_FIRST_SIZE = 1000;
-static const size_t INCLUDE_BUFFER_FIRST_SIZE = 100;
 
 void tree_to_asm(node_t* tree, FILE* const output_file, const identifier_t* const identifiers)
 {
+    assert(tree);
+    assert(output_file);
+    assert(identifiers);
+
     context_t context =
     {
         .counters = {},
@@ -65,14 +68,19 @@ void gen_include(node_t* include_node, const identifier_t* const identifiers, co
 {
     assert(include_node);
     assert(identifiers);
+    assert(context);
 
     int library_id = include_node->data_t.include.id_number;
     const char* library_name = identifiers[library_id].name;
 
     if (!strcmp(library_name, "my_stdlib"))
     {
-        printf_to_buffer(&context->buffers.include,
-                         "%%include \"%s.asm\"\n", library_name);
+        printf_to_buffer(&context->buffers.text,
+                         ";==================== MY_STDLIB ====================;\n"
+                         "__exit:\n"
+                         "\tmov rax, 60\n"
+                         "\txor rdi, rdi\n"
+                         "\tsyscall\n\n");
     }
     else
         fprintf(stderr, MAKE_BOLD_RED("Unknown library: %s\n"), library_name);
@@ -91,10 +99,7 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, context_
     const char* func_name = identifiers[func_node->data_t.function.id_number].name;
 
     if (!strcmp(func_name, "main"))
-    {
-        printf_to_buffer(&context->buffers.include,"\nglobal main\n\n");
         printf_to_buffer(&context->buffers.text, "main:\n");
-    }
 
     printf_to_buffer(&context->buffers.text,
                      ";==================== FUNCTION \"%s\" ====================;\n"
@@ -102,9 +107,7 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, context_
                      "\tpush rbp\n"
                      "\tmov rbp, rsp\n"
                      "\tsub rsp, %zu\t\t\t\t\t; Stack preparation\n\n",
-                     func_name,
-                     func_id,
-                     frame_size);
+                     func_name, func_id, frame_size);
     
     node_t* args_node = func_node->children[0];
     for (size_t i = 0; i < args_node->child_count; i++)
@@ -120,10 +123,19 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, context_
     printf_to_buffer(&context->buffers.text,
                      "func_end_%zu:\n"
                      "\tadd rsp, %zu\n"
-                     "\tpop rbp\n"
-                     "\tret\t\t\t\t\t\t\t; Stack free\n\n",
-                     func_id,
-                     frame_size);
+                     "\tpop rbp\n",
+                     func_id, frame_size);
+
+    if (!strcmp(func_name, "main"))
+    {
+        printf_to_buffer(&context->buffers.text,
+                         "\tcall __exit\n\n");
+    }
+    else
+    {
+        printf_to_buffer(&context->buffers.text,
+                         "\tret\n\n");
+    }
 }
 
 void gen_block(node_t* block_node, const identifier_t* const identifiers, context_t* context)
@@ -706,11 +718,9 @@ void initialize_buffers(buffers_t* buffers)
 
     buffers->text.capacity    = TEXT_BUFFER_FIRST_SIZE;
     buffers->rodata.capacity  = RODATA_BUFFER_FIRST_SIZE;
-    buffers->include.capacity = INCLUDE_BUFFER_FIRST_SIZE;
 
     buffers->text.buffer    = (char*) calloc(buffers->text.capacity, sizeof(char));
     buffers->rodata.buffer  = (char*) calloc(buffers->rodata.capacity, sizeof(char));
-    buffers->include.buffer = (char*) calloc(buffers->include.capacity, sizeof(char));
 }
 
 void buffers_to_file(buffers_t* buffers, FILE* const output_file)
@@ -718,7 +728,6 @@ void buffers_to_file(buffers_t* buffers, FILE* const output_file)
     assert(buffers);
     assert(output_file);
 
-    fwrite(buffers->include.buffer, sizeof(char), buffers->include.pos, output_file);
     fwrite(buffers->text.buffer, sizeof(char), buffers->text.pos, output_file);
     fwrite(buffers->rodata.buffer, sizeof(char), buffers->rodata.pos, output_file);
 }
@@ -729,9 +738,7 @@ void free_buffers(buffers_t* buffers)
 
     free(buffers->text.buffer);
     free(buffers->rodata.buffer);
-    free(buffers->include.buffer);
 
     buffers->text.buffer = nullptr;
     buffers->rodata.buffer = nullptr;
-    buffers->include.buffer = nullptr;
 }

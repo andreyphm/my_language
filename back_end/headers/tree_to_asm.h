@@ -31,7 +31,6 @@ struct buffers_t
 {
     buffer_data_t text;
     buffer_data_t rodata;
-    buffer_data_t include;
 };
 
 struct context_t

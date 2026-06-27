@@ -1,13 +1,15 @@
-%include "my_stdlib.asm"
-
-global main
-
 ;*******************************************************;
 ;==================== PROGRAM START ====================;
 ;================== GitHub: andreyphm ==================;
 ;*******************************************************;
 
 section .text
+
+;==================== MY_STDLIB ====================;
+__exit:
+	mov rax, 60
+	xor rdi, rdi
+	syscall
 
 ;==================== FUNCTION "fact" ====================;
 func_1:
@@ -117,7 +119,7 @@ func_3:
 func_end_3:
 	add rsp, 16
 	pop rbp
-	ret							; Stack free
+	call __exit							; Stack free
 
 ;================= PROGRAM END =================;
 
