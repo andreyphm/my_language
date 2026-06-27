@@ -83,7 +83,7 @@ void parse_instruction(char** asm_buffer, instruction_list_t* const instruction_
     assert(label_list);
     assert(section);
 
-    if (**asm_buffer == ';' || **asm_buffer == '%' || !strncmp(*asm_buffer, "global", sizeof("global") - 1))
+    if (**asm_buffer == ';')
     {
         skip_line(asm_buffer);
         return;
@@ -167,7 +167,7 @@ bool try_label(char** asm_buffer, instruction_list_t* const instruction_list, la
     assert(label_list);
 
     char* line_start = *asm_buffer;
-    while (**asm_buffer != ':' && **asm_buffer != '\n' && **asm_buffer != '\0')
+    while (**asm_buffer != ':' && **asm_buffer != '\n' && **asm_buffer != '\0' && **asm_buffer != ';')
         (*asm_buffer)++;
 
     if (**asm_buffer == ':')
@@ -194,7 +194,7 @@ void read_mnemonic(char** asm_buffer, instruction_t* instruction)
     assert(instruction);
 
     const char* line_start = *asm_buffer;
-    while (isalpha(**asm_buffer) || **asm_buffer == '_')
+    while (isalpha(**asm_buffer) || **asm_buffer == '_' || isdigit(**asm_buffer))
         (*asm_buffer)++;
 
     size_t mnemonic_len = (size_t) (*asm_buffer - line_start);
@@ -208,14 +208,22 @@ bool try_double(char** asm_buffer, operand_t* operand)
     assert(*asm_buffer);
     assert(operand);
 
+    char* start = *asm_buffer;
+
+    if (**asm_buffer == '-')
+        (*asm_buffer)++;
+
     if (!isdigit(**asm_buffer))
+    {
+        *asm_buffer = start;
         return false;
+    }
 
     char* end = nullptr;
     double value = strtod(*asm_buffer, &end);
 
     bool has_dot = false;
-    for (char* symbol_ptr = *asm_buffer; symbol_ptr < end; symbol_ptr++)
+    for (char* symbol_ptr = start; symbol_ptr < end; symbol_ptr++)
     {
         if (*symbol_ptr == '.')
         {
@@ -238,6 +246,17 @@ bool try_imm(char** asm_buffer, operand_t* operand)
     assert(asm_buffer);
     assert(*asm_buffer);
     assert(operand);
+
+    if (**asm_buffer == '\'')
+    {
+        operand->kind = OPERAND_IMM;
+        (*asm_buffer)++;
+        operand->imm_value = (int64_t) (**asm_buffer);
+        (*asm_buffer)++;
+        assert(**asm_buffer == '\'');
+        (*asm_buffer)++;
+        return true;
+    }
 
     if (isdigit(**asm_buffer))
     {

@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include "tree_to_asm.h"
 #include "font.h"
@@ -75,12 +76,23 @@ void gen_include(node_t* include_node, const identifier_t* const identifiers, co
 
     if (!strcmp(library_name, "my_stdlib"))
     {
-        printf_to_buffer(&context->buffers.text,
-                         ";==================== MY_STDLIB ====================;\n"
-                         "__exit:\n"
-                         "\tmov rax, 60\n"
-                         "\txor rdi, rdi\n"
-                         "\tsyscall\n\n");
+        FILE* stdlib_file = fopen("my_stdlib.asm", "r");
+        struct stat file_stat = {};
+        fstat(fileno(stdlib_file), &file_stat);
+        size_t file_size = (size_t) file_stat.st_size;
+
+        char* stdlib_buffer = (char*) calloc(file_size + 1, sizeof(char));
+        fread(stdlib_buffer, sizeof(char), file_size, stdlib_file);
+        fclose(stdlib_file);
+
+        printf_to_buffer(&context->buffers.text, "%s", stdlib_buffer);
+        free(stdlib_buffer);
+
+        printf_to_buffer(&context->buffers.rodata,
+                         "__stdlib_neg0:\n"
+                         "\tdq -0.0\n"
+                         "__stdlib_1m:\n"
+                         "\tdq 1000000.0\n");
     }
     else
         fprintf(stderr, MAKE_BOLD_RED("Unknown library: %s\n"), library_name);
@@ -438,9 +450,7 @@ void gen_out(node_t* out_node, const identifier_t* const identifiers, context_t*
 
     bool aligned = align_stack_before_call(context);
     printf_to_buffer(&context->buffers.text,
-                     "\tlea rdi, [rel __out_fmt]\t; Format string address is first argument of printf\n"
-                     "\tmov al, 1\t\t\t\t\t; One double argument in xmm0\n"
-                     "\tcall printf\n\n");
+                     "\tcall __out\n\n");
     unalign_stack_after_call(context, aligned);
 }
 
@@ -460,16 +470,10 @@ void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* c
 
     printf_to_buffer(&context->buffers.text,
                      ";==================== IN ====================;\n");
-    gen_sub_rsp(context, 16);
     bool aligned = align_stack_before_call(context);
     printf_to_buffer(&context->buffers.text,
-                     "\tlea rdi, [rel __in_fmt]\t\t; Format string address is first argument of scanf\n"
-                     "\tlea rsi, [rsp]\t\t\t\t; Write the address of the variable where scanf will store the value\n"
-                     "\txor eax, eax\t\t\t\t; There is no xmm arguments\n"
-                     "\tcall scanf\n"
-                     "\tmovsd xmm0, [rsp]\t\t; Save value in xmm0\n\n");
+                     "\tcall __in\n\n");
     unalign_stack_after_call(context, aligned);
-    gen_add_rsp(context, 16);
 }
 
 void op_node_to_asm(node_t* op_node, const identifier_t* const identifiers, context_t* context)
