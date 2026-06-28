@@ -13,7 +13,20 @@ size_t get_instruction_size(const instruction_t* instruction)
     const operand_t* second_op = &instruction->operands[1];
 
     if (!strcmp(mnemonic, "syscall")) return 2;
-    if (!strcmp(mnemonic, "ret"))     return 1;
+    if (!strcmp(mnemonic, "ret")) return 1;
+    if (!strcmp(mnemonic, "push") || !strcmp(mnemonic, "pop")) return 1;
+    if (!strcmp(mnemonic, "dq")) return 8;
+    if (!strcmp(mnemonic, "xor") || !strcmp(mnemonic, "test")) return 3;
+
+    if (!strcmp(mnemonic, "mov"))
+    {
+        if (first_op->kind == OPERAND_REG && second_op->kind == OPERAND_IMM)
+            return (first_op->reg_size == 1) ? 2 : 7;
+        if (first_op->kind == OPERAND_REG && second_op->kind == OPERAND_REG)
+            return 3;
+        if (first_op->kind == OPERAND_MEM && second_op->kind == OPERAND_REG)
+            return (first_op->displacement == 0) ? 2 : 3;
+    }
 
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);

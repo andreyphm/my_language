@@ -125,7 +125,7 @@ size_t encode_all(const instruction_list_t* list, const label_list_t* labels, ui
 void encode_instruction(const instruction_t* instruction, const label_list_t* labels,
                               uint64_t instruction_address, uint8_t** buffer_pos);
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte);
-void emit_4_bytes(uint8_t** buffer_pos, int32_t value);
+void emit_4_bytes(uint8_t** buffer_pos, uint32_t value);
 void emit_8_bytes(uint8_t** buffer_pos, uint64_t value);
 
 void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point);
