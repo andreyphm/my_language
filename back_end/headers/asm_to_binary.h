@@ -40,6 +40,7 @@ struct operand_t
 {
     operand_kind kind;
     size_t reg_num;
+    size_t reg_size;
     int64_t displacement;
     int64_t imm_value;
     double double_value;
@@ -65,6 +66,7 @@ struct label_t
 {
     char name[MAX_LABEL_NAME];
     size_t instruction_index;
+    uint64_t address;
 };
 
 struct label_list_t
@@ -78,14 +80,15 @@ struct reg_info_t
 {
     const char* name;
     size_t number;
+    size_t size;
 };
 
 const reg_info_t registers_array[] =
 {
-    {"rax", 0}, {"rcx", 1}, {"rdx", 2}, {"rbx", 3},
-    {"rsp", 4}, {"rbp", 5}, {"rsi", 6}, {"rdi", 7},
-    {"eax", 0}, {"ecx", 1}, {"edx", 2}, {"ebx", 3},
-    {"al",  0}, {"cl",  1}, {"dl",  2}, {"bl",  3}
+    {"rax", 0, 8}, {"rcx", 1, 8}, {"rdx", 2, 8}, {"rbx", 3, 8},
+    {"rsp", 4, 8}, {"rbp", 5, 8}, {"rsi", 6, 8}, {"rdi", 7, 8},
+    {"eax", 0, 4}, {"ecx", 1, 4}, {"edx", 2, 4}, {"ebx", 3, 4},
+    {"al",  0, 1}, {"cl",  1, 1}, {"dl",  2, 1}, {"bl",  3, 1}
 };
 
 const size_t REG_ARRAY_SIZE = sizeof(registers_array) / sizeof(registers_array[0]);
@@ -93,7 +96,7 @@ const size_t REG_ARRAY_SIZE = sizeof(registers_array) / sizeof(registers_array[0
 void asm_to_binary(FILE* const asm_file, FILE* const binary_file);
 void asm_code_to_instructions(char* asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
 void parse_instruction(char** asm_buffer, instruction_list_t* const instruction_list,
-                             label_list_t* label_list, section_kind* section);
+                                          label_list_t* label_list, section_kind* section);
 void parse_operand(char** asm_buffer, operand_t* operand);
 bool try_section(char** asm_buffer, section_kind* section);
 bool try_label(char** asm_buffer, instruction_list_t* const instruction_list, label_list_t* label_list);
@@ -113,6 +116,17 @@ void instruction_list_destroy(instruction_list_t* list);
 void label_list_init(label_list_t* list);
 void label_list_push_back(label_list_t* list, label_t label);
 void label_list_destroy(label_list_t* list);
+
+size_t get_instruction_size(const instruction_t* instruction);
+void calculate_sizes(instruction_list_t* list);
+void compute_labels_addresses(instruction_list_t* list, label_list_t* labels, uint64_t code_start);
+
+size_t encode_all(const instruction_list_t* list, const label_list_t* labels, uint64_t code_start, uint8_t* buffer);
+void encode_instruction(const instruction_t* instruction, const label_list_t* labels,
+                              uint64_t instruction_address, uint8_t** buffer_pos);
+void emit_1_byte(uint8_t** buffer_pos, uint8_t byte);
+void emit_4_bytes(uint8_t** buffer_pos, int32_t value);
+void emit_8_bytes(uint8_t** buffer_pos, uint64_t value);
 
 void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point);
 void fill_program_header(Elf64_Phdr* header, uint64_t base_vaddr, uint64_t code_offset, uint64_t code_size,
