@@ -136,9 +136,14 @@ void encode_cmp(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
 void encode_inc(const operand_t* op, uint8_t** buffer_pos);
 void encode_dec(const operand_t* op, uint8_t** buffer_pos);
 void encode_div(const operand_t* op, uint8_t** buffer_pos);
+void encode_lea(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
+void encode_movzx(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
+void encode_movsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte);
 void emit_4_bytes(uint8_t** buffer_pos, uint32_t value);
 void emit_8_bytes(uint8_t** buffer_pos, uint64_t value);
+uint64_t find_label_address(const label_list_t* labels, const char* name);
 
 void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point);
 void fill_program_header(Elf64_Phdr* header, uint64_t base_vaddr, uint64_t code_offset, uint64_t code_size,

@@ -23,8 +23,8 @@ size_t encode_all(const instruction_list_t* list, const label_list_t* labels, ui
     return (size_t) (buffer_pos - buffer);
 }
 
-void encode_instruction(const instruction_t* instruction, const label_list_t* labels,
-                              uint64_t instruction_address, uint8_t** buffer_pos)
+void encode_instruction(const instruction_t* instruction,
+                        const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
 {
     assert(instruction);
     assert(labels);
@@ -35,20 +35,24 @@ void encode_instruction(const instruction_t* instruction, const label_list_t* la
     const operand_t* first_op = &instruction->operands[0];
     const operand_t* second_op = &instruction->operands[1];
 
-    if (!strcmp(mnemonic, "syscall"))   { encode_syscall(buffer_pos);                   return; }
-    if (!strcmp(mnemonic, "ret"))       { encode_ret(buffer_pos);                       return; }
-    if (!strcmp(mnemonic, "push"))      { encode_push(first_op, buffer_pos);            return; }
-    if (!strcmp(mnemonic, "pop"))       { encode_pop(first_op, buffer_pos);             return; }
-    if (!strcmp(mnemonic, "dq"))        { encode_dq(first_op, buffer_pos);              return; }
-    if (!strcmp(mnemonic, "xor"))       { encode_xor(first_op, second_op, buffer_pos);  return; }
-    if (!strcmp(mnemonic, "test"))      { encode_test(first_op, second_op, buffer_pos); return; }
-    if (!strcmp(mnemonic, "mov"))       { encode_mov(first_op, second_op, buffer_pos);  return; }
-    if (!strcmp(mnemonic, "add"))       { encode_add(first_op, second_op, buffer_pos);  return; }
-    if (!strcmp(mnemonic, "sub"))       { encode_sub(first_op, second_op, buffer_pos);  return; }
-    if (!strcmp(mnemonic, "cmp"))       { encode_cmp(first_op, second_op, buffer_pos);  return; }
-    if (!strcmp(mnemonic, "inc"))       { encode_inc(first_op, buffer_pos);             return; }
-    if (!strcmp(mnemonic, "dec"))       { encode_dec(first_op, buffer_pos);             return; }
-    if (!strcmp(mnemonic, "div"))       { encode_div(first_op, buffer_pos);             return; }
+    if (!strcmp(mnemonic, "syscall"))   { encode_syscall(buffer_pos);                    return; }
+    if (!strcmp(mnemonic, "ret"))       { encode_ret(buffer_pos);                        return; }
+    if (!strcmp(mnemonic, "push"))      { encode_push(first_op, buffer_pos);             return; }
+    if (!strcmp(mnemonic, "pop"))       { encode_pop(first_op, buffer_pos);              return; }
+    if (!strcmp(mnemonic, "dq"))        { encode_dq(first_op, buffer_pos);               return; }
+    if (!strcmp(mnemonic, "xor"))       { encode_xor(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "test"))      { encode_test(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "mov"))       { encode_mov(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "add"))       { encode_add(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "sub"))       { encode_sub(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "cmp"))       { encode_cmp(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "inc"))       { encode_inc(first_op, buffer_pos);              return; }
+    if (!strcmp(mnemonic, "dec"))       { encode_dec(first_op, buffer_pos);              return; }
+    if (!strcmp(mnemonic, "div"))       { encode_div(first_op, buffer_pos);              return; }
+    if (!strcmp(mnemonic, "lea"))       { encode_lea(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "movzx"))     { encode_movzx(first_op, second_op, buffer_pos); return; }
+    if (!strcmp(mnemonic, "movsd"))     { encode_movsd(first_op, second_op, labels,
+                                                       instruction_address, buffer_pos); return; }
 
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
@@ -240,6 +244,72 @@ void encode_div(const operand_t* op, uint8_t** buffer_pos)
     emit_1_byte(buffer_pos, mod_rm);
 }
 
+void encode_lea(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    // Bytes: REX.W(0x48) | 0x8D | ModRM | disp8
+    uint8_t mod_rm = (uint8_t)((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0x8D);
+    emit_1_byte(buffer_pos, mod_rm);
+    emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+}
+
+void encode_movzx(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    // Bytes: REX.W(0x48) | 0x0F | 0xB6 | ModRM | disp8
+    uint8_t mod_rm = (uint8_t)((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0x0F);
+    emit_1_byte(buffer_pos, 0xB6);
+    emit_1_byte(buffer_pos, mod_rm);
+    emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+}
+
+void encode_movsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM_REL)
+    {
+        // Bytes: 0xF2 | 0x0F | 0x10 | ModRM(rm = 101) | rel32(4)
+        uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | 5);
+        uint64_t target = find_label_address(labels, op1->label_name);
+        int32_t rel32 = target - (instruction_address + 8);
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x10);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_4_bytes(buffer_pos, (uint32_t) rel32);
+        return;
+    }
+
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM)
+    {
+        // Bytes: 0xF2 | 0x0F | 0x10 | ModRM | disp8
+        uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x10);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+        return;
+    }
+
+    if (op0->kind == OPERAND_MEM && op1->kind == OPERAND_XMM)
+    {
+        // Bytes: 0xF2 | 0x0F | 0x11 | ModRM | disp8
+        uint8_t mod_rm = (uint8_t) ((1 << 6) | (op1->reg_num << 3) | op0->reg_num);
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x11);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t)(int8_t) op0->displacement);
+        return;
+    }
+
+    fprintf(stderr, "encode_movsd: unknown operand combination\n");
+    assert(0);
+}
+
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte)
 {
     assert(buffer_pos);
@@ -265,4 +335,17 @@ void emit_8_bytes(uint8_t** buffer_pos, uint64_t value)
 
     memcpy(*buffer_pos, &value, 8);
     *buffer_pos += 8;
+}
+
+uint64_t find_label_address(const label_list_t* labels, const char* name)
+{
+    for (size_t i = 0; i < labels->count; i++)
+    {
+        if (!strcmp(labels->labels[i].name, name))
+            return labels->labels[i].address;
+    }
+
+    fprintf(stderr, "Label not found: '%s'\n", name);
+    assert(0);
+    return 0;
 }
