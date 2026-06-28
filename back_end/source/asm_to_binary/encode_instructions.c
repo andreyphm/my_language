@@ -35,116 +35,119 @@ void encode_instruction(const instruction_t* instruction, const label_list_t* la
     const operand_t* first_op = &instruction->operands[0];
     const operand_t* second_op = &instruction->operands[1];
 
-    if (!strcmp(mnemonic, "syscall")) // Bytes: 0x0F | 0x05
+    if (!strcmp(mnemonic, "syscall")) { encode_syscall(buffer_pos);                    return; }
+    if (!strcmp(mnemonic, "ret"))     { encode_ret(buffer_pos);                        return; }
+    if (!strcmp(mnemonic, "push"))    { encode_push(first_op, buffer_pos);             return; }
+    if (!strcmp(mnemonic, "pop"))     { encode_pop(first_op, buffer_pos);              return; }
+    if (!strcmp(mnemonic, "dq"))      { encode_dq(first_op, buffer_pos);               return; }
+    if (!strcmp(mnemonic, "xor"))     { encode_xor(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "test"))    { encode_test(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "mov"))     { encode_mov(first_op, second_op, buffer_pos);   return; }
+
+    fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
+    assert(0);
+}
+
+void encode_syscall(uint8_t** buffer_pos)
+{
+    // Bytes: 0x0F | 0x05
+    emit_1_byte(buffer_pos, 0x0F);
+    emit_1_byte(buffer_pos, 0x05);
+}
+
+void encode_ret(uint8_t** buffer_pos)
+{
+    // Byte: 0xC3
+    emit_1_byte(buffer_pos, 0xC3);
+}
+
+void encode_push(const operand_t* op, uint8_t** buffer_pos)
+{
+    // Byte: 0x50 + reg_num
+    emit_1_byte(buffer_pos, (uint8_t) (0x50 + op->reg_num));
+}
+
+void encode_pop(const operand_t* op, uint8_t** buffer_pos)
+{
+    // Byte: 0x58 + reg_num
+    emit_1_byte(buffer_pos, (uint8_t) (0x58 + op->reg_num));
+}
+
+void encode_dq(const operand_t* op, uint8_t** buffer_pos)
+{
+    // Bytes: double_value(8)
+    uint64_t bytes = 0;
+    memcpy(&bytes, &op->double_value, sizeof(uint64_t));
+    emit_8_bytes(buffer_pos, bytes);
+}
+
+void encode_xor(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    // Bytes: REX.W(0x48) | 0x33 | ModRM
+    uint8_t mod_rm = (uint8_t)((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0x33);
+    emit_1_byte(buffer_pos, mod_rm);
+}
+
+void encode_test(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    // Bytes: REX.W(0x48) | 0x85 | ModRM
+    uint8_t mod_rm = (uint8_t)((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0x85);
+    emit_1_byte(buffer_pos, mod_rm);
+}
+
+void encode_mov(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    if (op0->kind == OPERAND_REG && op1->kind == OPERAND_IMM)
     {
-        emit_1_byte(buffer_pos, 0x0F);
-        emit_1_byte(buffer_pos, 0x05);
-        return;
-    }
-
-    if (!strcmp(mnemonic, "ret")) // Byte: 0xC3
-    {
-        emit_1_byte(buffer_pos, 0xC3);
-        return;
-    }
-
-    if (!strcmp(mnemonic, "push")) // Byte: 0x50 + reg_num
-    {
-        emit_1_byte(buffer_pos, (uint8_t) (0x50 + first_op->reg_num));
-        return;
-    }
-
-    if (!strcmp(mnemonic, "pop")) // Byte: 0x58 + reg_num
-    {
-        emit_1_byte(buffer_pos, (uint8_t) (0x58 + first_op->reg_num));
-        return;
-    }
-
-    if (!strcmp(mnemonic, "dq")) // Bytes: double_value(8)
-    {
-        uint64_t bytes = 0;
-        memcpy(&bytes, &first_op->double_value, 8);
-        emit_8_bytes(buffer_pos, bytes);
-        return;
-    }
-
-    if (!strcmp(mnemonic, "xor")) // Bytes: REX.W(0x48) | 0x33 | ModRM
-    {
-        uint8_t op_code  = 0x33;
-        uint8_t mod_rm   = (uint8_t) ((3 << 6) | (first_op->reg_num << 3) | second_op->reg_num);
-
-        emit_1_byte(buffer_pos, 0x48);
-        emit_1_byte(buffer_pos, op_code);
-        emit_1_byte(buffer_pos, mod_rm);
-        return;
-    }
-
-    if (!strcmp(mnemonic, "test")) // Bytes: REX.W(0x48) | 0x85 | ModRM
-    {
-        uint8_t op_code  = 0x85;
-        uint8_t mod_rm   = (uint8_t) ((3 << 6) | (first_op->reg_num << 3) | second_op->reg_num);
-
-        emit_1_byte(buffer_pos, 0x48);
-        emit_1_byte(buffer_pos, op_code);
-        emit_1_byte(buffer_pos, mod_rm);
-        return;
-    }
-
-    if (!strcmp(mnemonic, "mov"))
-    {
-        if (first_op->kind == OPERAND_REG && second_op->kind == OPERAND_IMM)
+        if (op0->reg_size == 1) // Bytes: 0xB0 + reg_num | imm8
         {
-            if (first_op->reg_size == 1) // Bytes: 0xB0 + reg_num | imm8
-            {
-                emit_1_byte(buffer_pos, (uint8_t) (0xB0 + first_op->reg_num));
-                emit_1_byte(buffer_pos, (uint8_t) second_op->imm_value);
-                return;
-            }
-
-            else // Bytes: REX.W(0x48) | 0xC7 | ModRM | imm32(4)
-            {
-                uint8_t mod_rm = (uint8_t) ((3 << 6) | first_op->reg_num);
-
-                emit_1_byte(buffer_pos, 0x48);
-                emit_1_byte(buffer_pos, 0xC7);
-                emit_1_byte(buffer_pos, mod_rm);
-                emit_4_bytes(buffer_pos, (uint32_t) second_op->imm_value);
-                return;
-            }
+            emit_1_byte(buffer_pos, (uint8_t) (0xB0 + op0->reg_num));
+            emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
         }
-
-        if (first_op->kind == OPERAND_REG && second_op->kind == OPERAND_REG) // Bytes: REX.W(0x48) | 0x89 | ModRM
+        else // Bytes: REX.W(0x48) | 0xC7 | ModRM | imm32(4)
         {
-            uint8_t mod_rm = (uint8_t)((3 << 6) | (second_op->reg_num << 3) | first_op->reg_num);
-
+            uint8_t mod_rm = (uint8_t)((3 << 6) | op0->reg_num);
             emit_1_byte(buffer_pos, 0x48);
-            emit_1_byte(buffer_pos, 0x89);
+            emit_1_byte(buffer_pos, 0xC7);
+            emit_1_byte(buffer_pos, mod_rm);
+            emit_4_bytes(buffer_pos, (uint32_t) op1->imm_value);
+        }
+        return;
+    }
+
+    if (op0->kind == OPERAND_REG && op1->kind == OPERAND_REG) // Bytes: REX.W(0x48) | 0x89 | ModRM
+    {
+        uint8_t mod_rm = (uint8_t)((3 << 6) | (op1->reg_num << 3) | op0->reg_num);
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x89);
+        emit_1_byte(buffer_pos, mod_rm);
+        return;
+    }
+
+    if (op0->kind == OPERAND_MEM && op1->kind == OPERAND_REG)
+    {
+        if (op0->displacement == 0) // Bytes: 0x88 | ModRM
+        {
+            uint8_t mod_rm = (uint8_t)((op1->reg_num << 3) | op0->reg_num);
+            emit_1_byte(buffer_pos, 0x88);
             emit_1_byte(buffer_pos, mod_rm);
             return;
         }
-
-        if (first_op->kind == OPERAND_MEM && second_op->kind == OPERAND_REG)
+        else // Bytes: 0x88 | ModRM | disp8
         {
-            if (first_op->displacement == 0) // Bytes: 0x88 | ModRM
-            {
-                uint8_t mod_rm = (uint8_t)((second_op->reg_num << 3) | first_op->reg_num);
-
-                emit_1_byte(buffer_pos, 0x88);
-                emit_1_byte(buffer_pos, mod_rm);
-            }
-            else // Bytes: 0x88 | ModRM | disp8 
-            {
-                uint8_t mod_rm = (uint8_t)((1 << 6) | (second_op->reg_num << 3) | first_op->reg_num);
-
-                emit_1_byte(buffer_pos, 0x88);
-                emit_1_byte(buffer_pos, mod_rm);
-                emit_1_byte(buffer_pos, (uint8_t) first_op->displacement);
-            }
+            uint8_t mod_rm = (uint8_t)((1 << 6) | (op1->reg_num << 3) | op0->reg_num);
+            emit_1_byte(buffer_pos, 0x88);
+            emit_1_byte(buffer_pos, mod_rm);
+            emit_1_byte(buffer_pos, (uint8_t) op0->displacement);
             return;
         }
     }
 
-    fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
+    fprintf(stderr, "encode_mov: unknown operand combination\n");
     assert(0);
 }
 

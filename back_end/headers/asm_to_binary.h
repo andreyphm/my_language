@@ -108,11 +108,9 @@ bool try_reg(char** asm_buffer, operand_t* operand);
 bool try_mem(char** asm_buffer, operand_t* operand);
 bool try_mem_rel(char** asm_buffer, operand_t* operand);
 bool try_label_jump(char** asm_buffer, operand_t* operand);
-
 void instruction_list_init(instruction_list_t* list);
 void instruction_list_push_back(instruction_list_t* list, instruction_t instr);
 void instruction_list_destroy(instruction_list_t* list);
-
 void label_list_init(label_list_t* list);
 void label_list_push_back(label_list_t* list, label_t label);
 void label_list_destroy(label_list_t* list);
@@ -124,6 +122,14 @@ void compute_labels_addresses(instruction_list_t* list, label_list_t* labels, ui
 size_t encode_all(const instruction_list_t* list, const label_list_t* labels, uint64_t code_start, uint8_t* buffer);
 void encode_instruction(const instruction_t* instruction, const label_list_t* labels,
                               uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_syscall(uint8_t** buffer_pos);
+void encode_ret(uint8_t** buffer_pos);
+void encode_push(const operand_t* op, uint8_t** buffer_pos);
+void encode_pop(const operand_t* op, uint8_t** buffer_pos);
+void encode_dq(const operand_t* op, uint8_t** buffer_pos);
+void encode_xor(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
+void encode_test(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
+void encode_mov(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte);
 void emit_4_bytes(uint8_t** buffer_pos, uint32_t value);
 void emit_8_bytes(uint8_t** buffer_pos, uint64_t value);
