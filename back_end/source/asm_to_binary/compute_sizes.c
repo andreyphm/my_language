@@ -28,6 +28,18 @@ size_t get_instruction_size(const instruction_t* instruction)
             return (first_op->displacement == 0) ? 2 : 3;
     }
 
+    if (!strcmp(mnemonic, "add"))
+        return (first_op->reg_size == 1) ? 3 : 4;
+
+    if (!strcmp(mnemonic, "sub"))
+        return (first_op->reg_size == 1) ? 3 : 4;
+
+    if (!strcmp(mnemonic, "cmp"))
+        return (first_op->reg_size == 1) ? 3 : 4;
+
+    if (!strcmp(mnemonic, "inc") || !strcmp(mnemonic, "dec")) return 3;
+    if (!strcmp(mnemonic, "div")) return 3;
+
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
     return 0;

@@ -35,14 +35,20 @@ void encode_instruction(const instruction_t* instruction, const label_list_t* la
     const operand_t* first_op = &instruction->operands[0];
     const operand_t* second_op = &instruction->operands[1];
 
-    if (!strcmp(mnemonic, "syscall")) { encode_syscall(buffer_pos);                    return; }
-    if (!strcmp(mnemonic, "ret"))     { encode_ret(buffer_pos);                        return; }
-    if (!strcmp(mnemonic, "push"))    { encode_push(first_op, buffer_pos);             return; }
-    if (!strcmp(mnemonic, "pop"))     { encode_pop(first_op, buffer_pos);              return; }
-    if (!strcmp(mnemonic, "dq"))      { encode_dq(first_op, buffer_pos);               return; }
-    if (!strcmp(mnemonic, "xor"))     { encode_xor(first_op, second_op, buffer_pos);   return; }
-    if (!strcmp(mnemonic, "test"))    { encode_test(first_op, second_op, buffer_pos);  return; }
-    if (!strcmp(mnemonic, "mov"))     { encode_mov(first_op, second_op, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "syscall"))   { encode_syscall(buffer_pos);                   return; }
+    if (!strcmp(mnemonic, "ret"))       { encode_ret(buffer_pos);                       return; }
+    if (!strcmp(mnemonic, "push"))      { encode_push(first_op, buffer_pos);            return; }
+    if (!strcmp(mnemonic, "pop"))       { encode_pop(first_op, buffer_pos);             return; }
+    if (!strcmp(mnemonic, "dq"))        { encode_dq(first_op, buffer_pos);              return; }
+    if (!strcmp(mnemonic, "xor"))       { encode_xor(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "test"))      { encode_test(first_op, second_op, buffer_pos); return; }
+    if (!strcmp(mnemonic, "mov"))       { encode_mov(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "add"))       { encode_add(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "sub"))       { encode_sub(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "cmp"))       { encode_cmp(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "inc"))       { encode_inc(first_op, buffer_pos);             return; }
+    if (!strcmp(mnemonic, "dec"))       { encode_dec(first_op, buffer_pos);             return; }
+    if (!strcmp(mnemonic, "div"))       { encode_div(first_op, buffer_pos);             return; }
 
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
@@ -137,18 +143,101 @@ void encode_mov(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
             emit_1_byte(buffer_pos, mod_rm);
             return;
         }
-        else // Bytes: 0x88 | ModRM | disp8
-        {
-            uint8_t mod_rm = (uint8_t)((1 << 6) | (op1->reg_num << 3) | op0->reg_num);
-            emit_1_byte(buffer_pos, 0x88);
-            emit_1_byte(buffer_pos, mod_rm);
-            emit_1_byte(buffer_pos, (uint8_t) op0->displacement);
-            return;
-        }
+
+        // Bytes: 0x88 | ModRM | disp8
+        uint8_t mod_rm = (uint8_t)((1 << 6) | (op1->reg_num << 3) | op0->reg_num);
+        emit_1_byte(buffer_pos, 0x88);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op0->displacement);
+        return;
     }
 
     fprintf(stderr, "encode_mov: unknown operand combination\n");
     assert(0);
+}
+
+void encode_add(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    uint8_t mod_rm = (uint8_t) ((3 << 6) | op0->reg_num);
+
+    if (op0->reg_size == 1) // Bytes: 0x80 | ModRM(/0) | imm8
+    {
+        emit_1_byte(buffer_pos, 0x80);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
+        return;
+    }
+
+    // Bytes: REX.W(0x48) | 0x83 | ModRM(/0) | imm8
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0x83);
+    emit_1_byte(buffer_pos, mod_rm);
+    emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
+}
+
+void encode_sub(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    uint8_t mod_rm = (uint8_t) ((3 << 6) | (5 << 3) | op0->reg_num);
+
+    if (op0->reg_size == 1) // Bytes: 0x80 | ModRM(/5) | imm8
+    {
+        emit_1_byte(buffer_pos, 0x80);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
+        return;
+    }
+
+    // Bytes: REX.W(0x48) | 0x83 | ModRM(/5) | imm8
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0x83);
+    emit_1_byte(buffer_pos, mod_rm);
+    emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
+}
+
+void encode_cmp(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    uint8_t mod_rm = (uint8_t) ((3 << 6) | (7 << 3) | op0->reg_num);
+
+    if (op0->reg_size == 1) // Bytes: 0x80 | ModRM(/7) | imm8
+    {
+        emit_1_byte(buffer_pos, 0x80);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
+        return;
+    }
+
+    // Bytes: REX.W(0x48) | 0x83 | ModRM(/7) | imm8
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0x83);
+    emit_1_byte(buffer_pos, mod_rm);
+    emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
+}
+
+void encode_inc(const operand_t* op, uint8_t** buffer_pos)
+{
+    // Bytes: REX.W(0x48) | 0xFF | ModRM(/0)
+    uint8_t mod_rm = (uint8_t)((3 << 6) | op->reg_num);
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0xFF);
+    emit_1_byte(buffer_pos, mod_rm);
+}
+
+void encode_dec(const operand_t* op, uint8_t** buffer_pos)
+{
+    // Bytes: REX.W(0x48) | 0xFF | ModRM(/1)
+    uint8_t mod_rm = (uint8_t)((3 << 6) | (1 << 3) | op->reg_num);
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0xFF);
+    emit_1_byte(buffer_pos, mod_rm);
+}
+
+void encode_div(const operand_t* op, uint8_t** buffer_pos)
+{
+    // Bytes: REX.W(0x48) | 0xF7 | ModRM(/6)
+    uint8_t mod_rm = (uint8_t)((3 << 6) | (6 << 3) | op->reg_num);
+    emit_1_byte(buffer_pos, 0x48);
+    emit_1_byte(buffer_pos, 0xF7);
+    emit_1_byte(buffer_pos, mod_rm);
 }
 
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte)
