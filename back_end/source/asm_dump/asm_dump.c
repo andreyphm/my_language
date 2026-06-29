@@ -6,12 +6,12 @@
 #include "font.h"
 
 void asm_dump(const instruction_list_t* instruction_list, const label_list_t* label_list,
-              const char* const txt_file_name, const char* const png_file_name)
+              const char* const txt_file_name, const char* const svg_file_name)
 {
     assert(instruction_list);
     assert(label_list);
     assert(txt_file_name);
-    assert(png_file_name);
+    assert(svg_file_name);
 
     FILE* txt_file = fopen(txt_file_name, "w");
     fprintf(txt_file, "digraph structs\n{\nrankdir = LR;\ngraph[bgcolor=\"#e0e0e9ff\"];\n");
@@ -77,10 +77,10 @@ void asm_dump(const instruction_list_t* instruction_list, const label_list_t* la
     fclose(txt_file);
 
     char command[1000];
-    sprintf(command, "dot %s -T png -o %s", txt_file_name, png_file_name);
+    sprintf(command, "dot %s -T svg -o %s", txt_file_name, svg_file_name);
     system(command);
 
-    printf(MAKE_BOLD_GREEN("ASM dump saved to %s\n"), png_file_name);
+    printf(MAKE_BOLD_GREEN("ASM dump saved to %s\n"), svg_file_name);
 }
 
 const char* operand_kind_to_str(operand_kind kind)

@@ -6,12 +6,12 @@
 #include "list_dump.h"
 #include "font.h"
 
-void list_dump(list_t* const list, const char* const txt_file_name, const char* const png_file_name, 
+void list_dump(list_t* const list, const char* const txt_file_name, const char* const svg_file_name, 
                                                                 const identifier_t* const identifiers)
 {
     assert(list);
     assert(txt_file_name);
-    assert(png_file_name);
+    assert(svg_file_name);
 
     FILE* txt_file = fopen(txt_file_name, "w");
     fprintf(txt_file, "digraph structs\n{\nrankdir = LR;\ngraph[bgcolor=\"#e0e0e9ff\"];\n");
@@ -79,10 +79,10 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
     fclose(txt_file);
 
     char command[1000];
-    sprintf(command, "dot %s -T png -o %s", txt_file_name, png_file_name);
+    sprintf(command, "dot %s -T svg -o %s", txt_file_name, svg_file_name);
     system(command);
 
-    printf(MAKE_BOLD_GREEN("List visualization saved to %s\n"), LIST_DUMP_PNG);
+    printf(MAKE_BOLD_GREEN("List visualization saved to %s\n"), LIST_DUMP_SVG);
 }
 
 const char* spec_to_str(spec_code spec)

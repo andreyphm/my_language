@@ -441,6 +441,16 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
 
                 return NO_ERROR;
             }
+
+            if (!strcmp(identifiers[func_id].name, "sqrt"))
+            {
+                node_t* args_node = expr_node->children[0];
+
+                if (args_node->child_count != 1)
+                    return SQRT_WRONG_NUMBER_OF_ARGS;
+
+                return analyze_expr(args_node->children[0], current, identifiers);
+            }
         
             if (!seek_func(current, func_id))
                 return UNDECLARED_FUNCTION;

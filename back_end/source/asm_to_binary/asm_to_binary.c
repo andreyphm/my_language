@@ -19,7 +19,7 @@ void asm_to_binary(FILE* const asm_file, FILE* const binary_file)
     label_list_t label_list = {};
     asm_code_to_instructions(asm_buffer, &instruction_list, &label_list);
 
-    asm_dump(&instruction_list, &label_list, ASM_DUMP_TXT, ASM_DUMP_PNG);
+    asm_dump(&instruction_list, &label_list, ASM_DUMP_TXT, ASM_DUMP_SVG);
 
     calculate_sizes(&instruction_list);
     compute_labels_addresses(&instruction_list, &label_list, BASE_VADDR + CODE_OFFSET);

@@ -30,12 +30,14 @@ __out:
 
 	mov dl, '-'
 	mov [rbp - 9], dl
+    xorpd xmm1, xmm1
+    subsd xmm1, xmm0
+    movsd xmm0, xmm1
 	mov rax, 1				; sys_write
 	mov rdi, 1				; stdout
 	lea rsi, [rbp - 9]		; Buffer start
 	mov rdx, 1				; Number of bytes to write
 	syscall
-	xorpd xmm0, [rel __stdlib_neg0]		; xmm0 to positive
 
 .out_pos:
 	cvttsd2si rax, xmm0			; rax = integer part of xmm0 (truncated)
@@ -49,7 +51,7 @@ __out:
 	mov dl, '0'
 	mov [rbp - 10], dl
 	mov rcx, 1
-	jmp .out_int_done
+	jmp .out_int_write
 
 .out_int_loop:
 	test rax, rax
@@ -62,8 +64,10 @@ __out:
 	dec rdi
 	inc rcx
 	jmp .out_int_loop
+
 .out_int_done:
 	inc rdi					    ; rdi now points to most significant digit
+.out_int_write:
 	mov rax, 1				    ; sys_write
 	mov rsi, rdi			    ; Buffer start
 	mov rdx, rcx			    ; Number of bytes to write
@@ -170,7 +174,9 @@ __in:
 .in_done:
     test rbx, rbx
     jz .in_positive
-    xorpd xmm0, [rel __stdlib_neg0]     ; xmm0 to negative
+    xorpd xmm1, xmm1
+    subsd xmm1, xmm0
+    movsd xmm0, xmm1
 
 .in_positive:
     add rsp, 16

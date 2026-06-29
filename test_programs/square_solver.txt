@@ -1,0 +1,99 @@
+#include <my_stdlib>
+
+func main()
+{
+    var a = in();
+    var b = in();
+    var c = in();
+
+    equation_solver(a, b, c);
+    return;
+}
+
+func equation_solver(a, b, c)
+{
+    if (a == 0)
+    {
+        linear_equation_solver(b, c);
+    }
+
+    else
+    {
+        quadratic_equation_solver(a, b, c);
+    }
+
+    return;
+}
+
+func linear_equation_solver(b, c)
+{
+    if (b == 0)
+    {
+        if (c == 0)
+        {
+            out(0-1);
+        }
+        else
+        {
+            out(0);
+        }
+    }
+
+    else
+    {
+        out(1);
+        out((0-1)*c / b);
+    }
+}
+
+func quadratic_equation_solver(a, b, c)
+{
+    var D = b*b - 4*a*c;
+    
+    if (is_close_to_zero(D))
+    {
+        var x1 = (0-1)*b / (2*a);
+        out(1);
+        out(x1);
+        return;
+    }
+
+    if (D > 0)
+    {
+        var x1 = ((0-1)*b + sqrt(D)) / (2*a);
+        var x2 = ((0-1)*b - sqrt(D)) / (2*a);
+        out(2);
+        out(x1);
+        out(x2);
+        return;
+    }
+
+    else
+    {
+        out(0);
+    }
+
+    return;
+}
+
+func abs(value)
+{
+    if (value < 0)
+    {
+        return 0 - value;
+    }
+
+    return value;
+}
+
+func is_close_to_zero(value)
+{
+    var epsilon = 0.000001;
+
+    if (abs(value) < epsilon)
+    {
+        return 1;
+    }
+
+    return 0;
+}

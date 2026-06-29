@@ -62,6 +62,7 @@ void gen_div(node_t* div_node, const identifier_t* const identifiers, context_t*
 void gen_cmp(node_t* cmp_node, const identifier_t* const identifiers, context_t* context, const char* jump_word);
 void gen_out(node_t* out_node, const identifier_t* const identifiers, context_t* context);
 void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* context);
+void gen_sqrt(node_t* sqrt_node, const identifier_t* const identifiers, context_t* context);
 
 void gen_sub_rsp(context_t* context, size_t bytes);
 void gen_add_rsp(context_t* context, size_t bytes);

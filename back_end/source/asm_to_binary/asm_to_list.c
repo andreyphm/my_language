@@ -178,7 +178,7 @@ bool try_double(char** asm_buffer, operand_t* operand)
     }
 
     char* end = nullptr;
-    double value = strtod(*asm_buffer, &end);
+    double value = strtod(start, &end);
 
     bool has_dot = false;
     for (char* symbol_ptr = start; symbol_ptr < end; symbol_ptr++)
@@ -191,7 +191,10 @@ bool try_double(char** asm_buffer, operand_t* operand)
     }
 
     if (!has_dot)
+    {
+        *asm_buffer = start;
         return false;
+    }
 
     operand->kind = OPERAND_DOUBLE;
     operand->double_value = value;

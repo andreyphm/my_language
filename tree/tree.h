@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define TREE_DUMP_TXT "tree/tree_dump/tree_dump.txt"
-#define TREE_DUMP_PNG "tree/tree_dump/tree_dump.png"
+#define TREE_DUMP_SVG "tree/tree_dump/tree_dump.svg"
 
 enum operator_code
 {
@@ -158,6 +158,6 @@ node_t* create_break_node();
 void destroy_nodes(size_t count, ...);
 void destroy_node(node_t* node);
 
-void tree_dump(node_t* const node, const char* const png_file_name, const identifier_t* const identifiers);
+void tree_dump(node_t* const node, const char* const svg_file_name, const identifier_t* const identifiers);
 
 #endif // TREE_H

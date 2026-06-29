@@ -10,14 +10,14 @@ const int COMMAND_CAPACITY = 100;
 
 const char* node_kind_to_str(node_kind kind);
 
-void tree_dump(node_t* const node, const char* const png_file_name, const identifier_t* const identifiers)
+void tree_dump(node_t* const node, const char* const svg_file_name, const identifier_t* const identifiers)
 {
     if (!node)
     {
         printf(MAKE_BOLD_RED("Tree is empty, nothing to dump\n"));
         return;
     }
-    assert(png_file_name);
+    assert(svg_file_name);
 
     FILE* txt_file = fopen(TREE_DUMP_TXT, "w");
     assert(txt_file);
@@ -135,10 +135,10 @@ void tree_dump(node_t* const node, const char* const png_file_name, const identi
     free(stack);
 
     char command[COMMAND_CAPACITY] = {};
-    sprintf(command, "dot -Tpng " TREE_DUMP_TXT " -o %s", png_file_name);
+    sprintf(command, "dot -Tsvg " TREE_DUMP_TXT " -o %s", svg_file_name);
     system(command);
 
-    printf(MAKE_BOLD_GREEN("Tree visualization saved to %s\n"), png_file_name);
+    printf(MAKE_BOLD_GREEN("Tree visualization saved to %s\n"), svg_file_name);
 }
 
 const char* node_kind_to_str(node_kind kind)

@@ -46,7 +46,16 @@ size_t get_instruction_size(const instruction_t* instruction)
 
     if (!strcmp(mnemonic, "movsd"))
     {
-        if (first_op->kind == OPERAND_MEM_REL || second_op->kind == OPERAND_MEM_REL) return 8;
+        if (first_op->kind == OPERAND_MEM_REL || second_op->kind == OPERAND_MEM_REL)
+            return 8;
+
+        if ((first_op->kind == OPERAND_MEM && first_op->reg_num == 4 && first_op->displacement != 0) ||
+            (second_op->kind == OPERAND_MEM && second_op->reg_num == 4 && second_op->displacement != 0))
+            return 6;
+
+        if (first_op->kind == OPERAND_XMM && second_op->kind == OPERAND_XMM)
+            return 4;
+
         return 5;
     }
 
@@ -63,7 +72,7 @@ size_t get_instruction_size(const instruction_t* instruction)
     if (!strcmp(mnemonic, "cvttsd2si") || !strcmp(mnemonic, "cvtsi2sd")) return 5;
 
     if (!strcmp(mnemonic, "addsd") || !strcmp(mnemonic, "subsd") ||
-        !strcmp(mnemonic, "mulsd") || !strcmp(mnemonic, "divsd"))
+        !strcmp(mnemonic, "mulsd") || !strcmp(mnemonic, "divsd") || !strcmp(mnemonic, "sqrtsd"))
     {
         if (second_op->kind == OPERAND_XMM)     return 4;
         if (second_op->kind == OPERAND_MEM_REL) return 8;
@@ -76,6 +85,7 @@ size_t get_instruction_size(const instruction_t* instruction)
         !strcmp(mnemonic, "jne") || !strcmp(mnemonic, "jnz") ||
         !strcmp(mnemonic, "jl")  || !strcmp(mnemonic, "jge") ||
         !strcmp(mnemonic, "jle") || !strcmp(mnemonic, "jg")  ||
+        !strcmp(mnemonic, "ja")  || !strcmp(mnemonic, "jb")  ||
         !strcmp(mnemonic, "jae") || !strcmp(mnemonic, "jbe")) return 6;
 
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);

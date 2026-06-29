@@ -393,17 +393,9 @@ void gen_call(node_t* call_node, const identifier_t* const identifiers, context_
     node_t* args_node = call_node->children[0];
     int function_id = call_node->data_t.function.id_number;
 
-    if (!strcmp(identifiers[function_id].name, "out"))
-    {
-        gen_out(call_node, identifiers, context);
-        return;
-    }
-
-    if (!strcmp(identifiers[function_id].name, "in"))
-    {
-        gen_in(call_node, identifiers, context);
-        return;
-    }
+    if (!strcmp(identifiers[function_id].name, "out"))  { gen_out(call_node, identifiers, context);     return; }
+    if (!strcmp(identifiers[function_id].name, "in"))   { gen_in(call_node, identifiers, context);      return; }
+    if (!strcmp(identifiers[function_id].name, "sqrt")) { gen_sqrt(call_node, identifiers, context);    return; }
 
     bool aligned = align_stack_before_call(context);
 
@@ -478,6 +470,26 @@ void gen_in(node_t* in_node, const identifier_t* const identifiers, context_t* c
     printf_to_buffer(&context->buffers.text,
                      "\tcall __in\n\n");
     unalign_stack_after_call(context, aligned);
+}
+
+void gen_sqrt(node_t* sqrt_node, const identifier_t* const identifiers, context_t* context)
+{
+    assert(sqrt_node);
+    assert(identifiers);
+    assert(context);
+
+    node_t* args_node = sqrt_node->children[0];
+
+    if (args_node->child_count != 1)
+    {
+        fprintf(stderr, MAKE_BOLD_RED("Error: sqrt() expects only one argument\n"));
+        return;
+    }
+
+    gen_expr(args_node->children[0], identifiers, context);
+
+    printf_to_buffer(&context->buffers.text,
+                     "\tsqrtsd xmm0, xmm0\n\n");
 }
 
 void op_node_to_asm(node_t* op_node, const identifier_t* const identifiers, context_t* context)

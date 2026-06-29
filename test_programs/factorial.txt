@@ -1,0 +1,23 @@
+#include <my_stdlib>
+
+func fact(n)
+{
+    if (n <= 1)
+    {
+        return 1;
+    }
+    else
+    {
+        return n * fact(n - 1);
+    }
+}
+
+func main()
+{
+    var x = 0;
+    x = in();
+
+    out(fact(x));
+
+    return;
+}

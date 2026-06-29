@@ -4,9 +4,9 @@
 #include "tokenization.h"
 
 #define LIST_DUMP_TXT "front_end/source/list_dump/list_dump.txt"
-#define LIST_DUMP_PNG "front_end/source/list_dump/list_dump.png"
+#define LIST_DUMP_SVG "front_end/source/list_dump/list_dump.svg"
 
-void list_dump(list_t* const list, const char* const txt_file_name, const char* const png_file_name,
+void list_dump(list_t* const list, const char* const txt_file_name, const char* const svg_file_name,
                const identifier_t* const identifiers);
 
 const char* spec_to_str(spec_code spec);
