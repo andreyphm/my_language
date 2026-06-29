@@ -68,6 +68,14 @@ size_t get_instruction_size(const instruction_t* instruction)
         return 5;
     }
 
+    if (!strcmp(mnemonic, "jmp") || !strcmp(mnemonic, "call")) return 5;
+
+    if (!strcmp(mnemonic, "je")  || !strcmp(mnemonic, "jz")  ||
+        !strcmp(mnemonic, "jne") || !strcmp(mnemonic, "jnz") ||
+        !strcmp(mnemonic, "jl")  || !strcmp(mnemonic, "jge") ||
+        !strcmp(mnemonic, "jle") || !strcmp(mnemonic, "jg")  ||
+        !strcmp(mnemonic, "jae") || !strcmp(mnemonic, "jbe")) return 6;
+
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
     return 0;

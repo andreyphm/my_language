@@ -56,10 +56,30 @@ void encode_instruction(const instruction_t* instruction,
     if (!strcmp(mnemonic, "ucomisd"))   { encode_ucomisd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
     if (!strcmp(mnemonic, "cvttsd2si")) { encode_cvttsd2si(first_op, second_op, buffer_pos); return; }
     if (!strcmp(mnemonic, "cvtsi2sd"))  { encode_cvtsi2sd(first_op, second_op, buffer_pos);  return; }
-    if (!strcmp(mnemonic, "addsd"))     { encode_addsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "subsd"))     { encode_subsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "mulsd"))     { encode_mulsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "divsd"))     { encode_divsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
+
+    if (!strcmp(mnemonic, "addsd"))     { encode_sse_arithmetic(0x58, first_op, second_op,
+                                          labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "subsd"))     { encode_sse_arithmetic(0x5C, first_op, second_op,
+                                          labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "mulsd"))     { encode_sse_arithmetic(0x59, first_op, second_op,
+                                          labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "divsd"))     { encode_sse_arithmetic(0x5E, first_op, second_op,
+                                          labels, instruction_address, buffer_pos); return; }
+
+    if (!strcmp(mnemonic, "jmp"))       { encode_jmp(first_op, labels, instruction_address, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "call"))      { encode_call(first_op, labels, instruction_address, buffer_pos); return; }
+
+    if (!strcmp(mnemonic, "je")  || !strcmp(mnemonic, "jz"))  { encode_jcc(0x84, first_op, labels,
+                                                                           instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jne") || !strcmp(mnemonic, "jnz")) { encode_jcc(0x85, first_op, labels,
+                                                                           instruction_address, buffer_pos); return; }
+
+    if (!strcmp(mnemonic, "jl"))  { encode_jcc(0x8C, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jge")) { encode_jcc(0x8D, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jle")) { encode_jcc(0x8E, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jg"))  { encode_jcc(0x8F, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jae")) { encode_jcc(0x83, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jbe")) { encode_jcc(0x86, first_op, labels, instruction_address, buffer_pos); return; }
 
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
@@ -473,28 +493,56 @@ void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t
     assert(0);
 }
 
-void encode_addsd(const operand_t* op0, const operand_t* op1,
-                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+void encode_jmp(const operand_t* op, const label_list_t* labels,
+                uint64_t instruction_address, uint8_t** buffer_pos)
 {
-    encode_sse_arithmetic(0x58, op0, op1, labels, instruction_address, buffer_pos);
+    if (op->kind == OPERAND_LABEL)
+    {
+        // Bytes: 0xE9 | rel32(4)
+        uint64_t target = find_label_address(labels, op->label_name);
+        uint32_t rel32 = (uint32_t) (target - (instruction_address + 5));
+        emit_1_byte(buffer_pos, 0xE9);
+        emit_4_bytes(buffer_pos, rel32);
+        return;
+    }
+
+    fprintf(stderr, "encode_jmp: incorrect operand type\n");
+    assert(0);
 }
 
-void encode_subsd(const operand_t* op0, const operand_t* op1,
-                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+void encode_call(const operand_t* op, const label_list_t* labels,
+                 uint64_t instruction_address, uint8_t** buffer_pos)
 {
-    encode_sse_arithmetic(0x5C, op0, op1, labels, instruction_address, buffer_pos);
+    if (op->kind == OPERAND_LABEL)
+    {
+        // Bytes: 0xE8 | rel32(4)
+        uint64_t target = find_label_address(labels, op->label_name);
+        uint32_t rel32 = (uint32_t) (target - (instruction_address + 5));
+        emit_1_byte(buffer_pos, 0xE8);
+        emit_4_bytes(buffer_pos, rel32);
+        return;
+    }
+
+    fprintf(stderr, "encode_call: incorrect operand type\n");
+    assert(0);
 }
 
-void encode_mulsd(const operand_t* op0, const operand_t* op1,
-                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+void encode_jcc(uint8_t opcode, const operand_t* op, const label_list_t* labels,
+                uint64_t instruction_address, uint8_t** buffer_pos)
 {
-    encode_sse_arithmetic(0x59, op0, op1, labels, instruction_address, buffer_pos);
-}
+    if (op->kind == OPERAND_LABEL)
+    {
+        // Bytes: 0x0F | op_code | rel32(4)
+        uint64_t target = find_label_address(labels, op->label_name);
+        uint32_t rel32 = (uint32_t) (target - (instruction_address + 6));
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, opcode);
+        emit_4_bytes(buffer_pos, rel32);
+        return;
+    }
 
-void encode_divsd(const operand_t* op0, const operand_t* op1,
-                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
-{
-    encode_sse_arithmetic(0x5E, op0, op1, labels, instruction_address, buffer_pos);
+    fprintf(stderr, "encode_jcc: incorrect operand type\n");
+    assert(0);
 }
 
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte)
