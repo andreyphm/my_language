@@ -140,6 +140,22 @@ void encode_lea(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
 void encode_movzx(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
 void encode_movsd(const operand_t* op0, const operand_t* op1,
                   const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_xorpd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_ucomisd(const operand_t* op0, const operand_t* op1,
+                    const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_cvttsd2si(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
+void encode_cvtsi2sd(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
+void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t* op1,
+                           const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_addsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_subsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_mulsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
+void encode_divsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte);
 void emit_4_bytes(uint8_t** buffer_pos, uint32_t value);
 void emit_8_bytes(uint8_t** buffer_pos, uint64_t value);

@@ -48,6 +48,26 @@ size_t get_instruction_size(const instruction_t* instruction)
         return 5;
     }
 
+    if (!strcmp(mnemonic, "xorpd"))
+        return (second_op->kind == OPERAND_MEM_REL) ? 8 : 4;
+
+    if (!strcmp(mnemonic, "ucomisd"))
+    {
+        if (second_op->kind == OPERAND_XMM) return 4;
+        if (second_op->kind == OPERAND_MEM_REL) return 8;
+        return 5;
+    }
+
+    if (!strcmp(mnemonic, "cvttsd2si") || !strcmp(mnemonic, "cvtsi2sd")) return 5;
+
+    if (!strcmp(mnemonic, "addsd") || !strcmp(mnemonic, "subsd") ||
+        !strcmp(mnemonic, "mulsd") || !strcmp(mnemonic, "divsd"))
+    {
+        if (second_op->kind == OPERAND_XMM)     return 4;
+        if (second_op->kind == OPERAND_MEM_REL) return 8;
+        return 5;
+    }
+
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
     return 0;

@@ -51,8 +51,15 @@ void encode_instruction(const instruction_t* instruction,
     if (!strcmp(mnemonic, "div"))       { encode_div(first_op, buffer_pos);              return; }
     if (!strcmp(mnemonic, "lea"))       { encode_lea(first_op, second_op, buffer_pos);   return; }
     if (!strcmp(mnemonic, "movzx"))     { encode_movzx(first_op, second_op, buffer_pos); return; }
-    if (!strcmp(mnemonic, "movsd"))     { encode_movsd(first_op, second_op, labels,
-                                                       instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "movsd"))     { encode_movsd(first_op, second_op, labels, instruction_address, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "xorpd"))     { encode_xorpd(first_op, second_op, labels, instruction_address, buffer_pos);   return; }
+    if (!strcmp(mnemonic, "ucomisd"))   { encode_ucomisd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "cvttsd2si")) { encode_cvttsd2si(first_op, second_op, buffer_pos); return; }
+    if (!strcmp(mnemonic, "cvtsi2sd"))  { encode_cvtsi2sd(first_op, second_op, buffer_pos);  return; }
+    if (!strcmp(mnemonic, "addsd"))     { encode_addsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "subsd"))     { encode_subsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "mulsd"))     { encode_mulsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "divsd"))     { encode_divsd(first_op, second_op, labels, instruction_address, buffer_pos); return; }
 
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
@@ -220,7 +227,7 @@ void encode_cmp(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
 void encode_inc(const operand_t* op, uint8_t** buffer_pos)
 {
     // Bytes: REX.W(0x48) | 0xFF | ModRM(/0)
-    uint8_t mod_rm = (uint8_t)((3 << 6) | op->reg_num);
+    uint8_t mod_rm = (uint8_t) ((3 << 6) | op->reg_num);
     emit_1_byte(buffer_pos, 0x48);
     emit_1_byte(buffer_pos, 0xFF);
     emit_1_byte(buffer_pos, mod_rm);
@@ -229,7 +236,7 @@ void encode_inc(const operand_t* op, uint8_t** buffer_pos)
 void encode_dec(const operand_t* op, uint8_t** buffer_pos)
 {
     // Bytes: REX.W(0x48) | 0xFF | ModRM(/1)
-    uint8_t mod_rm = (uint8_t)((3 << 6) | (1 << 3) | op->reg_num);
+    uint8_t mod_rm = (uint8_t) ((3 << 6) | (1 << 3) | op->reg_num);
     emit_1_byte(buffer_pos, 0x48);
     emit_1_byte(buffer_pos, 0xFF);
     emit_1_byte(buffer_pos, mod_rm);
@@ -238,7 +245,7 @@ void encode_dec(const operand_t* op, uint8_t** buffer_pos)
 void encode_div(const operand_t* op, uint8_t** buffer_pos)
 {
     // Bytes: REX.W(0x48) | 0xF7 | ModRM(/6)
-    uint8_t mod_rm = (uint8_t)((3 << 6) | (6 << 3) | op->reg_num);
+    uint8_t mod_rm = (uint8_t) ((3 << 6) | (6 << 3) | op->reg_num);
     emit_1_byte(buffer_pos, 0x48);
     emit_1_byte(buffer_pos, 0xF7);
     emit_1_byte(buffer_pos, mod_rm);
@@ -247,7 +254,7 @@ void encode_div(const operand_t* op, uint8_t** buffer_pos)
 void encode_lea(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
 {
     // Bytes: REX.W(0x48) | 0x8D | ModRM | disp8
-    uint8_t mod_rm = (uint8_t)((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+    uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
     emit_1_byte(buffer_pos, 0x48);
     emit_1_byte(buffer_pos, 0x8D);
     emit_1_byte(buffer_pos, mod_rm);
@@ -257,7 +264,7 @@ void encode_lea(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
 void encode_movzx(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
 {
     // Bytes: REX.W(0x48) | 0x0F | 0xB6 | ModRM | disp8
-    uint8_t mod_rm = (uint8_t)((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+    uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
     emit_1_byte(buffer_pos, 0x48);
     emit_1_byte(buffer_pos, 0x0F);
     emit_1_byte(buffer_pos, 0xB6);
@@ -273,12 +280,12 @@ void encode_movsd(const operand_t* op0, const operand_t* op1,
         // Bytes: 0xF2 | 0x0F | 0x10 | ModRM(rm = 101) | rel32(4)
         uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | 5);
         uint64_t target = find_label_address(labels, op1->label_name);
-        int32_t rel32 = target - (instruction_address + 8);
+        uint32_t rel32 = (uint32_t) (target - (instruction_address + 8));
         emit_1_byte(buffer_pos, 0xF2);
         emit_1_byte(buffer_pos, 0x0F);
         emit_1_byte(buffer_pos, 0x10);
         emit_1_byte(buffer_pos, mod_rm);
-        emit_4_bytes(buffer_pos, (uint32_t) rel32);
+        emit_4_bytes(buffer_pos, rel32);
         return;
     }
 
@@ -308,6 +315,186 @@ void encode_movsd(const operand_t* op0, const operand_t* op1,
 
     fprintf(stderr, "encode_movsd: unknown operand combination\n");
     assert(0);
+}
+
+void encode_xorpd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM_REL)
+    {
+        // Bytes: 0x66 | 0x0F | 0x57 | ModRM(rm = 101) | rel32(4)
+        uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | 5);
+        uint64_t target = find_label_address(labels, op1->label_name);
+        uint32_t rel32 = (uint32_t) (target - (instruction_address + 8));
+        emit_1_byte(buffer_pos, 0x66);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x57);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_4_bytes(buffer_pos, rel32);
+        return;
+    }
+
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_XMM)
+    {
+        // Bytes: 0x66 | 0x0F | 0x57 | ModRM
+        uint8_t mod_rm = (uint8_t) ((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0x66);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x57);
+        emit_1_byte(buffer_pos, mod_rm);
+        return;
+    }
+
+    fprintf(stderr, "encode_xorpd: unknown operand combination\n");
+    assert(0);
+}
+
+void encode_ucomisd(const operand_t* op0, const operand_t* op1,
+                    const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_XMM)
+    {
+        // Bytes: 0x66 | 0x0F | 0x2E | ModRM
+        uint8_t mod_rm = (uint8_t) ((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0x66);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x2E);
+        emit_1_byte(buffer_pos, mod_rm);
+        return;
+    }
+
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM_REL)
+    {
+        // Bytes: 0x66 | 0x0F | 0x2E | ModRM(rm=101) | rel32(4)
+        uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | 5);
+        uint64_t target = find_label_address(labels, op1->label_name);
+        uint32_t rel32 = (uint32_t) (target - (instruction_address + 8));
+        emit_1_byte(buffer_pos, 0x66);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x2E);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_4_bytes(buffer_pos, rel32);
+        return;
+    }
+
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM)
+    {
+        // Bytes: 0x66 | 0x0F | 0x2E | ModRM | disp8
+        uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0x66);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x2E);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+        return;
+    }
+
+    fprintf(stderr, "encode_ucomisd: unknown operand combination\n");
+    assert(0);
+}
+
+void encode_cvttsd2si(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    if (op0->kind == OPERAND_REG && op1->kind == OPERAND_XMM)
+    {
+        // Bytes: 0xF2 | REX.W(0x48) | 0x0F | 0x2C | ModRM
+        uint8_t mod_rm = (uint8_t) ((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x2C);
+        emit_1_byte(buffer_pos, mod_rm);
+        return;
+    }
+
+    fprintf(stderr, "encode_cvttsd2si: unknown operand combination\n");
+    assert(0);
+}
+
+void encode_cvtsi2sd(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
+{
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_REG)
+    {
+        // Bytes: 0xF2 | REX.W(0x48) | 0x0F | 0x2A | ModRM
+        uint8_t mod_rm = (uint8_t) ((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0x2A);
+        emit_1_byte(buffer_pos, mod_rm);
+        return;
+    }
+
+    fprintf(stderr, "encode_cvtsi2sd: unknown operand combination\n");
+    assert(0);
+}
+
+void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t* op1,
+                           const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_XMM)
+    {
+        // Bytes: 0xF2 | 0x0F | op_code | ModRM
+        uint8_t mod_rm = (uint8_t) ((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, opcode);
+        emit_1_byte(buffer_pos, mod_rm);
+        return;
+    }
+
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM_REL)
+    {
+        // Bytes: 0xF2 | 0x0F | op_code | ModRM(rm=101) | rel32(4)
+        uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | 5);
+        uint64_t target = find_label_address(labels, op1->label_name);
+        uint32_t rel32 = (uint32_t) (target - (instruction_address + 8));
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, opcode);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_4_bytes(buffer_pos, rel32);
+        return;
+    }
+
+    if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM)
+    {
+        // Bytes: 0xF2 | 0x0F | op_code | ModRM | disp8
+        uint8_t mod_rm = (uint8_t)((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0xF2);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, opcode);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+        return;
+    }
+
+    fprintf(stderr, "encode_sse_arithmetic: unknown operand combination\n");
+    assert(0);
+}
+
+void encode_addsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    encode_sse_arithmetic(0x58, op0, op1, labels, instruction_address, buffer_pos);
+}
+
+void encode_subsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    encode_sse_arithmetic(0x5C, op0, op1, labels, instruction_address, buffer_pos);
+}
+
+void encode_mulsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    encode_sse_arithmetic(0x59, op0, op1, labels, instruction_address, buffer_pos);
+}
+
+void encode_divsd(const operand_t* op0, const operand_t* op1,
+                  const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
+{
+    encode_sse_arithmetic(0x5E, op0, op1, labels, instruction_address, buffer_pos);
 }
 
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte)
