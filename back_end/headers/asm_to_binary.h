@@ -8,7 +8,6 @@
 #include "back_end.h"
 
 #define SEGMENT_COUNT   2
-#define ENTRY_POINT     0x400000
 #define BASE_VADDR      0x400000
 #define CODE_OFFSET     sizeof(Elf64_Ehdr) + 2 * sizeof(Elf64_Phdr)
 
@@ -146,11 +145,11 @@ void encode_ucomisd(const operand_t* op0, const operand_t* op1,
                     const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
 void encode_cvttsd2si(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
 void encode_cvtsi2sd(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos);
-void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t* op1,
+void encode_sse_arithmetic(uint8_t op_code, const operand_t* op0, const operand_t* op1,
                            const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
 void encode_jmp(const operand_t* op, const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
 void encode_call(const operand_t* op, const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos);
-void encode_jcc(uint8_t opcode, const operand_t* op, const label_list_t* labels,
+void encode_jcc(uint8_t op_code, const operand_t* op, const label_list_t* labels,
                 uint64_t instruction_address, uint8_t** buffer_pos);
 
 void emit_1_byte(uint8_t** buffer_pos, uint8_t byte);

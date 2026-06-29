@@ -28,7 +28,7 @@ int main(int argc, const char* argv[])
     
     tree_dump(tree, TREE_DUMP_PNG, identifiers);
 
-    FILE* binary_file = fopen("output.bin", "wb");
+    FILE* binary_file = fopen(BINARY_FILE, "wb");
     back_end_run(tree, asm_file, binary_file, identifiers);
     fclose(binary_file);
 

@@ -24,12 +24,25 @@ void asm_to_binary(FILE* const asm_file, FILE* const binary_file)
     calculate_sizes(&instruction_list);
     compute_labels_addresses(&instruction_list, &label_list, BASE_VADDR + CODE_OFFSET);
 
-    // Elf64_Ehdr elf_header = {};
-    // fill_elf_header(&elf_header, ENTRY_POINT);
+    size_t code_size = 0;
+    for (size_t i = 0; i < instruction_list.count; i++)
+        code_size += instruction_list.instructions[i].encoded_size;
 
-    // Elf64_Phdr program_header[SEGMENT_COUNT] = {};
-    // fill_program_header(program_header, BASE_VADDR, CODE_OFFSET, , , );
+    uint8_t* code_buffer = (uint8_t*) calloc(code_size, sizeof(uint8_t));
+    encode_all(&instruction_list, &label_list, BASE_VADDR + CODE_OFFSET, code_buffer);
 
+    Elf64_Ehdr elf_header = {};
+    uint64_t entry_point = find_label_address(&label_list, "main");
+    fill_elf_header(&elf_header, entry_point);
+
+    Elf64_Phdr program_header[SEGMENT_COUNT] = {};
+    fill_program_header(program_header, BASE_VADDR, CODE_OFFSET, code_size, 0, 0);
+
+    fwrite(&elf_header, sizeof(Elf64_Ehdr), 1, binary_file);
+    fwrite(program_header, sizeof(Elf64_Phdr), SEGMENT_COUNT, binary_file);
+    fwrite(code_buffer, 1, code_size, binary_file);
+
+    free(code_buffer);
     free(asm_buffer);
     instruction_list_destroy(&instruction_list);
     label_list_destroy(&label_list);
@@ -70,7 +83,7 @@ void fill_elf_header(Elf64_Ehdr* header, uint64_t entry_point)
     header->e_type      = ET_EXEC;              // execulist file
     header->e_machine   = EM_X86_64;            // architecture (x86-64)
     header->e_version   = EV_CURRENT;           // object file version
-    header->e_entry     = entry_point;
+    header->e_entry     = entry_point;          // first instruction address
     header->e_phoff     = sizeof(Elf64_Ehdr);   // Program Header offset (after ELF header)
     header->e_shoff     = 0;                    // !Section Header offset
     header->e_flags     = 0;

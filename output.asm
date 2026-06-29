@@ -134,7 +134,8 @@ __in:
     xorpd xmm0, xmm0                ; xmm0 = result accumulator
     movsd xmm1, [rel __stdlib_01]   ; xmm1 = 0.1 (fractional digit weight)
     xor rbx, rbx                    ; rbx = sign (positive 0 negative 1)
-    xor rcx, rcx                    ; rcx = mode (int 0 or frac 1)
+    mov dl, 0
+    mov [rbp - 10], dl              ; [rbp - 10] = mode (int 0 or frac 1)
 
 .in_read:
     mov rax, 0                  ; sys_read
@@ -152,14 +153,16 @@ __in:
 .in_not_minus:
     cmp al, '.'
     jne .in_digit
-    mov rcx, 1                  ; Switch to fractional mode
+    mov dl, 1
+    mov [rbp - 10], dl          ; Switch to fractional mode
     jmp .in_read
 
 .in_digit:
     sub al, '0'                 ; Convert ASCII digit to value
     movzx rax, al
     cvtsi2sd xmm2, rax          ; xmm2 = digit as double
-    test rcx, rcx
+    movzx rax, [rbp - 10]
+    test rax, rax
     jnz .in_frac
     mulsd xmm0, [rel __stdlib_10]       ; xmm0 *= 10
     addsd xmm0, xmm2                    ; xmm0 += digit

@@ -40,7 +40,9 @@ size_t get_instruction_size(const instruction_t* instruction)
     if (!strcmp(mnemonic, "inc") || !strcmp(mnemonic, "dec")) return 3;
     if (!strcmp(mnemonic, "div")) return 3;
     if (!strcmp(mnemonic, "lea")) return 4;
-    if (!strcmp(mnemonic, "movzx")) return 5;
+
+    if (!strcmp(mnemonic, "movzx"))
+        return (second_op->kind == OPERAND_REG) ? 4 : 5;
 
     if (!strcmp(mnemonic, "movsd"))
     {

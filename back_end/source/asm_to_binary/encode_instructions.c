@@ -74,12 +74,14 @@ void encode_instruction(const instruction_t* instruction,
     if (!strcmp(mnemonic, "jne") || !strcmp(mnemonic, "jnz")) { encode_jcc(0x85, first_op, labels,
                                                                            instruction_address, buffer_pos); return; }
 
-    if (!strcmp(mnemonic, "jl"))  { encode_jcc(0x8C, first_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "jge")) { encode_jcc(0x8D, first_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "jle")) { encode_jcc(0x8E, first_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "jg"))  { encode_jcc(0x8F, first_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "jae")) { encode_jcc(0x83, first_op, labels, instruction_address, buffer_pos); return; }
-    if (!strcmp(mnemonic, "jbe")) { encode_jcc(0x86, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jl"))        { encode_jcc(0x8C, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jge"))       { encode_jcc(0x8D, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jle"))       { encode_jcc(0x8E, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jg"))        { encode_jcc(0x8F, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "ja"))        { encode_jcc(0x87, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jb"))        { encode_jcc(0x82, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jae"))       { encode_jcc(0x83, first_op, labels, instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jbe"))       { encode_jcc(0x86, first_op, labels, instruction_address, buffer_pos); return; }
 
     fprintf(stderr, "Unknown mnemonic '%s'\n", mnemonic);
     assert(0);
@@ -283,13 +285,31 @@ void encode_lea(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
 
 void encode_movzx(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos)
 {
-    // Bytes: REX.W(0x48) | 0x0F | 0xB6 | ModRM | disp8
-    uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
-    emit_1_byte(buffer_pos, 0x48);
-    emit_1_byte(buffer_pos, 0x0F);
-    emit_1_byte(buffer_pos, 0xB6);
-    emit_1_byte(buffer_pos, mod_rm);
-    emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+    if (op0->kind == OPERAND_REG && op1->kind == OPERAND_REG)
+    {
+        // Bytes: REX.W(0x48) | 0x0F | 0xB6 | ModRM
+        uint8_t mod_rm = (uint8_t) ((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0xB6);
+        emit_1_byte(buffer_pos, mod_rm);
+        return;
+    }
+
+    if (op0->kind == OPERAND_REG && op1->kind == OPERAND_MEM)
+    {
+        // Bytes: REX.W(0x48) | 0x0F | 0xB6 | ModRM | disp8
+        uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x0F);
+        emit_1_byte(buffer_pos, 0xB6);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+        return;
+    }
+
+    fprintf(stderr, "encode_movzx: unknown operand combination\n");
+    assert(0);
 }
 
 void encode_movsd(const operand_t* op0, const operand_t* op1,
@@ -311,6 +331,18 @@ void encode_movsd(const operand_t* op0, const operand_t* op1,
 
     if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM)
     {
+        if (op1->reg_num == 4 && op1->displacement == 0) // rsp: special case (SIB: [7:6]scale | [5:3]index | [2:0]base)
+        // Bytes: 0xF2 | 0x0F | 0x10 | ModRM(mod = 00) | SIB(spec = 00, index = 100 - spec: no index)
+        {
+            uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | op1->reg_num);
+            emit_1_byte(buffer_pos, 0xF2);
+            emit_1_byte(buffer_pos, 0x0F);
+            emit_1_byte(buffer_pos, 0x10);
+            emit_1_byte(buffer_pos, mod_rm);
+            emit_1_byte(buffer_pos, (uint8_t) ((4 << 3) | op1->reg_num));
+            return;
+        }
+
         // Bytes: 0xF2 | 0x0F | 0x10 | ModRM | disp8
         uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
         emit_1_byte(buffer_pos, 0xF2);
@@ -323,6 +355,18 @@ void encode_movsd(const operand_t* op0, const operand_t* op1,
 
     if (op0->kind == OPERAND_MEM && op1->kind == OPERAND_XMM)
     {
+        if (op0->reg_num == 4 && op0->displacement == 0) // rsp: special case (SIB: [7:6]scale | [5:3]index | [2:0]base)
+        // Bytes: 0xF2 | 0x0F | 0x11 | ModRM(mod = 00) | SIB(spec = 00, index = 100 - spec: no index)
+        {
+            uint8_t mod_rm = (uint8_t) ((op1->reg_num << 3) | op0->reg_num);
+            emit_1_byte(buffer_pos, 0xF2);
+            emit_1_byte(buffer_pos, 0x0F);
+            emit_1_byte(buffer_pos, 0x11);
+            emit_1_byte(buffer_pos, mod_rm);
+            emit_1_byte(buffer_pos, (uint8_t) ((4 << 3) | op0->reg_num));
+            return;
+        }
+
         // Bytes: 0xF2 | 0x0F | 0x11 | ModRM | disp8
         uint8_t mod_rm = (uint8_t) ((1 << 6) | (op1->reg_num << 3) | op0->reg_num);
         emit_1_byte(buffer_pos, 0xF2);
@@ -399,6 +443,18 @@ void encode_ucomisd(const operand_t* op0, const operand_t* op1,
 
     if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM)
     {
+        if (op1->reg_num == 4 && op1->displacement == 0) // rsp: special case (SIB: [7:6]scale | [5:3]index | [2:0]base)
+        // Bytes: 0x66 | 0x0F | 0x2E | ModRM(mod = 00) | SIB(spec = 00, index = 100 - spec: no index)
+        {
+            uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | op1->reg_num);
+            emit_1_byte(buffer_pos, 0x66);
+            emit_1_byte(buffer_pos, 0x0F);
+            emit_1_byte(buffer_pos, 0x2E);
+            emit_1_byte(buffer_pos, mod_rm);
+            emit_1_byte(buffer_pos, (uint8_t) ((4 << 3) | op1->reg_num));
+            return;
+        }
+
         // Bytes: 0x66 | 0x0F | 0x2E | ModRM | disp8
         uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
         emit_1_byte(buffer_pos, 0x66);
@@ -449,7 +505,7 @@ void encode_cvtsi2sd(const operand_t* op0, const operand_t* op1, uint8_t** buffe
     assert(0);
 }
 
-void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t* op1,
+void encode_sse_arithmetic(uint8_t op_code, const operand_t* op0, const operand_t* op1,
                            const label_list_t* labels, uint64_t instruction_address, uint8_t** buffer_pos)
 {
     if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_XMM)
@@ -458,7 +514,7 @@ void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t
         uint8_t mod_rm = (uint8_t) ((3 << 6) | (op0->reg_num << 3) | op1->reg_num);
         emit_1_byte(buffer_pos, 0xF2);
         emit_1_byte(buffer_pos, 0x0F);
-        emit_1_byte(buffer_pos, opcode);
+        emit_1_byte(buffer_pos, op_code);
         emit_1_byte(buffer_pos, mod_rm);
         return;
     }
@@ -471,7 +527,7 @@ void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t
         uint32_t rel32 = (uint32_t) (target - (instruction_address + 8));
         emit_1_byte(buffer_pos, 0xF2);
         emit_1_byte(buffer_pos, 0x0F);
-        emit_1_byte(buffer_pos, opcode);
+        emit_1_byte(buffer_pos, op_code);
         emit_1_byte(buffer_pos, mod_rm);
         emit_4_bytes(buffer_pos, rel32);
         return;
@@ -479,11 +535,23 @@ void encode_sse_arithmetic(uint8_t opcode, const operand_t* op0, const operand_t
 
     if (op0->kind == OPERAND_XMM && op1->kind == OPERAND_MEM)
     {
+        if (op1->reg_num == 4 && op1->displacement == 0) // rsp: special case (SIB: [7:6]scale | [5:3]index | [2:0]base)
+        // Bytes: 0xF2 | 0x0F | op_code | ModRM | SIB(spec = 00, index = 100 - spec: no index)
+        {
+            uint8_t mod_rm = (uint8_t) ((op0->reg_num << 3) | op1->reg_num);
+            emit_1_byte(buffer_pos, 0xF2);
+            emit_1_byte(buffer_pos, 0x0F);
+            emit_1_byte(buffer_pos, op_code);
+            emit_1_byte(buffer_pos, mod_rm);
+            emit_1_byte(buffer_pos, (uint8_t) ((4 << 3) | op1->reg_num));
+            return;
+        }
+
         // Bytes: 0xF2 | 0x0F | op_code | ModRM | disp8
         uint8_t mod_rm = (uint8_t)((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
         emit_1_byte(buffer_pos, 0xF2);
         emit_1_byte(buffer_pos, 0x0F);
-        emit_1_byte(buffer_pos, opcode);
+        emit_1_byte(buffer_pos, op_code);
         emit_1_byte(buffer_pos, mod_rm);
         emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
         return;
@@ -527,7 +595,7 @@ void encode_call(const operand_t* op, const label_list_t* labels,
     assert(0);
 }
 
-void encode_jcc(uint8_t opcode, const operand_t* op, const label_list_t* labels,
+void encode_jcc(uint8_t op_code, const operand_t* op, const label_list_t* labels,
                 uint64_t instruction_address, uint8_t** buffer_pos)
 {
     if (op->kind == OPERAND_LABEL)
@@ -536,7 +604,7 @@ void encode_jcc(uint8_t opcode, const operand_t* op, const label_list_t* labels,
         uint64_t target = find_label_address(labels, op->label_name);
         uint32_t rel32 = (uint32_t) (target - (instruction_address + 6));
         emit_1_byte(buffer_pos, 0x0F);
-        emit_1_byte(buffer_pos, opcode);
+        emit_1_byte(buffer_pos, op_code);
         emit_4_bytes(buffer_pos, rel32);
         return;
     }
