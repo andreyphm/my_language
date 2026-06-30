@@ -8,7 +8,7 @@
 #include "font.h"
 #include "output.h"
 
-static const char* INCLUDE_STR = "#include";
+static const char* INCLUDE_STR = "возьмём";
 static const char* DIR_LEFT_BORDER_STR = "<";
 static const char* DIR_RIGHT_BORDER_STR = ">";
 
@@ -60,11 +60,11 @@ error_code tokenization(const char* buffer, identifier_t* identifiers, list_t* c
         const char* start_of_buffer = buffer;
 
         if (try_digit(&buffer, list, &position)                                                           ||
+            try_include(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers)     ||
             try_op(&buffer, list, &position)                                                              ||
             try_spec(&buffer, list, &position)                                                            ||
             try_keyword(&buffer, list, &position)                                                         ||
-            try_identifier(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers)  ||
-            try_include(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers))
+            try_identifier(&buffer, list, &position, identifiers, &last_identifier_num, &is_identifiers))
         {
             position.column_number += (size_t)(buffer - start_of_buffer);
             continue;
@@ -185,7 +185,7 @@ bool try_digit(const char** buffer, list_t* const list, position_t* const positi
             }
         }
 
-        if (isalpha((unsigned char)**buffer) || **buffer == '_')
+        if (is_identifier_char(*buffer))
         {
             *buffer = start_of_buffer;
             return false;
@@ -274,14 +274,14 @@ bool try_spec(const char** buffer, list_t* const list, position_t* const positio
 bool read_identifier(const char** buffer, position_t* const position, identifier_t* identifiers,
                      int* last_identifier_num, bool* is_identifiers, int* id_number)
 {
-    if (!(isalpha(**buffer) || **buffer == '_'))
+    if (!is_identifier_char(*buffer) || isdigit(**buffer))
         return false;
 
     const char* start_of_buffer = *buffer;
 
     (*buffer)++;
 
-    while (isalpha(**buffer) || **buffer == '_' || isdigit(**buffer))
+    while (is_identifier_char(*buffer))
         (*buffer)++;
 
     position->length = (size_t)(*buffer - start_of_buffer);
@@ -407,4 +407,31 @@ void identifiers_destroy(identifier_t** identifiers)
 
     free(*identifiers);
     *identifiers = nullptr;
+}
+
+bool starts_with_token_design(const char* string, const token_info_t* tokens, size_t token_count)
+{
+    assert(string);
+    assert(tokens);
+
+    for (size_t i = 0; i < token_count; i++)
+    {
+        if (!strncmp(string, tokens[i].design, tokens[i].strlen))
+            return true;
+    }
+
+    return false;
+}
+
+bool is_identifier_char(const char* string)
+{
+    assert(string);
+
+    unsigned char symbol = (unsigned char) *string;
+
+    return (symbol != '\0' &&
+            symbol != '$' &&
+            !isspace(symbol) &&
+            !starts_with_token_design(string, operators_array, OP_ARRAY_SIZE) &&
+            !starts_with_token_design(string, specs_array, SPEC_ARRAY_SIZE));
 }

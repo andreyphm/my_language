@@ -114,7 +114,7 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, context_
     size_t frame_size = align_up_16(func_node->data_t.function.frame_size);
     const char* func_name = identifiers[func_node->data_t.function.id_number].name;
 
-    if (!strcmp(func_name, "main"))
+    if (!strcmp(func_name, "теорема"))
         printf_to_buffer(&context->buffers.text, "main:\n");
 
     printf_to_buffer(&context->buffers.text,
@@ -142,7 +142,7 @@ void gen_func(node_t* func_node, const identifier_t* const identifiers, context_
                      "\tpop rbp\n",
                      func_id, frame_size);
 
-    if (!strcmp(func_name, "main"))
+    if (!strcmp(func_name, "теорема"))
     {
         printf_to_buffer(&context->buffers.text,
                          "\tcall __exit\n\n");
@@ -393,9 +393,9 @@ void gen_call(node_t* call_node, const identifier_t* const identifiers, context_
     node_t* args_node = call_node->children[0];
     int function_id = call_node->data_t.function.id_number;
 
-    if (!strcmp(identifiers[function_id].name, "out"))  { gen_out(call_node, identifiers, context);     return; }
-    if (!strcmp(identifiers[function_id].name, "in"))   { gen_in(call_node, identifiers, context);      return; }
-    if (!strcmp(identifiers[function_id].name, "sqrt")) { gen_sqrt(call_node, identifiers, context);    return; }
+    if (!strcmp(identifiers[function_id].name, "найдётся"))  { gen_out(call_node, identifiers, context);     return; }
+    if (!strcmp(identifiers[function_id].name, "дано"))      { gen_in(call_node, identifiers, context);      return; }
+    if (!strcmp(identifiers[function_id].name, "корень"))    { gen_sqrt(call_node, identifiers, context);    return; }
 
     bool aligned = align_stack_before_call(context);
 

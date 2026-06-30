@@ -422,7 +422,7 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
         {
             int func_id = expr_node->data_t.function.id_number;
         
-            if (!strcmp(identifiers[func_id].name, "out"))
+            if (!strcmp(identifiers[func_id].name, "найдётся"))
             {
                 node_t* args_node = expr_node->children[0];
             
@@ -432,7 +432,7 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
                 return analyze_expr(args_node->children[0], current, identifiers);
             }
 
-            if (!strcmp(identifiers[func_id].name, "in"))
+            if (!strcmp(identifiers[func_id].name, "дано"))
             {
                 node_t* args_node = expr_node->children[0];
 
@@ -442,7 +442,7 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
                 return NO_ERROR;
             }
 
-            if (!strcmp(identifiers[func_id].name, "sqrt"))
+            if (!strcmp(identifiers[func_id].name, "корень"))
             {
                 node_t* args_node = expr_node->children[0];
 

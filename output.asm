@@ -192,7 +192,7 @@ __in:
     ret
 
 main:
-;==================== FUNCTION "main" ====================;
+;==================== FUNCTION "теорема" ====================;
 func_1:
 	push rbp
 	mov rbp, rsp
@@ -216,7 +216,7 @@ func_1:
 
 	movsd [rbp - 24], xmm0		; variable_2 initialize
 
-;================= CALL "equation_solver" =================;
+;================= CALL "решение_уравнения" =================;
 	sub rsp, 24
 	movsd xmm0, [rbp - 8]
 	movsd [rsp + 0], xmm0		; Save func argument 1
@@ -239,7 +239,7 @@ func_end_1:
 	pop rbp
 	call __exit
 
-;==================== FUNCTION "equation_solver" ====================;
+;==================== FUNCTION "решение_уравнения" ====================;
 func_6:
 	push rbp
 	mov rbp, rsp
@@ -274,7 +274,7 @@ func_6:
 	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
 	je .if_end_1
 
-;================= CALL "linear_equation_solver" =================;
+;================= CALL "решение_линейного_уравнения" =================;
 	sub rsp, 16
 	movsd xmm0, [rbp - 16]
 	movsd [rsp + 0], xmm0		; Save func argument 1
@@ -289,7 +289,7 @@ func_6:
 
 .if_end_1:
 ;==================== ELSE_1 ====================;
-;================= CALL "quadratic_equation_solver" =================;
+;================= CALL "решение_квадратного_уравнения" =================;
 	sub rsp, 24
 	movsd xmm0, [rbp - 8]
 	movsd [rsp + 0], xmm0		; Save func argument 1
@@ -314,7 +314,7 @@ func_end_6:
 	pop rbp
 	ret
 
-;==================== FUNCTION "linear_equation_solver" ====================;
+;==================== FUNCTION "решение_линейного_уравнения" ====================;
 func_7:
 	push rbp
 	mov rbp, rsp
@@ -423,7 +423,7 @@ func_end_7:
 	pop rbp
 	ret
 
-;==================== FUNCTION "quadratic_equation_solver" ====================;
+;==================== FUNCTION "решение_квадратного_уравнения" ====================;
 func_8:
 	push rbp
 	mov rbp, rsp
@@ -467,7 +467,7 @@ func_8:
 	movsd [rbp - 32], xmm0		; variable_11 initialize
 
 ;==================== IF_4 ====================;
-;================= CALL "is_close_to_zero" =================;
+;================= CALL "близко_к_нулю" =================;
 	sub rsp, 8
 	movsd xmm0, [rbp - 32]
 	movsd [rsp + 0], xmm0		; Save func argument 1
@@ -646,7 +646,7 @@ func_end_8:
 	pop rbp
 	ret
 
-;==================== FUNCTION "abs" ====================;
+;==================== FUNCTION "модуль" ====================;
 func_15:
 	push rbp
 	mov rbp, rsp
@@ -695,7 +695,7 @@ func_end_15:
 	pop rbp
 	ret
 
-;==================== FUNCTION "is_close_to_zero" ====================;
+;==================== FUNCTION "близко_к_нулю" ====================;
 func_11:
 	push rbp
 	mov rbp, rsp
@@ -704,7 +704,7 @@ func_11:
 	movsd xmm0, [rbp + 16]
 	movsd [rbp - 8], xmm0		; Take argument 1
 
-;==================== VAR_DECL_ID 17 "epsilon" ====================;
+;==================== VAR_DECL_ID 17 "ε" ====================;
 	movsd xmm0, [rel const_25]
 	movsd [rbp - 16], xmm0		; variable_17 initialize
 
@@ -714,7 +714,7 @@ func_11:
 	movsd [rsp], xmm0			; Save temporary value
 
 	sub rsp, 8					; Stack alignment before call
-;================= CALL "abs" =================;
+;================= CALL "модуль" =================;
 	sub rsp, 8
 	movsd xmm0, [rbp - 8]
 	movsd [rsp + 0], xmm0		; Save func argument 1
