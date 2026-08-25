@@ -1,14 +1,10 @@
-#include <ctype.h>
-#include <string.h>
+#include <assert.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <math.h>
+#include <stdarg.h>
 
 #include "tree.h"
-#include "front_end.h"
-#include "font.h"
-#include "macros.h"
-#include "stdarg.h"
+
+static const size_t FIRST_CHILDREN_NUMBER = 3;
 
 node_t* create_node(node_kind kind, data_union data)
 {
@@ -159,11 +155,6 @@ node_t* create_if_node(node_t* condition, node_t* then_body, node_t* else_body)
     node_add_child(node, else_body);
 
     return node;
-}
-
-node_t* create_else_node()
-{
-    return create_node(NODE_ELSE, (data_union){});
 }
 
 node_t* create_while_node(node_t* condition, node_t* body)

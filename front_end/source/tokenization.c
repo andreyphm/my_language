@@ -3,10 +3,61 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "input.h"
 #include "tokenization.h"
 #include "font.h"
-#include "output.h"
+
+#define TOKEN_INFO(code, name, design) {code, name, design, sizeof(design) - 1}
+
+const token_info_t operators_array[] =
+{
+    TOKEN_INFO(ADD,           "ADD",              "вместе_с"),
+    TOKEN_INFO(SUB,           "SUB",                   "без"),
+    TOKEN_INFO(MUL,           "MUL",            "умножим_на"),
+    TOKEN_INFO(DIV,           "DIV",            "поделим_на"),
+    TOKEN_INFO(IS_EQUAL,      "IS_EQUAL",        "равняется"),
+    TOKEN_INFO(ASSIGN,        "ASSIGN",      "определим_как"),
+    TOKEN_INFO(LOGIC_OR,      "LOGIC_OR",                "∨"),
+    TOKEN_INFO(LOGIC_AND,     "LOGIC_AND",               "∧"),
+    TOKEN_INFO(IS_NOT_EQUAL,  "IS_NOT_EQUAL",            "≠"),
+    TOKEN_INFO(SHR,           "SHR",                    ">>"),
+    TOKEN_INFO(GREATER_EQUAL, "GREATER_EQUAL",           "≥"),
+    TOKEN_INFO(GREATER,       "GREATER",                 ">"),
+    TOKEN_INFO(SHL,           "SHL",                    "<<"),
+    TOKEN_INFO(LESS_EQUAL,    "LESS_EQUAL",              "≤"),
+    TOKEN_INFO(LESS,          "LESS",                    "<"),
+    TOKEN_INFO(BIT_OR,        "BIT_OR",                  "|"),
+    TOKEN_INFO(BIT_XOR,       "BIT_XOR",                 "^"),
+    TOKEN_INFO(BIT_AND,       "BIT_AND",                 "&")
+};
+
+const size_t OP_ARRAY_SIZE = sizeof(operators_array) / sizeof(operators_array[0]);
+
+const token_info_t keywords_array[] =
+{
+    TOKEN_INFO(IF,        "IF",                 "предположим"),
+    TOKEN_INFO(ELSE,      "ELSE",        "в_противном_случае"),
+    TOKEN_INFO(WHILE,     "WHILE", "пока_не_найдётся_эпсилон"),
+    TOKEN_INFO(VAR_DECL,  "VAR",                      "пусть"),
+    TOKEN_INFO(RET,       "RET",     "сводится_к_предыдущему"),
+    TOKEN_INFO(BREAK,     "BREAK",               "достаточно"),
+    TOKEN_INFO(FUNC,      "FUNC",                   "докажем")
+};
+
+const size_t KEYWORD_ARRAY_SIZE = sizeof(keywords_array) / sizeof(keywords_array[0]);
+
+const token_info_t specs_array[] =
+{
+    TOKEN_INFO(LEFT_BRACE,   "LEFT_BRACE",  "■"),
+    TOKEN_INFO(RIGHT_BRACE,  "RIGHT_BRACE", "□"),
+    TOKEN_INFO(LEFT_PAREN,   "LEFT_PAREN",  "("),
+    TOKEN_INFO(RIGHT_PAREN,  "RIGHT_PAREN", ")"),
+    TOKEN_INFO(SEMMICOLON,   "SEMMICOLON",  "§"),
+    TOKEN_INFO(COMMA,        "COMMA",       ",")
+};
+
+const size_t SPEC_ARRAY_SIZE = sizeof(specs_array) / sizeof(specs_array[0]);
+
+#undef TOKEN_INFO
 
 static const char* INCLUDE_STR = "возьмём";
 static const char* DIR_LEFT_BORDER_STR = "<";
@@ -110,13 +161,6 @@ static void skip_spaces(const char**  string, position_t* const position)
 
         (*string)++;
     }
-}
-
-bool is_char(const char symbol)
-{
-    return (isalpha((unsigned char)symbol) ||
-            isdigit((unsigned char)symbol) ||
-            symbol == '_');
 }
 
 bool try_include(const char** buffer, list_t* const list, position_t* const position,
@@ -304,7 +348,9 @@ bool read_identifier(const char** buffer, position_t* const position, identifier
     else
         *id_number = ++(*last_identifier_num);
 
-    identifiers[*last_identifier_num].name   = strndup(start_of_buffer, position->length);
+    identifiers[*last_identifier_num].name = (char*) calloc(position->length + 1, sizeof(char));
+    assert(identifiers[*last_identifier_num].name);
+    memcpy(identifiers[*last_identifier_num].name, start_of_buffer, position->length);
     identifiers[*last_identifier_num].number = *last_identifier_num;
     identifiers[*last_identifier_num].length = position->length;
 

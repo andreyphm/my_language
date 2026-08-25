@@ -1,14 +1,13 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "parser.h"
 #include "front_end.h"
 #include "font.h"
 
-const int STACK_CAPACITY = 1000;
-const int COMMAND_CAPACITY = 100;
+static const int STACK_CAPACITY = 1000;
+static const int COMMAND_CAPACITY = 100;
 
-const char* node_kind_to_str(node_kind kind);
+static const char* node_kind_to_str(node_kind kind);
 
 void tree_dump(node_t* const node, const char* const svg_file_name, const identifier_t* const identifiers)
 {

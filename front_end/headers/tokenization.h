@@ -51,7 +51,6 @@ bool read_identifier(const char** buffer, position_t* const position, identifier
 bool try_identifier(const char** buffer, list_t* const list, position_t* const position,
                     identifier_t* identifiers, int* last_identifier_num, bool* is_identifiers);
 
-bool is_char(const char symbol);
 bool starts_with_token_design(const char* string, const token_info_t* tokens, size_t token_count);
 bool is_identifier_char(const char* string);
 

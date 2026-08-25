@@ -29,8 +29,6 @@ node_t* front_end_run(FILE* input_file, identifier_t** identifiers)
         return nullptr;
     }
 
-    // tree_dump(tree, TREE_DUMP_SVG, *identifiers);
-
     error = build_scopes(tree, *identifiers);
     if (error)
     {

@@ -2,13 +2,20 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "asm_to_binary.h"
+#include "instructions_to_binary.h"
+
+static bool fits_in_int8(int64_t value)
+{
+    return value >= -128 && value <= 127;
+}
 
 size_t get_instruction_size(const instruction_t* instruction)
 {
     assert(instruction);
 
     const char* mnemonic = instruction->mnemonic;
+    if (mnemonic[0] == '\0') return 0;
+
     const operand_t* first_op = &instruction->operands[0];
     const operand_t* second_op = &instruction->operands[1];
 
@@ -29,13 +36,13 @@ size_t get_instruction_size(const instruction_t* instruction)
     }
 
     if (!strcmp(mnemonic, "add"))
-        return (first_op->reg_size == 1) ? 3 : 4;
+        return (first_op->reg_size == 1) ? 3 : (fits_in_int8(second_op->imm_value) ? 4 : 7);
 
     if (!strcmp(mnemonic, "sub"))
-        return (first_op->reg_size == 1) ? 3 : 4;
+        return (first_op->reg_size == 1) ? 3 : (fits_in_int8(second_op->imm_value) ? 4 : 7);
 
     if (!strcmp(mnemonic, "cmp"))
-        return (first_op->reg_size == 1) ? 3 : 4;
+        return (first_op->reg_size == 1) ? 3 : (fits_in_int8(second_op->imm_value) ? 4 : 7);
 
     if (!strcmp(mnemonic, "inc") || !strcmp(mnemonic, "dec")) return 3;
     if (!strcmp(mnemonic, "div")) return 3;
@@ -49,8 +56,11 @@ size_t get_instruction_size(const instruction_t* instruction)
         if (first_op->kind == OPERAND_MEM_REL || second_op->kind == OPERAND_MEM_REL)
             return 8;
 
-        if ((first_op->kind == OPERAND_MEM && first_op->reg_num == 4 && first_op->displacement != 0) ||
-            (second_op->kind == OPERAND_MEM && second_op->reg_num == 4 && second_op->displacement != 0))
+        const operand_t* memory_op = first_op->kind == OPERAND_MEM ? first_op : second_op;
+        if (memory_op->kind == OPERAND_MEM && !fits_in_int8(memory_op->displacement))
+            return memory_op->reg_num == 4 ? 9 : 8;
+
+        if (memory_op->kind == OPERAND_MEM && memory_op->reg_num == 4 && memory_op->displacement != 0)
             return 6;
 
         if (first_op->kind == OPERAND_XMM && second_op->kind == OPERAND_XMM)
@@ -101,17 +111,24 @@ void calculate_sizes(instruction_list_t* list)
         list->instructions[i].encoded_size = get_instruction_size(&list->instructions[i]);
 }
 
-void compute_labels_addresses(instruction_list_t* list, label_list_t* labels, uint64_t code_start)
+void compute_labels_addresses(instruction_list_t* list, label_list_t* labels,
+                              size_t rodata_instruction_index,
+                              uint64_t text_start, uint64_t rodata_start)
 {
     assert(list);
     assert(labels);
+    assert(rodata_instruction_index <= list->count);
 
     for (size_t i = 0; i < labels->count; i++)
     {
-        uint64_t address = code_start;
         size_t index = labels->labels[i].instruction_index;
+        assert(index <= list->count);
 
-        for (size_t j = 0; j < index; j++)
+        bool is_rodata = index >= rodata_instruction_index;
+        uint64_t address = is_rodata ? rodata_start : text_start;
+        size_t first_instruction = is_rodata ? rodata_instruction_index : 0;
+
+        for (size_t j = first_instruction; j < index; j++)
             address += list->instructions[j].encoded_size;
 
         labels->labels[i].address = address;

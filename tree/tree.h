@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-#define TREE_DUMP_TXT "tree/tree_dump/tree_dump.txt"
-#define TREE_DUMP_SVG "tree/tree_dump/tree_dump.svg"
+#define TREE_DUMP_TXT "tree/tree_dump.txt"
+#define TREE_DUMP_SVG "tree/tree_dump.svg"
 
 enum operator_code
 {
@@ -36,7 +36,6 @@ enum keyword_code
     VAR_DECL,
     RET,
     BREAK,
-    CALL,
     FUNC
 };
 
@@ -149,7 +148,6 @@ node_t* create_args_node();
 node_t* create_function_node(int func_id_num, node_t* args, node_t* body);
 node_t* create_call_node(int func_id_num, node_t* args);
 node_t* create_if_node(node_t* condition, node_t* then_body, node_t* else_body);
-node_t* create_else_node();
 node_t* create_while_node(node_t* condition, node_t* body);
 node_t* create_var_decl_node(node_t* var, node_t* init);
 node_t* create_ret_node(node_t* expr);

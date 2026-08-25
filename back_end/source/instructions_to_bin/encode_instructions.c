@@ -3,7 +3,12 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "asm_to_binary.h"
+#include "instructions_to_binary.h"
+
+static bool fits_in_int8(int64_t value)
+{
+    return value >= -128 && value <= 127;
+}
 
 size_t encode_all(const instruction_list_t* list, const label_list_t* labels, uint64_t code_start, uint8_t* buffer)
 {
@@ -32,6 +37,8 @@ void encode_instruction(const instruction_t* instruction,
     assert(*buffer_pos);
 
     const char* mnemonic = instruction->mnemonic;
+    if (mnemonic[0] == '\0') return;
+
     const operand_t* first_op = &instruction->operands[0];
     const operand_t* second_op = &instruction->operands[1];
 
@@ -241,6 +248,15 @@ void encode_add(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
         return;
     }
 
+    if (!fits_in_int8(op1->imm_value))
+    {
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x81);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_4_bytes(buffer_pos, (uint32_t) op1->imm_value);
+        return;
+    }
+
     // Bytes: REX.W(0x48) | 0x83 | ModRM(/0) | imm8
     emit_1_byte(buffer_pos, 0x48);
     emit_1_byte(buffer_pos, 0x83);
@@ -265,6 +281,15 @@ void encode_sub(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
         return;
     }
 
+    if (!fits_in_int8(op1->imm_value))
+    {
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x81);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_4_bytes(buffer_pos, (uint32_t) op1->imm_value);
+        return;
+    }
+
     // Bytes: REX.W(0x48) | 0x83 | ModRM(/5) | imm8
     emit_1_byte(buffer_pos, 0x48);
     emit_1_byte(buffer_pos, 0x83);
@@ -286,6 +311,15 @@ void encode_cmp(const operand_t* op0, const operand_t* op1, uint8_t** buffer_pos
         emit_1_byte(buffer_pos, 0x80);
         emit_1_byte(buffer_pos, mod_rm);
         emit_1_byte(buffer_pos, (uint8_t) op1->imm_value);
+        return;
+    }
+
+    if (!fits_in_int8(op1->imm_value))
+    {
+        emit_1_byte(buffer_pos, 0x48);
+        emit_1_byte(buffer_pos, 0x81);
+        emit_1_byte(buffer_pos, mod_rm);
+        emit_4_bytes(buffer_pos, (uint32_t) op1->imm_value);
         return;
     }
 
@@ -421,14 +455,18 @@ void encode_movsd(const operand_t* op0, const operand_t* op1,
             return;
         }
 
-        // Bytes: 0xF2 | 0x0F | 0x10 | ModRM | disp8
-        uint8_t mod_rm = (uint8_t) ((1 << 6) | (op0->reg_num << 3) | op1->reg_num);
+        bool disp8 = fits_in_int8(op1->displacement);
+        size_t mod = disp8 ? 1u : 2u;
+        uint8_t mod_rm = (uint8_t) ((mod << 6) | (op0->reg_num << 3) | op1->reg_num);
         emit_1_byte(buffer_pos, 0xF2);
         emit_1_byte(buffer_pos, 0x0F);
         emit_1_byte(buffer_pos, 0x10);
         emit_1_byte(buffer_pos, mod_rm);
         if (op1->reg_num == 4) emit_1_byte(buffer_pos, (uint8_t) ((4 << 3) | op1->reg_num));
-        emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+        if (disp8)
+            emit_1_byte(buffer_pos, (uint8_t) op1->displacement);
+        else
+            emit_4_bytes(buffer_pos, (uint32_t) op1->displacement);
         return;
     }
 
@@ -446,14 +484,18 @@ void encode_movsd(const operand_t* op0, const operand_t* op1,
             return;
         }
 
-        // Bytes: 0xF2 | 0x0F | 0x11 | ModRM | disp8
-        uint8_t mod_rm = (uint8_t) ((1 << 6) | (op1->reg_num << 3) | op0->reg_num);
+        bool disp8 = fits_in_int8(op0->displacement);
+        size_t mod = disp8 ? 1u : 2u;
+        uint8_t mod_rm = (uint8_t) ((mod << 6) | (op1->reg_num << 3) | op0->reg_num);
         emit_1_byte(buffer_pos, 0xF2);
         emit_1_byte(buffer_pos, 0x0F);
         emit_1_byte(buffer_pos, 0x11);
         emit_1_byte(buffer_pos, mod_rm);
         if (op0->reg_num == 4) emit_1_byte(buffer_pos, (uint8_t) ((4 << 3) | op0->reg_num));
-        emit_1_byte(buffer_pos, (uint8_t)(int8_t) op0->displacement);
+        if (disp8)
+            emit_1_byte(buffer_pos, (uint8_t) op0->displacement);
+        else
+            emit_4_bytes(buffer_pos, (uint32_t) op0->displacement);
         return;
     }
 

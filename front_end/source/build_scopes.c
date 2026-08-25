@@ -2,35 +2,48 @@
 #include <assert.h>
 #include <string.h>
 
-#include "front_end.h"
 #include "build_scopes.h"
+
+struct var_decl_t
+{
+    const char* name;
+    int decl_id;
+    int unique_id;
+    size_t stack_offset;
+    node_t* decl_node;
+    var_decl_t* next;
+};
+
+struct func_decl_t
+{
+    const char* name;
+    int decl_id;
+    node_t* decl_node;
+    func_decl_t* next;
+};
+
+struct scope_t
+{
+    var_decl_t* decl_var;
+    func_decl_t* decl_func;
+    scope_t* parent;
+};
+
+static void destroy_scope(scope_t* scope);
+static error_code declare_var(scope_t* scope, const char* name, int id, node_t* node);
+static error_code declare_func(scope_t* scope, const char* name, int id, node_t* node);
+static var_decl_t* seek_var(const scope_t* scope, int id);
+static func_decl_t* seek_func(const scope_t* scope, int id);
+static error_code analyze_func(node_t* node, scope_t* parent, const identifier_t* identifiers);
+static error_code analyze_block(node_t* node, scope_t* parent, const identifier_t* identifiers);
+static error_code analyze_op(node_t* node, scope_t* parent, const identifier_t* identifiers);
+static error_code analyze_if(node_t* node, scope_t* parent, const identifier_t* identifiers);
+static error_code analyze_while(node_t* node, scope_t* parent, const identifier_t* identifiers);
+static error_code analyze_var_decl(node_t* node, scope_t* scope, const identifier_t* identifiers);
+static error_code analyze_expr(node_t* node, scope_t* scope, const identifier_t* identifiers);
 
 static int var_unique_id = 0;
 static size_t current_stack_offset = 0;
-
-void enter_scope(scope_t** current)
-{
-    assert(current);
-    assert(*current);
-
-    scope_t* new_scope = (scope_t*) calloc(1, sizeof(scope_t));
-    assert(new_scope);
-
-    new_scope->parent = *current;
-
-    *current = new_scope;
-}
-
-void exit_scope(scope_t** current)
-{
-    assert(current);
-    assert(*current);
-
-    scope_t* current_scope = *current;
-    *current = (*current)->parent;
-
-    destroy_scope(current_scope);  
-}
 
 void destroy_scope(scope_t* scope)
 {
@@ -468,4 +481,3 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
             return NO_ERROR;
     }
 }
-

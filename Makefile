@@ -1,11 +1,18 @@
 BUILD_DIR := build
 TARGET := $(BUILD_DIR)/my_language.out
+STDLIB_BIN := $(BUILD_DIR)/my_stdlib.bin
 
-SRCS := $(shell find . -name "*.c")
-OBJS := $(patsubst ./%.c, $(BUILD_DIR)/%.o, $(SRCS)) # .c files from SRCS -> .o files in BUILD_DIR
+SRCS := main.c \
+        $(wildcard front_end/source/*.c) \
+        $(wildcard front_end/source/*/*.c) \
+        $(wildcard middle_end/source/*.c) \
+        $(wildcard back_end/source/*.c) \
+        $(wildcard back_end/source/*/*.c) \
+        $(wildcard tree/*.c)
+OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCS))
 
 CXX := g++
-FLAGS := $(addprefix -I, $(shell find . -type d -name headers)) -I./tree -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ \
+FLAGS := $(addprefix -I,$(wildcard */headers)) -I./tree -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ \
          -Waggressive-loop-optimizations -Wc++14-compat -Wmissing-declarations \
          -Wcast-align -Wcast-qual -Wchar-subscripts -Wconditionally-supported \
          -Wconversion -Wctor-dtor-privacy -Wempty-body -Wfloat-equal -Wformat-nonliteral \
@@ -20,12 +27,17 @@ FLAGS := $(addprefix -I, $(shell find . -type d -name headers)) -I./tree -D _DEB
          -Wno-varargs -Wstack-protector -fcheck-new -fsized-deallocation \
          -fstack-protector -fstrict-overflow -flto-odr-type-merging \
          -fno-omit-frame-pointer -Wlarger-than=50000 -Wstack-usage=8192 \
-         -pie -fPIE -Werror=vla -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,vla-bound,vptr
+         -pie -fPIE -Werror=vla \
+         -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,vla-bound,vptr
 
 
-.PHONY: all clean	# always build
+.PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET) $(STDLIB_BIN)
+
+$(STDLIB_BIN): my_stdlib.asm
+	@mkdir -p $(dir $@)
+	nasm -f bin $< -o $@
 
 $(TARGET): $(OBJS)
 	$(CXX) $(FLAGS) $(OBJS) -o $@ 

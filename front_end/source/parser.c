@@ -1,5 +1,3 @@
-#include <string.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdarg.h>
 
@@ -7,7 +5,6 @@
 #include "tree.h"
 #include "tokenization.h"
 #include "parser.h"
-#include "macros.h"
 #include "font.h"
 
 #define TOKEN_IS_OP                 (*token)->type == OP
@@ -25,6 +22,40 @@
 #define NEXT_TOKEN_SPEC_CODE        ((*token)->next)->data_t.spec
 #define NEXT_TOKEN_IS_OP            ((*token)->next)->type == OP
 #define NEXT_TOKEN_OP_CODE          ((*token)->next)->data_t.op
+
+static node_t* get_prog(token_t** token);
+static node_t* get_include(token_t** token);
+static node_t* get_func(token_t** token);
+static node_t* get_params(token_t** token);
+static node_t* get_block(token_t** token);
+static node_t* get_op(token_t** token);
+static node_t* get_if(token_t** token);
+static node_t* get_while(token_t** token);
+static node_t* get_var_declare(token_t** token);
+static node_t* get_ret(token_t** token);
+static node_t* get_break(token_t** token);
+static node_t* get_e(token_t** token);
+static node_t* get_or(token_t** token);
+static node_t* get_and(token_t** token);
+static node_t* get_bit_or(token_t** token);
+static node_t* get_bit_xor(token_t** token);
+static node_t* get_bit_and(token_t** token);
+static node_t* get_equal_or_not(token_t** token);
+static node_t* get_less_greater(token_t** token);
+static node_t* get_shift(token_t** token);
+static node_t* get_add_sub(token_t** token);
+static node_t* get_mul_div(token_t** token);
+static node_t* get_p(token_t** token);
+static node_t* get_call(token_t** token);
+static node_t* get_args(token_t** token);
+static node_t* get_n(token_t** token);
+static node_t* get_id(token_t** token);
+
+static bool token_is_start_of_expr(token_t* const* token);
+static const char* seek_spec_design(spec_code code);
+static void vreport_error(const position_t* position, const char* format, va_list arguments);
+static void report_error_on_token(const token_t* token, const char* format, ...);
+static void report_error_after_token(const token_t* token, const char* format, ...);
 
 error_code tokens_to_tree(list_t* list, node_t** node_ptr)
 {

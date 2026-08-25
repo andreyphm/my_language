@@ -1,11 +1,6 @@
-#include <stdlib.h>
-#include <string.h>
-
 #include "tree.h"
 #include "output.h"
-#include "macros.h"
 #include "font.h"
-#include "parser.h"
 
 void destroy_tree_and_id_array(identifier_t** identifiers_ptr, node_t** node_ptr)
 {

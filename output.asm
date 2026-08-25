@@ -1,9 +1,20 @@
 ;*******************************************************;
 ;==================== PROGRAM START ====================;
-;================== GitHub: andreyphm ==================;
 ;*******************************************************;
 
+BITS 64
 section .text
+
+
+; Fixed-size entry table used when this file is assembled as a flat binary.
+; Each `jmp near` occupies 5 bytes, so the public entry offsets are 0, 5 and 10.
+
+__stdlib_entry_exit:
+    jmp near __exit
+__stdlib_entry_out:
+    jmp near __out
+__stdlib_entry_in:
+    jmp near __in
 
 ;==================== MY_STDLIB ====================;
 ;---------------------------------------------------------------------------------------------------------------------
@@ -147,7 +158,7 @@ __in:
     lea rsi, [rbp - 9]          ; Buffer start
     mov rdx, 1                  ; Number of bytes to read
     syscall
-    movzx rax, [rbp - 9]        ; al = read character
+    movzx rax, byte [rbp - 9]   ; al = read character
     cmp al, 10                  ; '\n' check
     je .in_done
     cmp al, '-'
@@ -165,7 +176,7 @@ __in:
     sub al, '0'                 ; Convert ASCII digit to value
     movzx rax, al
     cvtsi2sd xmm2, rax          ; xmm2 = digit as double
-    movzx rax, [rbp - 10]
+    movzx rax, byte [rbp - 10]
     test rax, rax
     jnz .in_frac
     mulsd xmm0, [rel __stdlib_10]       ; xmm0 *= 10
@@ -191,223 +202,202 @@ __in:
     pop rbp
     ret
 
+align 8, db 0
+__stdlib_neg0:
+    dq -0.0
+__stdlib_1m:
+    dq 1000000.0
+__stdlib_10:
+    dq 10.0
+__stdlib_01:
+    dq 0.1
+
+
+
+; ==================== FUNCTION "теорема" ====================
 main:
-;==================== FUNCTION "теорема" ====================;
 func_1:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 32					; Stack preparation
+	sub rsp, 32	; Stack preparation
 
-;==================== VAR_DECL_ID 0 "a" ====================;
-;==================== IN ====================;
+; ==================== VAR_DECL_ID 0 "a" ====================
+
+; ==================== IN ====================
 	call __in
+	movsd [rbp - 8], xmm0	; Initialize variable_0
 
-	movsd [rbp - 8], xmm0		; variable_0 initialize
+; ==================== VAR_DECL_ID 1 "b" ====================
 
-;==================== VAR_DECL_ID 1 "b" ====================;
-;==================== IN ====================;
+; ==================== IN ====================
 	call __in
+	movsd [rbp - 16], xmm0	; Initialize variable_1
 
-	movsd [rbp - 16], xmm0		; variable_1 initialize
+; ==================== VAR_DECL_ID 2 "c" ====================
 
-;==================== VAR_DECL_ID 2 "c" ====================;
-;==================== IN ====================;
+; ==================== IN ====================
 	call __in
+	movsd [rbp - 24], xmm0	; Initialize variable_2
 
-	movsd [rbp - 24], xmm0		; variable_2 initialize
-
-;================= CALL "решение_уравнения" =================;
+; ==================== CALL "решение_уравнения" ====================
 	sub rsp, 24
 	movsd xmm0, [rbp - 8]
-	movsd [rsp + 0], xmm0		; Save func argument 1
-
+	movsd [rsp], xmm0	; Save function argument 1
 	movsd xmm0, [rbp - 16]
-	movsd [rsp + 8], xmm0		; Save func argument 2
-
+	movsd [rsp + 8], xmm0	; Save function argument 2
 	movsd xmm0, [rbp - 24]
-	movsd [rsp + 16], xmm0		; Save func argument 3
-
+	movsd [rsp + 16], xmm0	; Save function argument 3
 	call func_6
-
 	add rsp, 24
-;==================== RET ====================;
+
+; ==================== RET ====================
 	xorpd xmm0, xmm0
 	jmp func_end_1
-
 func_end_1:
 	add rsp, 32
 	pop rbp
 	call __exit
 
-;==================== FUNCTION "решение_уравнения" ====================;
+; ==================== FUNCTION "решение_уравнения" ====================
 func_6:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 32					; Stack preparation
-
+	sub rsp, 32	; Stack preparation
 	movsd xmm0, [rbp + 16]
-	movsd [rbp - 8], xmm0		; Take argument 1
-
+	movsd [rbp - 8], xmm0	; Take argument 1
 	movsd xmm0, [rbp + 24]
-	movsd [rbp - 16], xmm0		; Take argument 2
-
+	movsd [rbp - 16], xmm0	; Take argument 2
 	movsd xmm0, [rbp + 32]
-	movsd [rbp - 24], xmm0		; Take argument 3
+	movsd [rbp - 24], xmm0	; Take argument 3
 
-;==================== IF_1 ====================;
-	movsd xmm0, [rel const_0]
+; ==================== IF_1 ====================
+	movsd xmm0, [rel const_false]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 8]
 	ucomisd xmm0, [rsp]
 	je .cmp_true_1
-
 	movsd xmm0, [rel const_false]
 	jmp .cmp_end_1
-
 .cmp_true_1:
 	movsd xmm0, [rel const_true]
-
 .cmp_end_1:
 	add rsp, 8
-	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
+	ucomisd xmm0, [rel const_false]	; Compare expression with false
 	je .if_end_1
 
-;================= CALL "решение_линейного_уравнения" =================;
+; ==================== CALL "решение_линейного_уравнения" ====================
 	sub rsp, 16
 	movsd xmm0, [rbp - 16]
-	movsd [rsp + 0], xmm0		; Save func argument 1
-
+	movsd [rsp], xmm0	; Save function argument 1
 	movsd xmm0, [rbp - 24]
-	movsd [rsp + 8], xmm0		; Save func argument 2
-
+	movsd [rsp + 8], xmm0	; Save function argument 2
 	call func_7
-
 	add rsp, 16
 	jmp .if_else_end_1
-
 .if_end_1:
-;==================== ELSE_1 ====================;
-;================= CALL "решение_квадратного_уравнения" =================;
+
+; ==================== ELSE_1 ====================
+
+; ==================== CALL "решение_квадратного_уравнения" ====================
 	sub rsp, 24
 	movsd xmm0, [rbp - 8]
-	movsd [rsp + 0], xmm0		; Save func argument 1
-
+	movsd [rsp], xmm0	; Save function argument 1
 	movsd xmm0, [rbp - 16]
-	movsd [rsp + 8], xmm0		; Save func argument 2
-
+	movsd [rsp + 8], xmm0	; Save function argument 2
 	movsd xmm0, [rbp - 24]
-	movsd [rsp + 16], xmm0		; Save func argument 3
-
+	movsd [rsp + 16], xmm0	; Save function argument 3
 	call func_8
-
 	add rsp, 24
 .if_else_end_1:
 
-;==================== RET ====================;
+; ==================== RET ====================
 	xorpd xmm0, xmm0
 	jmp func_end_6
-
 func_end_6:
 	add rsp, 32
 	pop rbp
 	ret
 
-;==================== FUNCTION "решение_линейного_уравнения" ====================;
+; ==================== FUNCTION "решение_линейного_уравнения" ====================
 func_7:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 16					; Stack preparation
-
+	sub rsp, 16	; Stack preparation
 	movsd xmm0, [rbp + 16]
-	movsd [rbp - 8], xmm0		; Take argument 1
-
+	movsd [rbp - 8], xmm0	; Take argument 1
 	movsd xmm0, [rbp + 24]
-	movsd [rbp - 16], xmm0		; Take argument 2
+	movsd [rbp - 16], xmm0	; Take argument 2
 
-;==================== IF_2 ====================;
-	movsd xmm0, [rel const_1]
+; ==================== IF_2 ====================
+	movsd xmm0, [rel const_false]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 8]
 	ucomisd xmm0, [rsp]
 	je .cmp_true_2
-
 	movsd xmm0, [rel const_false]
 	jmp .cmp_end_2
-
 .cmp_true_2:
 	movsd xmm0, [rel const_true]
-
 .cmp_end_2:
 	add rsp, 8
-	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
+	ucomisd xmm0, [rel const_false]	; Compare expression with false
 	je .if_end_2
 
-;==================== IF_3 ====================;
-	movsd xmm0, [rel const_2]
+; ==================== IF_3 ====================
+	movsd xmm0, [rel const_false]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 16]
 	ucomisd xmm0, [rsp]
 	je .cmp_true_3
-
 	movsd xmm0, [rel const_false]
 	jmp .cmp_end_3
-
 .cmp_true_3:
 	movsd xmm0, [rel const_true]
-
 .cmp_end_3:
 	add rsp, 8
-	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
+	ucomisd xmm0, [rel const_false]	; Compare expression with false
 	je .if_end_3
 
-;==================== OUT ====================;
-	movsd xmm0, [rel const_3]
+; ==================== OUT ====================
+	movsd xmm0, [rel const_true]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_4]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_false]
 	subsd xmm0, [rsp]
 	add rsp, 8
 	call __out
-
 	jmp .if_else_end_3
-
 .if_end_3:
-;==================== ELSE_3 ====================;
-;==================== OUT ====================;
-	movsd xmm0, [rel const_5]
-	call __out
 
+; ==================== ELSE_3 ====================
+
+; ==================== OUT ====================
+	movsd xmm0, [rel const_false]
+	call __out
 .if_else_end_3:
-
 	jmp .if_else_end_2
-
 .if_end_2:
-;==================== ELSE_2 ====================;
-;==================== OUT ====================;
-	movsd xmm0, [rel const_6]
+
+; ==================== ELSE_2 ====================
+
+; ==================== OUT ====================
+	movsd xmm0, [rel const_true]
 	call __out
 
-;==================== OUT ====================;
+; ==================== OUT ====================
 	movsd xmm0, [rbp - 8]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 16]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_7]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_true]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_8]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_false]
 	subsd xmm0, [rsp]
 	add rsp, 8
 	mulsd xmm0, [rsp]
@@ -415,156 +405,132 @@ func_7:
 	divsd xmm0, [rsp]
 	add rsp, 8
 	call __out
-
 .if_else_end_2:
-
 func_end_7:
 	add rsp, 16
 	pop rbp
 	ret
 
-;==================== FUNCTION "решение_квадратного_уравнения" ====================;
+; ==================== FUNCTION "решение_квадратного_уравнения" ====================
 func_8:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 64					; Stack preparation
-
+	sub rsp, 64	; Stack preparation
 	movsd xmm0, [rbp + 16]
-	movsd [rbp - 8], xmm0		; Take argument 1
-
+	movsd [rbp - 8], xmm0	; Take argument 1
 	movsd xmm0, [rbp + 24]
-	movsd [rbp - 16], xmm0		; Take argument 2
-
+	movsd [rbp - 16], xmm0	; Take argument 2
 	movsd xmm0, [rbp + 32]
-	movsd [rbp - 24], xmm0		; Take argument 3
+	movsd [rbp - 24], xmm0	; Take argument 3
 
-;==================== VAR_DECL_ID 11 "D" ====================;
+; ==================== VAR_DECL_ID 11 "D" ====================
 	movsd xmm0, [rbp - 24]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 8]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_9]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_0]
 	mulsd xmm0, [rsp]
 	add rsp, 8
 	mulsd xmm0, [rsp]
 	add rsp, 8
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 16]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 16]
 	mulsd xmm0, [rsp]
 	add rsp, 8
 	subsd xmm0, [rsp]
 	add rsp, 8
-	movsd [rbp - 32], xmm0		; variable_11 initialize
+	movsd [rbp - 32], xmm0	; Initialize variable_11
 
-;==================== IF_4 ====================;
-;================= CALL "близко_к_нулю" =================;
+; ==================== IF_4 ====================
+
+; ==================== CALL "близко_к_нулю" ====================
 	sub rsp, 8
 	movsd xmm0, [rbp - 32]
-	movsd [rsp + 0], xmm0		; Save func argument 1
-
+	movsd [rsp], xmm0	; Save function argument 1
 	call func_11
-
 	add rsp, 8
-	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
+	ucomisd xmm0, [rel const_false]	; Compare expression with false
 	je .if_end_4
 
-;==================== VAR_DECL_ID 12 "x1" ====================;
+; ==================== VAR_DECL_ID 12 "x1" ====================
 	movsd xmm0, [rbp - 8]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_10]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_1]
 	mulsd xmm0, [rsp]
 	add rsp, 8
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 16]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_11]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_true]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_12]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_false]
 	subsd xmm0, [rsp]
 	add rsp, 8
 	mulsd xmm0, [rsp]
 	add rsp, 8
 	divsd xmm0, [rsp]
 	add rsp, 8
-	movsd [rbp - 40], xmm0		; variable_12 initialize
+	movsd [rbp - 40], xmm0	; Initialize variable_12
 
-;==================== OUT ====================;
-	movsd xmm0, [rel const_13]
+; ==================== OUT ====================
+	movsd xmm0, [rel const_true]
 	call __out
 
-;==================== OUT ====================;
+; ==================== OUT ====================
 	movsd xmm0, [rbp - 40]
 	call __out
 
-;==================== RET ====================;
+; ==================== RET ====================
 	xorpd xmm0, xmm0
 	jmp func_end_8
-
 .if_end_4:
-;==================== IF_5 ====================;
-	movsd xmm0, [rel const_14]
-	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
 
+; ==================== IF_5 ====================
+	movsd xmm0, [rel const_false]
+	sub rsp, 8
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 32]
 	ucomisd xmm0, [rsp]
 	ja .cmp_true_4
-
 	movsd xmm0, [rel const_false]
 	jmp .cmp_end_4
-
 .cmp_true_4:
 	movsd xmm0, [rel const_true]
-
 .cmp_end_4:
 	add rsp, 8
-	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
+	ucomisd xmm0, [rel const_false]	; Compare expression with false
 	je .if_end_5
 
-;==================== VAR_DECL_ID 13 "x1" ====================;
+; ==================== VAR_DECL_ID 13 "x1" ====================
 	movsd xmm0, [rbp - 8]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_15]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_1]
 	mulsd xmm0, [rsp]
 	add rsp, 8
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 32]
 	sqrtsd xmm0, xmm0
-
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 16]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_16]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_true]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_17]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_false]
 	subsd xmm0, [rsp]
 	add rsp, 8
 	mulsd xmm0, [rsp]
@@ -573,34 +539,28 @@ func_8:
 	add rsp, 8
 	divsd xmm0, [rsp]
 	add rsp, 8
-	movsd [rbp - 48], xmm0		; variable_13 initialize
+	movsd [rbp - 48], xmm0	; Initialize variable_13
 
-;==================== VAR_DECL_ID 14 "x2" ====================;
+; ==================== VAR_DECL_ID 14 "x2" ====================
 	movsd xmm0, [rbp - 8]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_18]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_1]
 	mulsd xmm0, [rsp]
 	add rsp, 8
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 32]
 	sqrtsd xmm0, xmm0
-
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 16]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_19]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_true]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_20]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_false]
 	subsd xmm0, [rsp]
 	add rsp, 8
 	mulsd xmm0, [rsp]
@@ -609,217 +569,141 @@ func_8:
 	add rsp, 8
 	divsd xmm0, [rsp]
 	add rsp, 8
-	movsd [rbp - 56], xmm0		; variable_14 initialize
+	movsd [rbp - 56], xmm0	; Initialize variable_14
 
-;==================== OUT ====================;
-	movsd xmm0, [rel const_21]
+; ==================== OUT ====================
+	movsd xmm0, [rel const_1]
 	call __out
 
-;==================== OUT ====================;
+; ==================== OUT ====================
 	movsd xmm0, [rbp - 48]
 	call __out
 
-;==================== OUT ====================;
+; ==================== OUT ====================
 	movsd xmm0, [rbp - 56]
 	call __out
 
-;==================== RET ====================;
+; ==================== RET ====================
 	xorpd xmm0, xmm0
 	jmp func_end_8
-
 	jmp .if_else_end_5
-
 .if_end_5:
-;==================== ELSE_5 ====================;
-;==================== OUT ====================;
-	movsd xmm0, [rel const_22]
-	call __out
 
+; ==================== ELSE_5 ====================
+
+; ==================== OUT ====================
+	movsd xmm0, [rel const_false]
+	call __out
 .if_else_end_5:
 
-;==================== RET ====================;
+; ==================== RET ====================
 	xorpd xmm0, xmm0
 	jmp func_end_8
-
 func_end_8:
 	add rsp, 64
 	pop rbp
 	ret
 
-;==================== FUNCTION "модуль" ====================;
+; ==================== FUNCTION "модуль" ====================
 func_15:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 16					; Stack preparation
-
+	sub rsp, 16	; Stack preparation
 	movsd xmm0, [rbp + 16]
-	movsd [rbp - 8], xmm0		; Take argument 1
+	movsd [rbp - 8], xmm0	; Take argument 1
 
-;==================== IF_6 ====================;
-	movsd xmm0, [rel const_23]
+; ==================== IF_6 ====================
+	movsd xmm0, [rel const_false]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
+	movsd [rsp], xmm0	; Save temporary value
 	movsd xmm0, [rbp - 8]
 	ucomisd xmm0, [rsp]
 	jb .cmp_true_5
-
 	movsd xmm0, [rel const_false]
 	jmp .cmp_end_5
-
 .cmp_true_5:
 	movsd xmm0, [rel const_true]
-
 .cmp_end_5:
 	add rsp, 8
-	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
+	ucomisd xmm0, [rel const_false]	; Compare expression with false
 	je .if_end_6
 
-;==================== RET ====================;
+; ==================== RET ====================
 	movsd xmm0, [rbp - 8]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
-
-	movsd xmm0, [rel const_24]
+	movsd [rsp], xmm0	; Save temporary value
+	movsd xmm0, [rel const_false]
 	subsd xmm0, [rsp]
 	add rsp, 8
 	jmp func_end_15
-
 .if_end_6:
-;==================== RET ====================;
+
+; ==================== RET ====================
 	movsd xmm0, [rbp - 8]
 	jmp func_end_15
-
 func_end_15:
 	add rsp, 16
 	pop rbp
 	ret
 
-;==================== FUNCTION "близко_к_нулю" ====================;
+; ==================== FUNCTION "близко_к_нулю" ====================
 func_11:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 16					; Stack preparation
-
+	sub rsp, 16	; Stack preparation
 	movsd xmm0, [rbp + 16]
-	movsd [rbp - 8], xmm0		; Take argument 1
+	movsd [rbp - 8], xmm0	; Take argument 1
 
-;==================== VAR_DECL_ID 17 "ε" ====================;
-	movsd xmm0, [rel const_25]
-	movsd [rbp - 16], xmm0		; variable_17 initialize
+; ==================== VAR_DECL_ID 17 "ε" ====================
+	movsd xmm0, [rel const_2]
+	movsd [rbp - 16], xmm0	; Initialize variable_17
 
-;==================== IF_7 ====================;
+; ==================== IF_7 ====================
 	movsd xmm0, [rbp - 16]
 	sub rsp, 8
-	movsd [rsp], xmm0			; Save temporary value
+	movsd [rsp], xmm0	; Save temporary value
 
-	sub rsp, 8					; Stack alignment before call
-;================= CALL "модуль" =================;
+; ==================== CALL "модуль" ====================
+	sub rsp, 8	; Stack alignment before call
 	sub rsp, 8
 	movsd xmm0, [rbp - 8]
-	movsd [rsp + 0], xmm0		; Save func argument 1
-
+	movsd [rsp], xmm0	; Save function argument 1
 	call func_15
-
 	add rsp, 8
-	add rsp, 8					; Remove alignment
+	add rsp, 8	; Remove stack alignment
 	ucomisd xmm0, [rsp]
 	jb .cmp_true_6
-
 	movsd xmm0, [rel const_false]
 	jmp .cmp_end_6
-
 .cmp_true_6:
 	movsd xmm0, [rel const_true]
-
 .cmp_end_6:
 	add rsp, 8
-	ucomisd xmm0, [rel const_false]	; Compare xmm0 with 0.0 (false)
+	ucomisd xmm0, [rel const_false]	; Compare expression with false
 	je .if_end_7
 
-;==================== RET ====================;
-	movsd xmm0, [rel const_26]
+; ==================== RET ====================
+	movsd xmm0, [rel const_true]
 	jmp func_end_11
-
 .if_end_7:
-;==================== RET ====================;
-	movsd xmm0, [rel const_27]
-	jmp func_end_11
 
+; ==================== RET ====================
+	movsd xmm0, [rel const_false]
+	jmp func_end_11
 func_end_11:
 	add rsp, 16
 	pop rbp
 	ret
 
-;================= PROGRAM END =================;
-
 section .rodata
 
 const_true:
-	dq 1.0
+	dq 1.0000000000000000
 const_false:
-	dq 0.0
-__stdlib_neg0:
-	dq -0.0
-__stdlib_1m:
-	dq 1000000.0
-__stdlib_10:
-	dq 10.0
-__stdlib_01:
-	dq 0.1
+	dq 0.0000000000000000
 const_0:
-	dq 0.0000000000000000
-const_1:
-	dq 0.0000000000000000
-const_2:
-	dq 0.0000000000000000
-const_3:
-	dq 1.0000000000000000
-const_4:
-	dq 0.0000000000000000
-const_5:
-	dq 0.0000000000000000
-const_6:
-	dq 1.0000000000000000
-const_7:
-	dq 1.0000000000000000
-const_8:
-	dq 0.0000000000000000
-const_9:
 	dq 4.0000000000000000
-const_10:
+const_1:
 	dq 2.0000000000000000
-const_11:
-	dq 1.0000000000000000
-const_12:
-	dq 0.0000000000000000
-const_13:
-	dq 1.0000000000000000
-const_14:
-	dq 0.0000000000000000
-const_15:
-	dq 2.0000000000000000
-const_16:
-	dq 1.0000000000000000
-const_17:
-	dq 0.0000000000000000
-const_18:
-	dq 2.0000000000000000
-const_19:
-	dq 1.0000000000000000
-const_20:
-	dq 0.0000000000000000
-const_21:
-	dq 2.0000000000000000
-const_22:
-	dq 0.0000000000000000
-const_23:
-	dq 0.0000000000000000
-const_24:
-	dq 0.0000000000000000
-const_25:
+const_2:
 	dq 9.9999999999999995e-07
-const_26:
-	dq 1.0000000000000000
-const_27:
-	dq 0.0000000000000000

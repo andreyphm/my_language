@@ -1,5 +1,5 @@
-#ifndef DUMP_H
-#define DUMP_H
+#ifndef LIST_DUMP_H
+#define LIST_DUMP_H
 
 #include "tokenization.h"
 
@@ -10,6 +10,5 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
                const identifier_t* const identifiers);
 
 const char* spec_to_str(spec_code spec);
-const char* node_kind_to_str(node_kind kind);
 
-#endif // DUMP_H
+#endif // LIST_DUMP_H

@@ -1,3 +1,15 @@
+BITS 64
+
+; Fixed-size entry table used when this file is assembled as a flat binary.
+; Each `jmp near` occupies 5 bytes, so the public entry offsets are 0, 5 and 10.
+
+__stdlib_entry_exit:
+    jmp near __exit
+__stdlib_entry_out:
+    jmp near __out
+__stdlib_entry_in:
+    jmp near __in
+
 ;==================== MY_STDLIB ====================;
 ;---------------------------------------------------------------------------------------------------------------------
 ; Terminates the process with exit code 0
@@ -140,7 +152,7 @@ __in:
     lea rsi, [rbp - 9]          ; Buffer start
     mov rdx, 1                  ; Number of bytes to read
     syscall
-    movzx rax, [rbp - 9]        ; al = read character
+    movzx rax, byte [rbp - 9]   ; al = read character
     cmp al, 10                  ; '\n' check
     je .in_done
     cmp al, '-'
@@ -158,7 +170,7 @@ __in:
     sub al, '0'                 ; Convert ASCII digit to value
     movzx rax, al
     cvtsi2sd xmm2, rax          ; xmm2 = digit as double
-    movzx rax, [rbp - 10]
+    movzx rax, byte [rbp - 10]
     test rax, rax
     jnz .in_frac
     mulsd xmm0, [rel __stdlib_10]       ; xmm0 *= 10
@@ -184,3 +196,12 @@ __in:
     pop rbp
     ret
 
+align 8, db 0
+__stdlib_neg0:
+    dq -0.0
+__stdlib_1m:
+    dq 1000000.0
+__stdlib_10:
+    dq 10.0
+__stdlib_01:
+    dq 0.1

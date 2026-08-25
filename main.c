@@ -1,26 +1,27 @@
 #include "front_end.h"
 #include "input.h"
-#include "tokenization.h"
-#include "parser.h"
-#include "output.h"
-#include "build_scopes.h"
 #include "middle_end.h"
 #include "font.h"
 #include "back_end.h"
 
+#include <string.h>
+
 static void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file);
+static back_end_mode get_back_end_mode(int argc, const char* argv[]);
 
 int main(int argc, const char* argv[])
 {
     FILE* input_file = nullptr;
-    FILE* asm_file = nullptr;
-    check_files(&input_file, &asm_file, argc, argv);
+    FILE* output_file = nullptr;
+    back_end_mode mode = get_back_end_mode(argc, argv);
+    int files_argc = argc == 4 ? 3 : argc;
+    check_files(&input_file, &output_file, files_argc, argv);
 
     identifier_t* identifiers = nullptr;
     node_t* tree = front_end_run(input_file, &identifiers); 
     if (!tree)
     {
-        fclose(asm_file);
+        fclose(output_file);
         return 1;
     }
 
@@ -28,11 +29,34 @@ int main(int argc, const char* argv[])
     
     tree_dump(tree, TREE_DUMP_SVG, identifiers);
 
-    FILE* binary_file = fopen(BINARY_FILE, "wb");
-    back_end_run(tree, asm_file, binary_file, identifiers);
-    fclose(binary_file);
+    back_end_run(tree, output_file, identifiers, mode);
+    fclose(output_file);
 
     program_complete(&identifiers, &tree, input_file);
+}
+
+static back_end_mode get_back_end_mode(int argc, const char* argv[])
+{
+    if (argc != 4)
+    {
+        printf(MAKE_BOLD_GREEN("NASM mode has been selected.\n"));
+        return BACK_END_NASM;
+    }
+
+    if (!strcmp(argv[3], "bin") || !strcmp(argv[3], "binary"))
+    {
+        printf(MAKE_BOLD_GREEN("Binary mode has been selected.\n"));
+        return BACK_END_BINARY;
+    }
+
+    if (!strcmp(argv[3], "asm") || !strcmp(argv[3], "nasm"))
+    {
+        printf(MAKE_BOLD_GREEN("NASM mode has been selected.\n"));
+        return BACK_END_NASM;
+    }
+
+    fprintf(stderr, "Unknown backend mode '%s'. Use 'nasm' or 'bin'.\n", argv[3]);
+    return BACK_END_NASM;
 }
 
 static void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, FILE* input_file)
