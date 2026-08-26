@@ -82,7 +82,7 @@ error_code file_to_tokens(identifier_t** identifiers_ptr, FILE* input_file, list
     }
 
     free(original_ptr);
-    printf(MAKE_BOLD_GREEN("Tokenization successful\n"));
+    // printf(MAKE_BOLD_GREEN("Tokenization successful\n"));
     return NO_ERROR;
 }
 

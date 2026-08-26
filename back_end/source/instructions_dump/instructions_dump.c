@@ -165,7 +165,7 @@ void instructions_dump(const instruction_list_t* instruction_list, const label_l
     sprintf(command, "dot %s -T svg -o %s", txt_file_name, svg_file_name);
     system(command);
 
-    printf(MAKE_BOLD_GREEN("Instructions dump saved to %s\n"), svg_file_name);
+    // printf(MAKE_BOLD_GREEN("Instructions dump saved to %s\n"), svg_file_name);
 }
 
 static void print_html_escaped(FILE* file, const char* text)

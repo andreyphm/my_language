@@ -96,7 +96,6 @@ void tree_dump(node_t* const node, const char* const svg_file_name, const identi
 
             case NODE_BODY:
             case NODE_ARGS:
-            case NODE_COND:
                 fprintf(txt_file, "}\", style=filled, fillcolor=\"#09be76ff\"];\n");
                 break;
 
@@ -137,7 +136,7 @@ void tree_dump(node_t* const node, const char* const svg_file_name, const identi
     sprintf(command, "dot -Tsvg " TREE_DUMP_TXT " -o %s", svg_file_name);
     system(command);
 
-    printf(MAKE_BOLD_GREEN("Tree visualization saved to %s\n"), svg_file_name);
+    // printf(MAKE_BOLD_GREEN("Tree visualization saved to %s\n"), svg_file_name);
 }
 
 const char* node_kind_to_str(node_kind kind)
@@ -158,7 +157,6 @@ const char* node_kind_to_str(node_kind kind)
         case NODE_RET:       return "RET";
         case NODE_BREAK:     return "BREAK";
         case NODE_PROG:      return "PROGRAM";
-        case NODE_COND:      return "COND";
         case NODE_FUNCTIONS: return "FUNCTIONS";
         case NODE_INCLUDES:  return "INCLUDES";
         case NODE_INCLUDE:   return "INCLUDE";

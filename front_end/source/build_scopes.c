@@ -44,6 +44,7 @@ static error_code analyze_expr(node_t* node, scope_t* scope, const identifier_t*
 
 static int var_unique_id = 0;
 static size_t current_stack_offset = 0;
+static size_t current_loop_depth = 0;
 
 void destroy_scope(scope_t* scope)
 {
@@ -181,13 +182,18 @@ error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
     scope_t* prog_scope = (scope_t*) calloc(1, sizeof(scope_t));
 
     node_t* functions = tree->children[1];
+    size_t entry_point_count = 0;
 
     for (size_t i = 0; i < functions->child_count; i++)
     {
         node_t* func_node = functions->children[i];
+        const char* func_name = identifiers[func_node->data_t.function.id_number].name;
+
+        if (!strcmp(func_name, "теорема") || !strcmp(func_name, "main"))
+            entry_point_count++;
 
         error_code error = declare_func(prog_scope,
-                                        identifiers[func_node->data_t.function.id_number].name,
+                                        func_name,
                                         func_node->data_t.function.id_number,
                                         func_node);
         if (error)
@@ -197,9 +203,21 @@ error_code build_scopes(node_t* tree, const identifier_t* const identifiers)
         }
     }
 
+    if (entry_point_count == 0)
+    {
+        destroy_scope(prog_scope);
+        return MISSING_ENTRY_POINT;
+    }
+    if (entry_point_count > 1)
+    {
+        destroy_scope(prog_scope);
+        return MULTIPLE_ENTRY_POINTS;
+    }
+
     for (size_t i = 0; i < functions->child_count; i++)
     {
        current_stack_offset = 0;
+       current_loop_depth = 0;
        error_code error = analyze_func(functions->children[i], prog_scope, identifiers);
        if (error) 
        {
@@ -303,6 +321,8 @@ error_code analyze_op(node_t* op_node, scope_t* parent, const identifier_t* cons
             return analyze_expr(op_node, parent, identifiers);
 
         case NODE_BREAK:
+            return current_loop_depth > 0 ? NO_ERROR : BREAK_OUTSIDE_LOOP;
+
         default:
             return NO_ERROR;
     }
@@ -363,7 +383,9 @@ error_code analyze_while(node_t* while_node, scope_t* parent, const identifier_t
         return cond_error;
     }
 
+    current_loop_depth++;
     error_code body_error = analyze_block(while_node->children[1], while_scope, identifiers);
+    current_loop_depth--;
     if (body_error)
     {
         destroy_scope(while_scope);
@@ -465,12 +487,18 @@ error_code analyze_expr(node_t* expr_node, scope_t* current, const identifier_t*
                 return analyze_expr(args_node->children[0], current, identifiers);
             }
         
-            if (!seek_func(current, func_id))
+            func_decl_t* func_decl = seek_func(current, func_id);
+            if (!func_decl)
                 return UNDECLARED_FUNCTION;
+
+            node_t* args_node = expr_node->children[0];
+            node_t* params_node = func_decl->decl_node->children[0];
+            if (args_node->child_count != params_node->child_count)
+                return FUNC_WRONG_NUMBER_OF_ARGS;
         
-            for (size_t i = 0; i < expr_node->children[0]->child_count; i++)
+            for (size_t i = 0; i < args_node->child_count; i++)
             {
-                error_code error = analyze_expr(expr_node->children[0]->children[i], current, identifiers);
+                error_code error = analyze_expr(args_node->children[i], current, identifiers);
                 if (error) return error;
             }
         

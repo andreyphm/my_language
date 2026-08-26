@@ -1,28 +1,14 @@
 BITS 64
 
 ; Fixed-size entry table used when this file is assembled as a flat binary.
-; Each `jmp near` occupies 5 bytes, so the public entry offsets are 0, 5 and 10.
+; Each `jmp near` occupies 5 bytes, so the public entry offsets are 0 and 5.
 
-__stdlib_entry_exit:
-    jmp near __exit
 __stdlib_entry_out:
     jmp near __out
 __stdlib_entry_in:
     jmp near __in
 
 ;==================== MY_STDLIB ====================;
-;---------------------------------------------------------------------------------------------------------------------
-; Terminates the process with exit code 0
-;
-; Arguments:    -
-; Return value: -
-; Destroy:      rax, rdi
-;---------------------------------------------------------------------------------------------------------------------
-__exit:
-	mov rax, 60				; __x64_sys_exit
-	xor rdi, rdi			; rdi = error_code
-	syscall
-
 ;---------------------------------------------------------------------------------------------------------------------
 ; Prints double (6 digits in the fractional part) to stdout followed by a newline
 ;

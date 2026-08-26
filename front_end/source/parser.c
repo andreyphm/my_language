@@ -61,7 +61,7 @@ error_code tokens_to_tree(list_t* list, node_t** node_ptr)
     list_destroy(list);
     if (!*node_ptr) return TREE_NULLPTR;
 
-    printf(MAKE_BOLD_GREEN("Parsed successfully\n"));
+    // printf(MAKE_BOLD_GREEN("Parsed successfully\n"));
     return NO_ERROR;
 }
 

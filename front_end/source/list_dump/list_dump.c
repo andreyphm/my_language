@@ -145,7 +145,7 @@ void list_dump(list_t* const list, const char* const txt_file_name, const char* 
     sprintf(command, "dot %s -T svg -o %s", txt_file_name, svg_file_name);
     system(command);
 
-    printf(MAKE_BOLD_GREEN("List visualization saved to %s\n"), svg_file_name);
+    // printf(MAKE_BOLD_GREEN("List visualization saved to %s\n"), svg_file_name);
 }
 
 static const char* token_type_to_str(type_data type)

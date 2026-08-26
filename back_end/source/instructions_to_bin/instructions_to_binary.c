@@ -12,9 +12,8 @@ static size_t instructions_size_between(const instruction_list_t* instructions,
 static uint64_t align_up(uint64_t value, uint64_t alignment);
 static void write_zero_padding(FILE* file, size_t padding_size);
 
-static const size_t STDLIB_EXIT_OFFSET = 0;
-static const size_t STDLIB_OUT_OFFSET  = 5;
-static const size_t STDLIB_IN_OFFSET   = 10;
+static const size_t STDLIB_OUT_OFFSET = 0;
+static const size_t STDLIB_IN_OFFSET  = 5;
 
 void instructions_to_binary(instruction_list_t* instruction_list, label_list_t* label_list,
                             FILE* const binary_file, const char* stdlib_binary_path)
@@ -46,7 +45,6 @@ void instructions_to_binary(instruction_list_t* instruction_list, label_list_t* 
     if (stdlib_buffer)
     {
         uint64_t stdlib_address = text_start + text_size;
-        add_stdlib_label(label_list, "__exit", stdlib_address + STDLIB_EXIT_OFFSET);
         add_stdlib_label(label_list, "__out",  stdlib_address + STDLIB_OUT_OFFSET);
         add_stdlib_label(label_list, "__in",   stdlib_address + STDLIB_IN_OFFSET);
     }

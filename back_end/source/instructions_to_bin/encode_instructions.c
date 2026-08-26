@@ -82,6 +82,7 @@ void encode_instruction(const instruction_t* instruction,
                                                                            instruction_address, buffer_pos); return; }
     if (!strcmp(mnemonic, "jne") || !strcmp(mnemonic, "jnz")) { encode_jcc(0x85, first_op, labels,
                                                                            instruction_address, buffer_pos); return; }
+    if (!strcmp(mnemonic, "jp"))        { encode_jcc(0x8A, first_op, labels, instruction_address, buffer_pos); return; }
 
     if (!strcmp(mnemonic, "jl"))        { encode_jcc(0x8C, first_op, labels, instruction_address, buffer_pos); return; }
     if (!strcmp(mnemonic, "jge"))       { encode_jcc(0x8D, first_op, labels, instruction_address, buffer_pos); return; }

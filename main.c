@@ -64,5 +64,6 @@ static void program_complete(identifier_t** identifiers_ptr, node_t** node_ptr, 
     if (*identifiers_ptr) identifiers_destroy(identifiers_ptr);
     destroy_node(*node_ptr);
     fclose(input_file);
-    printf(MAKE_BOLD("COMMIT GITHUB\n"));
+    // printf(MAKE_BOLD("COMMIT GITHUB\n"));
+    printf(MAKE_BOLD("Program completed successfully.\n"));
 }

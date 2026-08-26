@@ -30,6 +30,7 @@ struct instructions_context_t
 };
 
 static void gen_prog(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
+static void gen_exit(instructions_context_t* context);
 static void gen_include(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_func(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_block(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
@@ -53,8 +54,7 @@ static void gen_div(node_t* node, const identifier_t* identifiers, instructions_
 static void gen_logic(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_logic_or(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_logic_and(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
-static void gen_cmp(node_t* node, const identifier_t* identifiers,
-                    instructions_context_t* context, const char* jump_word);
+static void gen_cmp(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_sub_rsp(instructions_context_t* context, size_t bytes);
 static void gen_add_rsp(instructions_context_t* context, size_t bytes);
 static bool align_stack_before_call(instructions_context_t* context);
@@ -85,6 +85,8 @@ static operand_t make_label_fmt(const char* format, ...);
 
 static operand_t rsp()  { return make_reg(4, 8); }
 static operand_t rbp()  { return make_reg(5, 8); }
+static operand_t rax()  { return make_reg(0, 8); }
+static operand_t rdi()  { return make_reg(7, 8); }
 static operand_t xmm0() { return make_xmm(0); }
 
 static void append_rodata(instructions_context_t* context);
@@ -108,6 +110,8 @@ void tree_to_instructions(node_t* tree, instruction_list_t* const instruction_li
         .labels = label_list,
         .rodata_instructions = {},
         .rodata_labels = {},
+        .while_stack = {},
+        .while_stack_size = 0,
     };
 
     instruction_list_init(&context.rodata_instructions);
@@ -117,13 +121,25 @@ void tree_to_instructions(node_t* tree, instruction_list_t* const instruction_li
     emit_rodata_double(&context, "const_false", 0.0);
 
     gen_prog(tree, identifiers, &context);
+    gen_exit(&context);
 
     append_rodata(&context);
 
     instruction_list_destroy(&context.rodata_instructions);
     label_list_destroy(&context.rodata_labels);
 
-    printf(MAKE_BOLD_GREEN("Tree to instructions successful\n"));
+    // printf(MAKE_BOLD_GREEN("Tree to instructions successful\n"));
+}
+
+void gen_exit(instructions_context_t* context)
+{
+    assert(context);
+
+    emit_comment(context, "==================== EXIT ====================");
+    emit_text_label(context, "__exit");
+    emit_two_operands(context, "mov", rax(), make_imm(60));
+    emit_two_operands(context, "xor", rdi(), rdi());
+    emit_no_operands(context, "syscall");
 }
 
 void gen_prog(node_t* prog_node, const identifier_t* identifiers, instructions_context_t* context)
@@ -193,6 +209,9 @@ void gen_func(node_t* func_node, const identifier_t* identifiers, instructions_c
 
     gen_block(func_node->children[1], identifiers, context);
 
+    emit_two_operands(context, "xorpd", xmm0(), xmm0());
+    comment_last_instruction(context, "Default return value");
+
     emit_text_label_fmt(context, "func_end_%zu", func_id);
 
     emit_two_operands(context, "add", rsp(), make_imm((int64_t) frame_size));
@@ -223,9 +242,7 @@ void gen_op(node_t* op_node, const identifier_t* identifiers, instructions_conte
     switch (op_node->kind)
     {
         case NODE_VAR_DECL:
-            if (op_node->child_count >= 2)
-                return gen_var_decl(op_node, identifiers, context);
-            break;
+            return gen_var_decl(op_node, identifiers, context);
 
         case NODE_RET:      return gen_ret(op_node, identifiers, context);
         case NODE_IF:       return gen_if(op_node, identifiers, context);
@@ -252,8 +269,10 @@ void gen_if(node_t* if_node, const identifier_t* identifiers, instructions_conte
     gen_expr(if_node->children[0], identifiers, context);
     emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
     comment_last_instruction(context, "Compare expression with false");
+    emit_one_operand(context, "jp", make_label_fmt(".if_true_%zu", if_id));
     emit_one_operand(context, "je", make_label_fmt(".if_end_%zu", if_id));
 
+    emit_text_label_fmt(context, ".if_true_%zu", if_id);
     gen_block(if_node->children[1], identifiers, context);
 
     if (if_node->child_count >= 3)
@@ -283,6 +302,7 @@ void gen_while(node_t* while_node, const identifier_t* identifiers, instructions
     gen_expr(while_node->children[0], identifiers, context);
     emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
     comment_last_instruction(context, "Compare expression with false");
+    emit_one_operand(context, "jp", make_label_fmt(".while_loop_%zu", while_id));
     emit_one_operand(context, "je", make_label_fmt(".while_end_%zu", while_id));
 
     emit_text_label_fmt(context, ".while_loop_%zu", while_id);
@@ -292,6 +312,7 @@ void gen_while(node_t* while_node, const identifier_t* identifiers, instructions
     gen_expr(while_node->children[0], identifiers, context);
     emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
     comment_last_instruction(context, "Compare expression with false");
+    emit_one_operand(context, "jp", make_label_fmt(".while_loop_%zu", while_id));
     emit_one_operand(context, "jne", make_label_fmt(".while_loop_%zu", while_id));
 
     emit_text_label_fmt(context, ".while_end_%zu", while_id);
@@ -319,7 +340,11 @@ void gen_var_decl(node_t* var_decl_node, const identifier_t* identifiers, instru
                  variable_node->data_t.variable.unique_id,
                  identifiers[variable_node->data_t.variable.id_number].name);
 
-    gen_expr(var_decl_node->children[1], identifiers, context);
+    if (var_decl_node->child_count >= 2)
+        gen_expr(var_decl_node->children[1], identifiers, context);
+    else
+        emit_two_operands(context, "xorpd", xmm0(), xmm0());
+
     emit_two_operands(context, "movsd", make_mem(5, -((int64_t) var_decl_node->data_t.variable.stack_offset)), xmm0());
     comment_last_instruction(context, "Initialize variable_%d", variable_node->data_t.variable.unique_id);
 }
@@ -501,12 +526,14 @@ void gen_op_node(node_t* op_node, const identifier_t* identifiers, instructions_
                               xmm0());
             break;
 
-        case IS_EQUAL:      gen_cmp(op_node, identifiers, context, "je");  break;
-        case IS_NOT_EQUAL:  gen_cmp(op_node, identifiers, context, "jne"); break;
-        case GREATER_EQUAL: gen_cmp(op_node, identifiers, context, "jae"); break;
-        case GREATER:       gen_cmp(op_node, identifiers, context, "ja");  break;
-        case LESS_EQUAL:    gen_cmp(op_node, identifiers, context, "jbe"); break;
-        case LESS:          gen_cmp(op_node, identifiers, context, "jb");  break;
+        case IS_EQUAL:
+        case IS_NOT_EQUAL:
+        case GREATER_EQUAL:
+        case GREATER:
+        case LESS_EQUAL:
+        case LESS:
+            gen_cmp(op_node, identifiers, context);
+            break;
 
         default:
             break;
@@ -544,10 +571,12 @@ void gen_logic_or(node_t* logic_node, const identifier_t* identifiers, instructi
 
     gen_expr(logic_node->children[0], identifiers, context);
     emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "jp", make_label_fmt(".logic_true_%zu", logic_id));
     emit_one_operand(context, "jne", make_label_fmt(".logic_true_%zu", logic_id));
 
     gen_expr(logic_node->children[1], identifiers, context);
     emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "jp", make_label_fmt(".logic_true_%zu", logic_id));
     emit_one_operand(context, "jne", make_label_fmt(".logic_true_%zu", logic_id));
 
     emit_two_operands(context, "movsd", xmm0(), make_mem_rel("const_false"));
@@ -569,12 +598,16 @@ void gen_logic_and(node_t* logic_node, const identifier_t* identifiers, instruct
 
     gen_expr(logic_node->children[0], identifiers, context);
     emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "jp", make_label_fmt(".logic_and_rhs_%zu", logic_id));
     emit_one_operand(context, "je", make_label_fmt(".logic_false_%zu", logic_id));
 
+    emit_text_label_fmt(context, ".logic_and_rhs_%zu", logic_id);
     gen_expr(logic_node->children[1], identifiers, context);
     emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "jp", make_label_fmt(".logic_true_%zu", logic_id));
     emit_one_operand(context, "je", make_label_fmt(".logic_false_%zu", logic_id));
 
+    emit_text_label_fmt(context, ".logic_true_%zu", logic_id);
     emit_two_operands(context, "movsd", xmm0(), make_mem_rel("const_true"));
     emit_one_operand(context, "jmp", make_label_fmt(".logic_end_%zu", logic_id));
 
@@ -648,14 +681,25 @@ void gen_div(node_t* div_node, const identifier_t* identifiers, instructions_con
     gen_add_rsp(context, sizeof(double));
 }
 
-void gen_cmp(node_t* cmp_node, const identifier_t* identifiers, instructions_context_t* context, const char* jump_word)
+void gen_cmp(node_t* cmp_node, const identifier_t* identifiers, instructions_context_t* context)
 {
     assert(cmp_node);
     assert(identifiers);
     assert(context);
-    assert(jump_word);
 
     size_t cmp_id = ++context->counters.cmp_counter;
+    const char* jump_word = nullptr;
+
+    switch (cmp_node->data_t.op)
+    {
+        case IS_EQUAL:      jump_word = "je";  break;
+        case IS_NOT_EQUAL:  jump_word = "jne"; break;
+        case GREATER_EQUAL: jump_word = "jae"; break;
+        case GREATER:       jump_word = "ja";  break;
+        case LESS_EQUAL:    jump_word = "jbe"; break;
+        case LESS:          jump_word = "jb";  break;
+        default:            assert(0 && "Expected comparison operator");
+    }
 
     gen_sub_rsp(context, sizeof(double));
     emit_two_operands(context, "movsd", make_mem(4, 0), xmm0());
@@ -664,8 +708,12 @@ void gen_cmp(node_t* cmp_node, const identifier_t* identifiers, instructions_con
     gen_expr(cmp_node->children[0], identifiers, context);
 
     emit_two_operands(context, "ucomisd", xmm0(), make_mem(4, 0));
+    emit_one_operand(context, "jp",
+                     make_label_fmt(cmp_node->data_t.op == IS_NOT_EQUAL
+                                    ? ".cmp_true_%zu" : ".cmp_false_%zu", cmp_id));
     emit_one_operand(context, jump_word, make_label_fmt(".cmp_true_%zu", cmp_id));
 
+    emit_text_label_fmt(context, ".cmp_false_%zu", cmp_id);
     emit_two_operands(context, "movsd", xmm0(), make_mem_rel("const_false"));
     emit_one_operand(context, "jmp", make_label_fmt(".cmp_end_%zu", cmp_id));
 

@@ -36,7 +36,6 @@ enum keyword_code
 
 enum spec_code
 {
-    PROGRAM_START,
     LEFT_BRACE,
     RIGHT_BRACE,
     LEFT_PAREN,
@@ -72,7 +71,6 @@ enum node_kind
     NODE_CALL,    
     NODE_BODY,     
     NODE_ARGS,
-    NODE_COND,     
 
     NODE_IF,       
     NODE_ELSE,     
