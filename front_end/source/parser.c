@@ -37,12 +37,8 @@ static node_t* get_break(token_t** token);
 static node_t* get_e(token_t** token);
 static node_t* get_or(token_t** token);
 static node_t* get_and(token_t** token);
-static node_t* get_bit_or(token_t** token);
-static node_t* get_bit_xor(token_t** token);
-static node_t* get_bit_and(token_t** token);
 static node_t* get_equal_or_not(token_t** token);
 static node_t* get_less_greater(token_t** token);
-static node_t* get_shift(token_t** token);
 static node_t* get_add_sub(token_t** token);
 static node_t* get_mul_div(token_t** token);
 static node_t* get_p(token_t** token);
@@ -486,76 +482,10 @@ node_t* get_or(token_t** token)
 
 node_t* get_and(token_t** token)
 {
-    node_t* value = get_bit_or(token);
-    if (!value) return nullptr;
-
-    while (TOKEN_IS_OP && TOKEN_OP_CODE == LOGIC_AND)
-    {
-        *token = (*token)->next;
-
-        node_t* value_2 = get_bit_or(token);
-        if (!value_2)
-        {
-            destroy_node(value);
-            return nullptr;
-        }
-
-        value = create_op_node(LOGIC_AND, value, value_2);
-    }
-
-    return value;
-}
-
-node_t* get_bit_or(token_t** token)
-{
-    node_t* value = get_bit_xor(token);
-    if (!value) return nullptr;
-
-    while (TOKEN_IS_OP && TOKEN_OP_CODE == BIT_OR)
-    {
-        *token = (*token)->next;
-
-        node_t* value_2 = get_bit_xor(token);
-        if (!value_2)
-        {
-            destroy_node(value);
-            return nullptr;
-        }
-
-        value = create_op_node(BIT_OR, value, value_2);
-    }
-
-    return value;
-}
-
-node_t* get_bit_xor(token_t** token)
-{
-    node_t* value = get_bit_and(token);
-    if (!value) return nullptr;
-
-    while (TOKEN_IS_OP && TOKEN_OP_CODE == BIT_XOR)
-    {
-        *token = (*token)->next;
-
-        node_t* value_2 = get_bit_and(token);
-        if (!value_2)
-        {
-            destroy_node(value);
-            return nullptr;
-        }
-
-        value = create_op_node(BIT_XOR, value, value_2);
-    }
-
-    return value;
-}
-
-node_t* get_bit_and(token_t** token)
-{
     node_t* value = get_equal_or_not(token);
     if (!value) return nullptr;
 
-    while (TOKEN_IS_OP && TOKEN_OP_CODE == BIT_AND)
+    while (TOKEN_IS_OP && TOKEN_OP_CODE == LOGIC_AND)
     {
         *token = (*token)->next;
 
@@ -566,7 +496,7 @@ node_t* get_bit_and(token_t** token)
             return nullptr;
         }
 
-        value = create_op_node(BIT_AND, value, value_2);
+        value = create_op_node(LOGIC_AND, value, value_2);
     }
 
     return value;
@@ -600,7 +530,7 @@ node_t* get_equal_or_not(token_t** token)
 
 node_t* get_less_greater(token_t** token)
 {
-    node_t* value = get_shift(token);
+    node_t* value = get_add_sub(token);
     if (!value) return nullptr;
 
     while (TOKEN_IS_OP && (TOKEN_OP_CODE == GREATER_EQUAL || TOKEN_OP_CODE == GREATER
@@ -609,7 +539,7 @@ node_t* get_less_greater(token_t** token)
         operator_code op = TOKEN_OP_CODE;
         *token = (*token)->next;
 
-        node_t* value_2 = get_shift(token);
+        node_t* value_2 = get_add_sub(token);
         if (!value_2)
         {
             destroy_node(value);
@@ -629,29 +559,6 @@ node_t* get_less_greater(token_t** token)
                 destroy_nodes(2, value, value_2);
                 return nullptr;
         }
-    }
-
-    return value;
-}
-
-node_t* get_shift(token_t** token)
-{
-    node_t* value = get_add_sub(token);
-    if (!value) return nullptr;
-
-    while (TOKEN_IS_OP && (TOKEN_OP_CODE == SHL || TOKEN_OP_CODE == SHR))
-    {
-        operator_code op = TOKEN_OP_CODE;
-        *token = (*token)->next;
-
-        node_t* value_2 = get_add_sub(token);
-        if (!value_2)
-        {
-            destroy_node(value);
-            return nullptr;
-        }
-
-        value = create_op_node(op, value, value_2);
     }
 
     return value;

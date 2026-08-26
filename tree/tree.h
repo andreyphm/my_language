@@ -17,15 +17,10 @@ enum operator_code
     LOGIC_OR,
     LOGIC_AND,
     IS_NOT_EQUAL,
-    SHR,
     GREATER_EQUAL,
     GREATER,
-    SHL,
     LESS_EQUAL,
-    LESS,
-    BIT_OR,
-    BIT_XOR,
-    BIT_AND
+    LESS
 };
 
 enum keyword_code

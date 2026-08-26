@@ -11,6 +11,7 @@ struct instructions_counters_t
 {
     size_t const_counter;
     size_t cmp_counter;
+    size_t logic_counter;
     size_t if_counter;
     size_t while_counter;
     size_t current_func_id;
@@ -49,6 +50,9 @@ static void gen_add(node_t* node, const identifier_t* identifiers, instructions_
 static void gen_sub(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_mul(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_div(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
+static void gen_logic(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
+static void gen_logic_or(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
+static void gen_logic_and(node_t* node, const identifier_t* identifiers, instructions_context_t* context);
 static void gen_cmp(node_t* node, const identifier_t* identifiers,
                     instructions_context_t* context, const char* jump_word);
 static void gen_sub_rsp(instructions_context_t* context, size_t bytes);
@@ -476,6 +480,12 @@ void gen_op_node(node_t* op_node, const identifier_t* identifiers, instructions_
     assert(identifiers);
     assert(context);
 
+    if (op_node->data_t.op == LOGIC_OR || op_node->data_t.op == LOGIC_AND)
+    {
+        gen_logic(op_node, identifiers, context);
+        return;
+    }
+
     gen_expr(op_node->children[1], identifiers, context);
 
     switch (op_node->data_t.op)
@@ -501,6 +511,77 @@ void gen_op_node(node_t* op_node, const identifier_t* identifiers, instructions_
         default:
             break;
     }
+}
+
+void gen_logic(node_t* logic_node, const identifier_t* identifiers, instructions_context_t* context)
+{
+    assert(logic_node);
+    assert(identifiers);
+    assert(context);
+
+    switch (logic_node->data_t.op)
+    {
+        case LOGIC_OR:
+            gen_logic_or(logic_node, identifiers, context);
+            return;
+
+        case LOGIC_AND:
+            gen_logic_and(logic_node, identifiers, context);
+            return;
+
+        default:
+            assert(0 && "Expected logical operator");
+    }
+}
+
+void gen_logic_or(node_t* logic_node, const identifier_t* identifiers, instructions_context_t* context)
+{
+    assert(logic_node);
+    assert(identifiers);
+    assert(context);
+
+    size_t logic_id = ++context->counters.logic_counter;
+
+    gen_expr(logic_node->children[0], identifiers, context);
+    emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "jne", make_label_fmt(".logic_true_%zu", logic_id));
+
+    gen_expr(logic_node->children[1], identifiers, context);
+    emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "jne", make_label_fmt(".logic_true_%zu", logic_id));
+
+    emit_two_operands(context, "movsd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "jmp", make_label_fmt(".logic_end_%zu", logic_id));
+
+    emit_text_label_fmt(context, ".logic_true_%zu", logic_id);
+    emit_two_operands(context, "movsd", xmm0(), make_mem_rel("const_true"));
+
+    emit_text_label_fmt(context, ".logic_end_%zu", logic_id);
+}
+
+void gen_logic_and(node_t* logic_node, const identifier_t* identifiers, instructions_context_t* context)
+{
+    assert(logic_node);
+    assert(identifiers);
+    assert(context);
+
+    size_t logic_id = ++context->counters.logic_counter;
+
+    gen_expr(logic_node->children[0], identifiers, context);
+    emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "je", make_label_fmt(".logic_false_%zu", logic_id));
+
+    gen_expr(logic_node->children[1], identifiers, context);
+    emit_two_operands(context, "ucomisd", xmm0(), make_mem_rel("const_false"));
+    emit_one_operand(context, "je", make_label_fmt(".logic_false_%zu", logic_id));
+
+    emit_two_operands(context, "movsd", xmm0(), make_mem_rel("const_true"));
+    emit_one_operand(context, "jmp", make_label_fmt(".logic_end_%zu", logic_id));
+
+    emit_text_label_fmt(context, ".logic_false_%zu", logic_id);
+    emit_two_operands(context, "movsd", xmm0(), make_mem_rel("const_false"));
+
+    emit_text_label_fmt(context, ".logic_end_%zu", logic_id);
 }
 
 void gen_add(node_t* add_node, const identifier_t* identifiers, instructions_context_t* context)

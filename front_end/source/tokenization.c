@@ -19,15 +19,10 @@ const token_info_t operators_array[] =
     TOKEN_INFO(LOGIC_OR,      "LOGIC_OR",                "∨"),
     TOKEN_INFO(LOGIC_AND,     "LOGIC_AND",               "∧"),
     TOKEN_INFO(IS_NOT_EQUAL,  "IS_NOT_EQUAL",            "≠"),
-    TOKEN_INFO(SHR,           "SHR",                    ">>"),
     TOKEN_INFO(GREATER_EQUAL, "GREATER_EQUAL",           "≥"),
     TOKEN_INFO(GREATER,       "GREATER",                 ">"),
-    TOKEN_INFO(SHL,           "SHL",                    "<<"),
     TOKEN_INFO(LESS_EQUAL,    "LESS_EQUAL",              "≤"),
-    TOKEN_INFO(LESS,          "LESS",                    "<"),
-    TOKEN_INFO(BIT_OR,        "BIT_OR",                  "|"),
-    TOKEN_INFO(BIT_XOR,       "BIT_XOR",                 "^"),
-    TOKEN_INFO(BIT_AND,       "BIT_AND",                 "&")
+    TOKEN_INFO(LESS,          "LESS",                    "<")
 };
 
 const size_t OP_ARRAY_SIZE = sizeof(operators_array) / sizeof(operators_array[0]);

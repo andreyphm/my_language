@@ -26,6 +26,7 @@ void instructions_to_nasm(const instruction_list_t* instructions, const label_li
             ";==================== PROGRAM START ====================;\n"
             ";*******************************************************;\n\n"
             "BITS 64\n"
+            "global main\n"
             "section .text\n\n");
 
     if (stdlib_source_path)
