@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "back_end.h"
 #include "tree_to_instructions.h"
@@ -27,9 +28,15 @@ void back_end_run(node_t* tree, FILE* output_file,
     if (mode == BACK_END_NASM)
         instructions_to_nasm(&instructions, &labels, output_file,
                              use_stdlib ? STDLIB_SOURCE_FILE : nullptr);
-    else
+    else 
+    {
+        int file_descriptor = fileno(output_file);
+        (fchmod(file_descriptor, S_IRWXU | S_IRWXG | S_IROTH) == -1) && fprintf(stderr, "Cannot change rights on executable\n");
+
         instructions_to_binary(&instructions, &labels, output_file,
                                use_stdlib ? STDLIB_BINARY_FILE : nullptr);
+    }
+        
 
     instruction_list_destroy(&instructions);
     label_list_destroy(&labels);
