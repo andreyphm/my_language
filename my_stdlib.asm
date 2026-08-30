@@ -1,12 +1,11 @@
 BITS 64
 
 ; Fixed-size entry table used when this file is assembled as a flat binary.
-; Each `jmp near` occupies 5 bytes, so the public entry offsets are 0 and 5.
 
 __stdlib_entry_out:
-    jmp near __out
+    jmp strict near __out
 __stdlib_entry_in:
-    jmp near __in
+    jmp strict near __in
 
 ;==================== MY_STDLIB ====================;
 ;---------------------------------------------------------------------------------------------------------------------
