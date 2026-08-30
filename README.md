@@ -76,24 +76,9 @@
 
 ## Процесс компиляции
 
-```mermaid
-flowchart LR
-    SOURCE[Исходный код] --> TOKENS[Список токенов]
-    TOKENS --> AST[Абстрактное<br/>синтаксическое дерево]
-    AST --> OPT[Упрощённое AST]
-    OPT --> IR[Список инструкций<br/>и меток]
-    IR --> NASM[NASM-код]
-    IR --> ELF[Исполняемый<br/>ELF64]
-
-    classDef source fill:#9575ff,stroke:#3f3d73,color:black;
-    classDef frontend fill:#36ff6f,stroke:#247a3b,color:black;
-    classDef middle fill:#ecff1a,stroke:#d9b811,color:black;
-    classDef backend fill:#b7e5f3,stroke:#3f6969,color:black;
-    class SOURCE source;
-    class TOKENS,AST frontend;
-    class OPT middle;
-    class IR,NASM,ELF backend;
-```
+<p align="center">
+  <img src="assets/stages_of_translation.drawio.svg" alt="Процесс компиляции" width="92%">
+</p>
 
 ### Frontend
 

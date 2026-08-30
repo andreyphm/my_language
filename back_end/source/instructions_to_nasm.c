@@ -49,7 +49,7 @@ void instructions_to_nasm(const instruction_list_t* instructions, const label_li
     }
 
     print_labels(output_file, labels, instructions->count);
-    printf(MAKE_BOLD_GREEN("Instructions to NASM successful\n"));
+    // printf(MAKE_BOLD_GREEN("Instructions to NASM successful\n"));
 }
 
 static void copy_stdlib(FILE* destination, const char* source_path)
